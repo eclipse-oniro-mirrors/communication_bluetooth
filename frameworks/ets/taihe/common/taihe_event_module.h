@@ -19,6 +19,7 @@
 #include <shared_mutex>
 #include <vector>
 
+#include "bluetooth_log.h"
 #include "stdexcept"
 #include "taihe/callback.hpp"
 #include "taihe/optional.hpp"
@@ -26,11 +27,17 @@
 
 namespace OHOS {
 namespace Bluetooth {
+// Upper bound of callbacks registered on a single EventModule, guards against
+// unbounded growth when the subscriber leaks its registration.
+constexpr size_t MAX_EVENT_CALLBACK_COUNT = 50;
+
 template<typename T>
 class EventModule {
 public:
     void RegisterEvent(::taihe::callback_view<T> callback);
     void DeregisterEvent(::taihe::optional_view<::taihe::callback<T>> callback);
+    template<typename Arg>
+    void PublishEvent(const Arg& arg);
 
     std::vector<::taihe::optional<::taihe::callback<T>>> callbackVec_;
     std::shared_mutex lock_;
@@ -49,6 +56,10 @@ void EventModule<T>::RegisterEvent(::taihe::callback_view<T> callback)
     if (std::find(callbackVec_.begin(), callbackVec_.end(), eventCb) != callbackVec_.end()) {
         return;
     }
+    if (callbackVec_.size() >= MAX_EVENT_CALLBACK_COUNT) {
+        HILOGE("register event callback exceeds the upper bound %{public}zu", MAX_EVENT_CALLBACK_COUNT);
+        return;
+    }
     callbackVec_.emplace_back(eventCb);
 }
 
@@ -65,6 +76,24 @@ void EventModule<T>::DeregisterEvent(::taihe::optional_view<::taihe::callback<T>
             callbackVec_.end());
     } else {
         callbackVec_.clear();
+    }
+}
+
+template<typename T>
+template<typename Arg>
+void EventModule<T>::PublishEvent(const Arg& arg)
+{
+    // Copy the callbacks out of the lock, the callback may re-enter
+    // RegisterEvent/DeregisterEvent which requires the unique lock.
+    std::vector<::taihe::optional<::taihe::callback<T>>> callbacks;
+    {
+        std::unique_lock<std::shared_mutex> guard(lock_);
+        callbacks = callbackVec_;
+    }
+    for (auto& cb : callbacks) {
+        if (cb.has_value()) {
+            cb.value()(arg);
+        }
     }
 }
 } // namespace Bluetooth

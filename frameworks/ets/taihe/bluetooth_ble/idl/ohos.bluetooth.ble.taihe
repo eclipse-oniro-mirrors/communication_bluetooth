@@ -20,6 +20,7 @@
 static { loadLibraryWithPermissionCheck("bluetoothBle_taihe_native.z", "@ohos.bluetooth.ble") }
 """)
 from ohos.bluetooth.constant use ProfileConnectionState;
+from ohos.bluetooth.connection use BluetoothTransport;
 
 struct ScanReport {
     reportType: ScanReportType;
@@ -27,7 +28,8 @@ struct ScanReport {
 }
 enum ScanReportType: i32 {
     ON_FOUND = 1,
-    ON_LOST = 2
+    ON_LOST = 2,
+    ON_BATCH = 3
 }
 struct ScanResult {
     deviceId: String;
@@ -72,6 +74,7 @@ struct AdvertiseSetting {
     interval: Optional<i32>;
     txPower: Optional<i32>;
     connectable: Optional<bool>;
+    isExtended: Optional<bool>;
 }
 
 struct NotifyCharacteristic {
@@ -135,6 +138,8 @@ struct ScanOptions {
     matchMode: Optional<MatchMode>;
     phyType: Optional<PhyType>;
     reportMode: Optional<ScanReportMode>;
+    isExtended: Optional<bool>;
+    scanEnhanceMode: Optional<ScanEnhanceMode>;
 }
 
 enum ScanDuty: i32 {
@@ -163,6 +168,18 @@ struct BLECharacteristic {
     properties: Optional<GattProperties>;
     characteristicValueHandle: Optional<i32>;
     permissions: Optional<GattPermissions>;
+}
+
+struct ScanEnhanceMode {
+    enhanceMode: EnhanceMode;
+    timeout: i32;
+}
+
+enum EnhanceMode: i32 {
+    BLE_SCAN_ENHANCE_MODE_BALANCED = 0,
+    BLE_SCAN_ENHANCE_MODE_MEDIUM = 1,
+    BLE_SCAN_ENHANCE_MODE_FAST = 2,
+    BLE_SCAN_ENHANCE_MODE_ULTRA_FAST = 3
 }
 
 @class struct BLECharacteristicInfo {
@@ -229,7 +246,28 @@ struct GattPermissions {
     @extends gattPermissions: GattPermissions;
 }
 
+union UndefinedType {
+    @undefined undefined;
+}
+
 function StopAdvertising(): void;
+
+@rename("stopAdvertising")
+function StopAdvertisingPromise(advertisingId: i32): @sts_type("Promise<void>") Opaque;
+
+@rename("stopAdvertising")
+function StopAdvertisingAsync(advertisingId: i32, callback: @sts_type("AsyncCallback<void>") Opaque): void;
+
+struct GattSetting {
+    autoConnect: Optional<bool>;
+    transport: Optional<BluetoothTransport>;
+}
+
+function OnAdvertisingStateChange(callback:(data: AdvertisingStateChangeInfo) => void): void;
+function OffAdvertisingStateChange(callback: Optional<(data: AdvertisingStateChangeInfo) => void>): void;
+
+function OnBLEDeviceFind(callback:(data: Array<ScanResult>) => void): void;
+function OffBLEDeviceFind(callback: Optional<(data: Array<ScanResult>) => void>): void;
 
 interface GattClientDevice {
     SetBLEMtuSize(mtu: i32): void;
@@ -259,6 +297,78 @@ interface GattClientDevice {
 
     @rename("setCharacteristicChangeIndication")
     SetCharacteristicChangeIndicationAsync(characteristic: BLECharacteristic, enable: bool, callback: @sts_type("AsyncCallback<void>") Opaque): void;
+
+    @rename("readPhy")
+    ReadPhyPromise(): @sts_type("Promise<PhyValue>") Opaque;
+
+    @rename("setPhy")
+    SetPhyPromise(phyValue: PhyValue): @sts_type("Promise<void>") Opaque;
+
+    @rename("writeCharacteristicValueWithContext")
+    WriteCharacteristicValueWithContextPromise(characteristic: BLECharacteristic, writeType: GattWriteType):  @sts_type("Promise<GattRspContext>") Opaque;
+
+    @rename("writeDescriptorValue")
+    WriteDescriptorValuePromise(descriptor: BLEDescriptor): @sts_type("Promise<void>") Opaque;
+
+    @rename("writeDescriptorValue")
+    WriteDescriptorValueAsync(descriptor: BLEDescriptor, callback: @sts_type("AsyncCallback<void>") Opaque): void;
+
+    @gen_async("getServices")
+    @gen_promise("getServices")
+    GetServicesSync(): Array<GattService>;
+
+    OnBlePhyUpdate(callback:(data: PhyValue) => void): void;
+    OffBlePhyUpdate(callback: Optional<(data: PhyValue) => void>): void;
+
+    @rename("setCharacteristicChangeNotification")
+    SetCharacteristicChangeNotificationPromise(characteristic: BLECharacteristic, enable: bool):  @sts_type("Promise<void>") Opaque;
+
+    @rename("setCharacteristicChangeNotification")
+    SetCharacteristicChangeNotificationAsync(characteristic: BLECharacteristic, enable: bool, callback: @sts_type("AsyncCallback<void>") Opaque): void;
+
+    @rename("getRssiValue")
+    GetRssiValuePromise(): @sts_type("Promise<int>") Opaque;
+
+    @rename("getRssiValue")
+    GetRssiValueAsync(callback: @sts_type("AsyncCallback<int>") Opaque): void;
+
+    @rename("setBLEMtu")
+    SetBLEMtuPromise(mtu: i32): @sts_type("Promise<int>") Opaque;
+
+    @rename("setBLEMtu")
+    SetBLEMtuAsync(mtu: i32, callback: @sts_type("AsyncCallback<int>") Opaque): void;
+
+    @rename("writeCharacteristicValue")
+    WriteCharacteristicValuePromise(characteristic: BLECharacteristic, writeType: GattWriteType):  @sts_type("Promise<void>") Opaque;
+
+    @rename("writeCharacteristicValue")
+    WriteCharacteristicValueAsync(characteristic: BLECharacteristic, writeType: GattWriteType, callback: @sts_type("AsyncCallback<void>") Opaque): void;
+
+    OnBLEMtuChange(callback:(data: i32) => void): void;
+    OffBLEMtuChange(callback: Optional<(data: i32) => void>): void;
+
+    OnServiceChange(callback: (data: UndefinedType) => void): void;
+    OffServiceChange(callback: Optional<(data: UndefinedType) => void>): void;
+
+    OnBLECharacteristicChange(callback:(data: BLECharacteristic) => void): void;
+    OffBLECharacteristicChange(callback: Optional<(data: BLECharacteristic) => void>): void;
+
+    @rename("updateConnectionParam")
+    UpdateConnectionParamPromise(param: ConnectionParam): @sts_type("Promise<void>") Opaque;
+
+    @rename("updateConnectionParam")
+    UpdateConnectionParamAsync(param: ConnectionParam, callback: @sts_type("AsyncCallback<void>") Opaque): void;
+
+    OnBLEConnectionStateChange(callback:(data: BLEConnectionChangeState) => void): void;
+    OffBLEConnectionStateChange(callback: Optional<(data: BLEConnectionChangeState) => void>): void;
+
+    GetConnectedState(): ProfileConnectionState;
+}
+
+enum ConnectionParam : i32 {
+    LOW_POWER = 1,
+    BALANCED = 2,
+    HIGH = 3
 }
 
 function CreateGattClientDevice(deviceId: String): GattClientDevice;
@@ -274,6 +384,43 @@ interface GattServer {
 
     @rename("notifyCharacteristicChanged")
     NotifyCharacteristicChangedAsync(deviceId: String, notifyCharacteristic: NotifyCharacteristic, callback: @sts_type("AsyncCallback<void>") Opaque): void;
+
+    OnBlePhyUpdate(callback:(data: PhyValue) => void): void;
+    OffBlePhyUpdate(callback: Optional<(data: PhyValue) => void>): void;
+
+    @rename("setPhy")
+    SetPhyPromise(deviceId: String, phyValue: PhyValue): @sts_type("Promise<void>") Opaque;
+
+    @rename("readPhy")
+    ReadPhyPromise(deviceId: String): @sts_type("Promise<PhyValue>") Opaque;
+
+    OnBLEMtuChange(callback:(data: i32) => void): void;
+    OffBLEMtuChange(callback: Optional<(data: i32) => void>): void;
+
+    Disconnect(deviceId: String): void;
+    Connect(deviceId: String, autoConnect: Optional<bool>): void;
+
+    OnCharacteristicRead(callback:(data: CharacteristicReadRequest) => void): void;
+    OffCharacteristicRead(callback: Optional<(data: CharacteristicReadRequest) => void>): void;
+
+    OnCharacteristicWrite(callback:(data: CharacteristicWriteRequest) => void): void;
+    OffCharacteristicWrite(callback: Optional<(data: CharacteristicWriteRequest) => void>): void;
+
+    GetConnectedState(deviceId: String): ProfileConnectionState;
+
+    GetService(serviceUuid: String): GattService;
+
+    OnConnectionStateChange(callback:(data: BLEConnectionChangeState) => void): void;
+    OffConnectionStateChange(callback: Optional<(data: BLEConnectionChangeState) => void>): void;
+
+    OnDescriptorWrite(callback:(data: DescriptorWriteRequest) => void): void;
+    OffDescriptorWrite(callback: Optional<(data: DescriptorWriteRequest) => void>): void;
+
+    OnDescriptorRead(callback:(data: DescriptorReadRequest) => void): void;
+    OffDescriptorRead(callback: Optional<(data: DescriptorReadRequest) => void>): void;
+
+    RemoveAllServices(): void;
+    GetServices(): Array<GattService>;
 }
 
 function CreateGattServer(): GattServer;
@@ -318,12 +465,37 @@ struct AdvertisingDisableParams {
     advertisingId: i32;
 }
 
+struct PhyValue {
+    txPhy: BlePhy;
+    rxPhy: BlePhy;
+    phyMode: Optional<CodedPhyMode>;
+}
+
+struct GattRspContext {
+    timestamp: i64;
+}
+
+enum BlePhy: i32 {
+    BLE_PHY_1M = 1,
+    BLE_PHY_2M = 2,
+    BLE_PHY_CODED = 3,
+}
+
+enum CodedPhyMode: i32 {
+    BLE_PHY_CODED_S2 = 1,
+    BLE_PHY_CODED_S8 = 2
+}
+
+
 interface BleScanner {
     @rename("startScan")
     StartScanPromise(filters: ScanFilterNullValue, options: Optional<ScanOptions>):  @sts_type("Promise<void>") Opaque;
 
     @rename("stopScan")
     StopScanPromise(): @sts_type("Promise<void>") Opaque;
+
+    OnBLEDeviceFind(callback:(data: ScanReport) => void): void;
+    OffBLEDeviceFind(callback: Optional<(data: ScanReport) => void>): void;
 }
 
 function CreateBleScanner(): BleScanner;

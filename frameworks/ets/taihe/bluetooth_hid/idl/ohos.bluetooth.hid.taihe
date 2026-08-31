@@ -19,18 +19,25 @@ static { loadLibraryWithPermissionCheck("bluetoothHid_taihe_native.z", "@ohos.bl
 """)
 
 from ohos.bluetooth.baseProfile use BaseProfile;
+from ohos.bluetooth.common use BluetoothAddress;
 @!sts_inject_into_module("import {baseProfile} from './@ohos.bluetooth.baseProfile';")
 interface HidHostProfile : BaseProfile {
     @!sts_inject_into_class("""on(type: string, callback: object): void {
-        if (type === "connectionStateChange") {
-            this.onConnectionStateChange(callback as (info: baseProfile.StateChangeParam) => void);
+        switch (type) {
+            case "connectionStateChange":
+                this.onConnectionStateChange(callback as (info: baseProfile.StateChangeParam) => void);
+                break;
+            default: throw new Error(`Unknown type: ${type}`);
         }
     }
     """)
 
     @!sts_inject_into_class("""off(type: string, callback?: object): void {
-        if (type === "connectionStateChange") {
-            this.offConnectionStateChange(callback as ((info: baseProfile.StateChangeParam) => void) | undefined);
+        switch (type) {
+            case "connectionStateChange":
+                this.offConnectionStateChange(callback as ((info: baseProfile.StateChangeParam) => void) | undefined);
+                break;
+            default: throw new Error(`Unknown type: ${type}`);
         }
     }
     """)
@@ -38,3 +45,124 @@ interface HidHostProfile : BaseProfile {
     Disconnect(deviceId: String): void;
 }
 function CreateHidHostProfile(): HidHostProfile;
+
+union UndefinedType {
+    @undefined undefined;
+}
+
+interface HidDeviceProfile : BaseProfile {
+    @!sts_inject_into_class("""on(type: string, callback: object): void {
+        switch (type) {
+            case "connectionStateChange":
+                this.onConnectionStateChange(callback as (info: baseProfile.StateChangeParam) => void);
+                break;
+            default: throw new Error(`Unknown type: ${type}`);
+        }
+    }
+    """)
+
+    @!sts_inject_into_class("""off(type: string, callback?: object): void {
+        switch (type) {
+            case "connectionStateChange":
+                this.offConnectionStateChange(callback as ((info: baseProfile.StateChangeParam) => void) | undefined);
+                break;
+            default: throw new Error(`Unknown type: ${type}`);
+        }
+    }
+    """)
+    Connect(deviceId: BluetoothAddress): void;
+    Disconnect(): void;
+    ReportError(error: ErrorReason): void;
+    UnregisterHidDevice(): void;
+    SendReport(id: i32, reportData: @typedarray Array<u8>): void;
+    ReplyReport(type: ReportType, id: i32, reportData: @typedarray Array<u8>): void;
+    OnSetProtocol(callback: (data: ProtocolData) => void): void;
+    OffSetProtocol(callback: Optional<(data: ProtocolData) => void>): void;
+    OnInterruptDataReceived(callback: (data: InterruptData) => void): void;
+    OffInterruptDataReceived(callback: Optional<(data: InterruptData) => void>): void;
+    RegisterHidDevice(sdp: HidDeviceSdp, inQos: HidDeviceQos, outQos: HidDeviceQos, callback:(data:bool)=>void): void;
+    OnSetReport(callback: (data: SetReportData) => void): void;
+    OffSetReport(callback: Optional<(data: SetReportData) => void>): void;
+    OnGetReport(callback: (data: GetReportData) => void): void;
+    OffGetReport(callback: Optional<(data: GetReportData) => void>): void;
+    OnVirtualCableUnplug(callback:(data: UndefinedType) => void): void;
+    OffVirtualCableUnplug(callback: Optional<(data: UndefinedType) => void>): void;
+}
+function CreateHidDeviceProfile(): HidDeviceProfile;
+
+enum ErrorReason: i32 {
+    RSP_SUCCESS = 0,
+    RSP_NOT_READY = 1,
+    RSP_INVALID_REPORT_ID = 2,
+    RSP_UNSUPPORTED_REQ = 3,
+    RSP_INVALID_PARAM = 4,
+    RSP_UNKNOWN = 14
+}
+
+struct ProtocolData {
+    protocol: ProtocolType;
+}
+
+enum ProtocolType: i32 {
+    PROTOCOL_BOOT_MODE = 0,
+    PROTOCOL_REPORT_MODE = 1
+}
+
+struct InterruptData {
+    id: i32;
+    data: @typedarray Array<u8>;
+}
+
+struct HidDeviceSdp {
+    name: String;
+    description: String;
+    provider: String;
+    subclass: Subclass;
+    descriptors: @typedarray Array<u8>;
+}
+
+enum Subclass: i32 {
+    SUBCLASS_UNCATEGORIZED = 0,
+    SUBCLASS_JOYSTICK = 1,
+    SUBCLASS_GAMEPAD = 2,
+    SUBCLASS_REMOTE_CONTROL = 3,
+    SUBCLASS_SENSING_DEVICE = 4,
+    SUBCLASS_DIGITIZER_TABLET = 5,
+    SUBCLASS_CARD_READER = 6,
+    SUBCLASS_KEYBOARD = 64,
+    SUBCLASS_MOUSE = 128,
+    SUBCLASS_COMBO = 192
+}
+
+struct HidDeviceQos {
+    serviceType: Optional<ServiceType>;
+    tokenRate: Optional<i32>;
+    tokenBucketSize: Optional<i32>;
+    peakBandwidth: Optional<i32>;
+    latency: Optional<i32>;
+    delayVariation: Optional<i32>;
+}
+
+enum ServiceType: i32 {
+    SERVICE_NO_TRAFFIC = 0,
+    SERVICE_BEST_EFFORT = 1,
+    SERVICE_GUARANTEED = 2
+}
+
+struct SetReportData {
+    type: ReportType;
+    id: i32;
+    data: @typedarray Array<u8>;
+}
+
+struct GetReportData {
+    type: ReportType;
+    id: i32;
+    bufferSize: i32;
+}
+
+enum ReportType: i32 {
+    REPORT_TYPE_INPUT = 1,
+    REPORT_TYPE_OUTPUT = 2,
+    REPORT_TYPE_FEATURE = 3
+}

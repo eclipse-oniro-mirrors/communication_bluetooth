@@ -102,7 +102,15 @@
           "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_connection:bluetoothConnection_taihe",
           "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_constant:bluetoothConstant_taihe",
           "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_hfp:bluetoothHfp_taihe",
-          "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_hid:bluetoothHid_taihe"
+          "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_hid:bluetoothHid_taihe",
+          "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_common:bluetoothCommon_taihe",
+          "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_bas:bluetoothBas_taihe",
+          "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_map:bluetoothMap_taihe",
+          "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_opp:bluetoothOpp_taihe",
+          "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_pan:bluetoothPan_taihe",
+          "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_pbap:bluetoothPbap_taihe",
+          "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_socket:bluetoothSocket_taihe",
+          "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_wearDetection:bluetoothWearDetection_taihe"
         ],
         "service_group": [
           "//foundation/communication/bluetooth/tools/ohos-bluetoothTool:ohos-bluetoothTool",
@@ -289,6 +297,9 @@
             ]
           },
           "name": "//foundation/communication/bluetooth/frameworks/js/napi/src/common:bt_napi_common"
+        },
+        {
+          "name": "//foundation/communication/bluetooth/frameworks/ets/taihe/bluetooth_common:bluetooth_common_taihe"
         },
         {
           "header": {

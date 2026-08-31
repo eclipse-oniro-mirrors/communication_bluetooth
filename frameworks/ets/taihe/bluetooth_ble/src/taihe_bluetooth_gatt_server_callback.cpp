@@ -27,6 +27,14 @@ namespace Bluetooth {
 using namespace std;
 
 TaiheGattServerCallback::TaiheGattServerCallback()
+    : eventSubscribe_({STR_BT_GATT_SERVER_CALLBACK_CHARACTERISTIC_READ,
+        STR_BT_GATT_SERVER_CALLBACK_CHARACTERISTIC_WRITE,
+        STR_BT_GATT_SERVER_CALLBACK_DESCRIPTOR_READ,
+        STR_BT_GATT_SERVER_CALLBACK_DESCRIPTOR_WRITE,
+        STR_BT_GATT_SERVER_CALLBACK_CONNECT_STATE_CHANGE,
+        STR_BT_GATT_SERVER_CALLBACK_MTU_CHANGE,
+        STR_BT_GATT_SERVER_CALLBACK_BLE_PHY_UPDATE},
+        "bluetoothBleGattServer_taihe")
 {}
 
 void TaiheGattServerCallback::OnCharacteristicReadRequest(
@@ -34,6 +42,20 @@ void TaiheGattServerCallback::OnCharacteristicReadRequest(
 {
     HILOGI("enter, remote device address: %{public}s, requestId: %{public}d",
         GET_ENCRYPT_ADDR(device), requestId);
+    std::string serviceUuid;
+    if (characteristic.GetService() != nullptr) {
+        serviceUuid = characteristic.GetService()->GetUuid().ToString();
+    }
+    ::ohos::bluetooth::ble::CharacteristicReadRequest request{
+        taihe::string(device.GetDeviceAddr()),
+        requestId,
+        0,
+        taihe::string(characteristic.GetUuid().ToString()),
+        taihe::string(serviceUuid)
+    };
+    auto &module = eventSubscribe_.GetModule<void(::ohos::bluetooth::ble::CharacteristicReadRequest const&)
+        >(STR_BT_GATT_SERVER_CALLBACK_CHARACTERISTIC_READ);
+    module.PublishEvent(request);
 }
 
 void TaiheGattServerCallback::OnCharacteristicWriteRequest(const BluetoothRemoteDevice &device,
@@ -41,6 +63,25 @@ void TaiheGattServerCallback::OnCharacteristicWriteRequest(const BluetoothRemote
 {
     HILOGI("enter, remote device address: %{public}s, requestId: %{public}d",
         GET_ENCRYPT_ADDR(device), requestId);
+    std::string serviceUuid;
+    if (characteristic.GetService() != nullptr) {
+        serviceUuid = characteristic.GetService()->GetUuid().ToString();
+    }
+    size_t valueSize = 0;
+    const auto &valueData = characteristic.GetValue(&valueSize);
+    ::ohos::bluetooth::ble::CharacteristicWriteRequest request{
+        taihe::string(device.GetDeviceAddr()),
+        requestId,
+        0,
+        false,
+        characteristic.GetWriteType() == GattCharacteristic::WriteType::DEFAULT,
+        taihe::array<uint8_t>(taihe::copy_data, valueData.get(), valueSize),
+        taihe::string(characteristic.GetUuid().ToString()),
+        taihe::string(serviceUuid)
+    };
+    auto &module = eventSubscribe_.GetModule<void(::ohos::bluetooth::ble::CharacteristicWriteRequest const&)
+        >(STR_BT_GATT_SERVER_CALLBACK_CHARACTERISTIC_WRITE);
+    module.PublishEvent(request);
 }
 
 void TaiheGattServerCallback::OnConnectionStateUpdate(const BluetoothRemoteDevice &device, int state)
@@ -74,11 +115,50 @@ void TaiheGattServerCallback::OnConnectionStateUpdate(const BluetoothRemoteDevic
     }
 }
 
+void TaiheGattServerCallback::OnConnectionStateUpdateWithMessage(const BluetoothRemoteDevice &device,
+    int state, GattDisconnectParam disconnectParam)
+{
+    HILOGI("enter, state: %{public}d, remote device address: %{public}s", state, GET_ENCRYPT_ADDR(device));
+    OnConnectionStateUpdate(device, state);
+    ::ohos::bluetooth::ble::BLEConnectionChangeState changeState{
+        taihe::string(device.GetDeviceAddr()),
+        ::ohos::bluetooth::constant::ProfileConnectionState::from_value(
+            TaiheUtils::GetProfileConnectionState(state))
+    };
+    auto &module = eventSubscribe_.GetModule<void(::ohos::bluetooth::ble::BLEConnectionChangeState const&)
+        >(STR_BT_GATT_SERVER_CALLBACK_CONNECT_STATE_CHANGE);
+    module.PublishEvent(changeState);
+}
+
 void TaiheGattServerCallback::OnDescriptorWriteRequest(const BluetoothRemoteDevice &device,
     GattDescriptor &descriptor, int requestId)
 {
     HILOGI("enter, remote device address: %{public}s, requestId: %{public}d",
         GET_ENCRYPT_ADDR(device), requestId);
+    std::string characteristicUuid;
+    std::string serviceUuid;
+    if (descriptor.GetCharacteristic() != nullptr) {
+        characteristicUuid = descriptor.GetCharacteristic()->GetUuid().ToString();
+        if (descriptor.GetCharacteristic()->GetService() != nullptr) {
+            serviceUuid = descriptor.GetCharacteristic()->GetService()->GetUuid().ToString();
+        }
+    }
+    size_t valueSize = 0;
+    const auto &valueData = descriptor.GetValue(&valueSize);
+    ::ohos::bluetooth::ble::DescriptorWriteRequest request{
+        taihe::string(device.GetDeviceAddr()),
+        requestId,
+        0,
+        false,
+        true,
+        taihe::array<uint8_t>(taihe::copy_data, valueData.get(), valueSize),
+        taihe::string(descriptor.GetUuid().ToString()),
+        taihe::string(characteristicUuid),
+        taihe::string(serviceUuid)
+    };
+    auto &module = eventSubscribe_.GetModule<void(::ohos::bluetooth::ble::DescriptorWriteRequest const&)
+        >(STR_BT_GATT_SERVER_CALLBACK_DESCRIPTOR_WRITE);
+    module.PublishEvent(request);
 }
 
 void TaiheGattServerCallback::OnDescriptorReadRequest(const BluetoothRemoteDevice &device,
@@ -86,19 +166,61 @@ void TaiheGattServerCallback::OnDescriptorReadRequest(const BluetoothRemoteDevic
 {
     HILOGI("enter, remote device address: %{public}s, requestId: %{public}d",
         GET_ENCRYPT_ADDR(device), requestId);
+    std::string characteristicUuid;
+    std::string serviceUuid;
+    if (descriptor.GetCharacteristic() != nullptr) {
+        characteristicUuid = descriptor.GetCharacteristic()->GetUuid().ToString();
+        if (descriptor.GetCharacteristic()->GetService() != nullptr) {
+            serviceUuid = descriptor.GetCharacteristic()->GetService()->GetUuid().ToString();
+        }
+    }
+    ::ohos::bluetooth::ble::DescriptorReadRequest request{
+        taihe::string(device.GetDeviceAddr()),
+        requestId,
+        0,
+        taihe::string(descriptor.GetUuid().ToString()),
+        taihe::string(characteristicUuid),
+        taihe::string(serviceUuid)
+    };
+    auto &module = eventSubscribe_.GetModule<void(::ohos::bluetooth::ble::DescriptorReadRequest const&)
+        >(STR_BT_GATT_SERVER_CALLBACK_DESCRIPTOR_READ);
+    module.PublishEvent(request);
 }
 
 void TaiheGattServerCallback::OnMtuUpdate(const BluetoothRemoteDevice &device, int mtu)
 {
     HILOGI("enter, remote device address: %{public}s, mtu: %{public}d",
         GET_ENCRYPT_ADDR(device), mtu);
+    auto &module = eventSubscribe_.GetModule<void(int32_t)>(STR_BT_GATT_SERVER_CALLBACK_MTU_CHANGE);
+    module.PublishEvent(mtu);
 }
 
 void TaiheGattServerCallback::OnNotificationCharacteristicChanged(const BluetoothRemoteDevice &device, int ret)
 {
     HILOGI("ret: %{public}d", ret);
-    auto taiheRet = std::make_shared<TaiheNativeInt>(ret);
-    AsyncWorkCallFunction(asyncWorkMap_, TaiheAsyncType::GATT_SERVER_NOTIFY_CHARACTERISTIC, taiheRet, ret);
+    TaiheAsyncWorkSettleIntResult(asyncWorkMap_, TaiheAsyncType::GATT_SERVER_NOTIFY_CHARACTERISTIC, ret);
+}
+
+void TaiheGattServerCallback::OnBlePhyUpdate(const BluetoothRemoteDevice &device,
+    int32_t txPhy, int32_t rxPhy, int32_t status)
+{
+    HILOGI("remote device address: %{public}s, txPhy: %{public}d, rxPhy: %{public}d, status: %{public}d",
+        GET_ENCRYPT_ADDR(device), txPhy, rxPhy, status);
+    AsyncWorkCallFunction(asyncWorkMap_, TaiheAsyncType::GATT_SERVER_SET_PHY, nullptr, status);
+    ::ohos::bluetooth::ble::PhyValue phyValue{
+        ::ohos::bluetooth::ble::BlePhy::from_value(txPhy),
+        ::ohos::bluetooth::ble::BlePhy::from_value(rxPhy)
+    };
+    auto &module = eventSubscribe_.GetModule<void(::ohos::bluetooth::ble::PhyValue const&)
+        >(STR_BT_GATT_SERVER_CALLBACK_BLE_PHY_UPDATE);
+    module.PublishEvent(phyValue);
+}
+
+void TaiheGattServerCallback::OnBlePhyRead(int32_t txPhy, int32_t rxPhy, int32_t status)
+{
+    HILOGI("txPhy: %{public}d, rxPhy: %{public}d, status: %{public}d", txPhy, rxPhy, status);
+    auto taihePhyValue = std::make_shared<TaiheNativePhyValue>(txPhy, rxPhy);
+    AsyncWorkCallFunction(asyncWorkMap_, TaiheAsyncType::GATT_SERVER_READ_PHY, taihePhyValue, status);
 }
 } // namespace Bluetooth
 } // namespace OHOS

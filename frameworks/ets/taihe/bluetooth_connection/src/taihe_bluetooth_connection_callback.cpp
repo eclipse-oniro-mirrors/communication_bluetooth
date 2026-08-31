@@ -49,11 +49,23 @@ std::shared_ptr<TaiheBluetoothRemoteDeviceObserver> TaiheBluetoothRemoteDeviceOb
 
 void TaiheBluetoothRemoteDeviceObserver::OnAclStateChanged(
     const BluetoothRemoteDevice &device, int state, unsigned int reason)
-{}
+{
+    int aclStateValue = (state == 0) ?
+        static_cast<int>(::ohos::bluetooth::connection::AclState::key_t::STATE_DISCONNECTED) :
+        static_cast<int>(::ohos::bluetooth::connection::AclState::key_t::STATE_CONNECTED);
+    HILOGI("addr:%{public}s, state:%{public}d, reason:%{public}d", GET_ENCRYPT_ADDR(device), state, reason);
+
+    auto deviceId_ = static_cast<::taihe::string>(device.GetDeviceAddr());
+    auto state_ = ::ohos::bluetooth::connection::AclState::from_value(aclStateValue);
+    auto taiheResult = ::ohos::bluetooth::connection::AclStateResult{
+        .deviceId = deviceId_,
+        .state = state_,
+    };
+    aclStateChangeEventModule_.PublishEvent(taiheResult);
+}
 
 void TaiheBluetoothRemoteDeviceObserver::OnPairStatusChanged(const BluetoothRemoteDevice &device, int status, int cause)
 {
-    std::shared_lock<std::shared_mutex> guard(bondStateChangeLock);
     int bondStatus = 0;
     HILOGD("status is %{public}d", status);
     switch (status) {
@@ -79,7 +91,13 @@ void TaiheBluetoothRemoteDeviceObserver::OnPairStatusChanged(const BluetoothRemo
         .state = state_,
         .cause = cause_,
     };
-    for (auto callback : bondStateChangeVec) {
+    std::vector<::taihe::optional<::taihe::callback<void(
+        ::ohos::bluetooth::connection::BondStateParam const& data)>>> callbacks;
+    {
+        std::shared_lock<std::shared_mutex> guard(bondStateChangeLock);
+        callbacks = bondStateChangeVec;
+    }
+    for (auto callback : callbacks) {
         if (callback) {
             (*callback)(taiheResult);
         }
@@ -119,7 +137,6 @@ void TaiheBluetoothRemoteDeviceObserver ::OnRemoteBatteryLevelChanged(
 void TaiheBluetoothRemoteDeviceObserver ::OnRemoteBatteryChanged(
     const BluetoothRemoteDevice &device, const DeviceBatteryInfo &batteryInfo)
 {
-    std::shared_lock<std::shared_mutex> guard(remoteBatteryChangeLock);
     auto deviceId_ = static_cast<::taihe::string_view>(batteryInfo.deviceId_);
     auto batteryLevel_ = batteryInfo.batteryLevel_;
     auto leftEarBatteryLevel_ = batteryInfo.leftEarBatteryLevel_;
@@ -141,7 +158,13 @@ void TaiheBluetoothRemoteDeviceObserver ::OnRemoteBatteryChanged(
         .boxBatteryLevel = boxBatteryLevel_,
         .boxChargeState = boxChargeState_,
     };
-    for (auto callback : remoteBatteryChangeVec) {
+    std::vector<::taihe::optional<::taihe::callback<void(
+        ::ohos::bluetooth::connection::BatteryInfo const& data)>>> callbacks;
+    {
+        std::shared_lock<std::shared_mutex> guard(remoteBatteryChangeLock);
+        callbacks = remoteBatteryChangeVec;
+    }
+    for (auto callback : callbacks) {
         if (callback) {
             (*callback)(taiheResult);
         }
@@ -212,6 +235,8 @@ void TaiheBluetoothConnectionObserver::OnPairConfirmed(const BluetoothRemoteDevi
 void TaiheBluetoothConnectionObserver::OnScanModeChanged(int mode)
 {
     HILOGI("mode is %{public}d", mode);
+    auto taiheResult = ::ohos::bluetooth::connection::ScanMode::from_value(mode);
+    scanModeChangeEventModule_.PublishEvent(taiheResult);
 }
 
 void TaiheBluetoothConnectionObserver::OnDeviceNameChanged(const std::string &deviceName)
@@ -227,7 +252,6 @@ void TaiheBluetoothConnectionObserver::OnDeviceAddrChanged(const std::string &ad
 void TaiheBluetoothConnectionObserver::OnPairConfirmedCallBack(
     const std::shared_ptr<PairConfirmedCallBackInfo> &pairConfirmInfo)
 {
-    std::shared_lock<std::shared_mutex> guard(pinRequiredLock);
     CHECK_AND_RETURN_LOG(pairConfirmInfo, "pairConfirmInfo is nullptr");
     HILOGI("Addr: %{public}s", GetEncryptAddr(pairConfirmInfo->deviceAddr).c_str());
 
@@ -239,7 +263,13 @@ void TaiheBluetoothConnectionObserver::OnPairConfirmedCallBack(
         .pinCode = pinCode_,
         .pinType = pinType_,
     };
-    for (auto callback : pinRequiredVec) {
+    std::vector<::taihe::optional<::taihe::callback<void(
+        ::ohos::bluetooth::connection::PinRequiredParam const& data)>>> callbacks;
+    {
+        std::shared_lock<std::shared_mutex> guard(pinRequiredLock);
+        callbacks = pinRequiredVec;
+    }
+    for (auto callback : callbacks) {
         if (callback) {
             (*callback)(taiheResult);
         }
@@ -261,11 +291,16 @@ std::string TaiheBluetoothConnectionObserver::GetFormatPinCode(uint32_t pinType,
 
 void TaiheBluetoothConnectionObserver::OnDiscoveryResultCallBack(const BluetoothRemoteDevice &device)
 {
-    std::shared_lock<std::shared_mutex> guard(bluetoothDeviceFindLock);
     std::shared_ptr<BluetoothRemoteDevice> remoteDevice = std::make_shared<BluetoothRemoteDevice>(device);
     ::taihe::string oneResult(remoteDevice->GetDeviceAddr());
     ::taihe::array<::taihe::string> taiheResult = {oneResult};
-    for (auto callback : bluetoothDeviceFindVec) {
+    std::vector<::taihe::optional<::taihe::callback<void(
+        ::taihe::array_view<::taihe::string> data)>>> callbacks;
+    {
+        std::shared_lock<std::shared_mutex> guard(bluetoothDeviceFindLock);
+        callbacks = bluetoothDeviceFindVec;
+    }
+    for (auto callback : callbacks) {
         if (callback) {
             (*callback)(taiheResult);
         }
@@ -275,7 +310,6 @@ void TaiheBluetoothConnectionObserver::OnDiscoveryResultCallBack(const Bluetooth
 void TaiheBluetoothConnectionObserver::OnDiscoveryResultCallBack(
     const BluetoothRemoteDevice &device, int rssi, const std::string &deviceName, int deviceClass)
 {
-    std::shared_lock<std::shared_mutex> guard(discoveryResultLock);
     std::shared_ptr<BluetoothRemoteDevice> remoteDevice = std::make_shared<BluetoothRemoteDevice>(device);
     CHECK_AND_RETURN_LOG(remoteDevice, "remoteDevice is nullptr");
     ::taihe::string deviceId_(remoteDevice->GetDeviceAddr());
@@ -299,7 +333,13 @@ void TaiheBluetoothConnectionObserver::OnDiscoveryResultCallBack(
         .deviceClass = deviceClass_,
     };
     ::taihe::array<::ohos::bluetooth::connection::DiscoveryResult> taiheResult = {oneDiscoveryResult};
-    for (auto callback : discoveryResultVec) {
+    std::vector<::taihe::optional<::taihe::callback<void(
+        ::taihe::array_view<::ohos::bluetooth::connection::DiscoveryResult> data)>>> callbacks;
+    {
+        std::shared_lock<std::shared_mutex> guard(discoveryResultLock);
+        callbacks = discoveryResultVec;
+    }
+    for (auto callback : callbacks) {
         if (callback) {
             (*callback)(taiheResult);
         }

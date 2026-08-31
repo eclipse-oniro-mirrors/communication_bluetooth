@@ -37,6 +37,44 @@ public:
         const ohos::bluetooth::ble::NotifyCharacteristic &notifyCharacteristic);
     void NotifyCharacteristicChangedAsync(taihe::string_view deviceId,
         const ohos::bluetooth::ble::NotifyCharacteristic &notifyCharacteristic, uintptr_t callback);
+    void OnBlePhyUpdate(::taihe::callback_view<void(::ohos::bluetooth::ble::PhyValue const& data)> callback);
+    void OffBlePhyUpdate(
+        ::taihe::optional_view<::taihe::callback<void(::ohos::bluetooth::ble::PhyValue const& data)>> callback);
+    uintptr_t SetPhyPromise(::taihe::string_view deviceId, ::ohos::bluetooth::ble::PhyValue const& phyValue);
+    uintptr_t ReadPhyPromise(::taihe::string_view deviceId);
+    void OnBLEMtuChange(::taihe::callback_view<void(int32_t data)> callback);
+    void OffBLEMtuChange(::taihe::optional_view<::taihe::callback<void(int32_t data)>> callback);
+    void Disconnect(::taihe::string_view deviceId);
+    void Connect(::taihe::string_view deviceId, ::taihe::optional_view<bool> autoConnect);
+    void OnCharacteristicRead(
+        ::taihe::callback_view<void(::ohos::bluetooth::ble::CharacteristicReadRequest const& data)> callback);
+    void OffCharacteristicRead(
+        ::taihe::optional_view<::taihe::callback<
+            void(::ohos::bluetooth::ble::CharacteristicReadRequest const& data)>> callback);
+    void OnCharacteristicWrite(
+        ::taihe::callback_view<void(::ohos::bluetooth::ble::CharacteristicWriteRequest const& data)> callback);
+    void OffCharacteristicWrite(
+        ::taihe::optional_view<::taihe::callback<
+            void(::ohos::bluetooth::ble::CharacteristicWriteRequest const& data)>> callback);
+    ::ohos::bluetooth::constant::ProfileConnectionState GetConnectedState(::taihe::string_view deviceId);
+    ::ohos::bluetooth::ble::GattService GetService(::taihe::string_view serviceUuid);
+    void OnConnectionStateChange(
+        ::taihe::callback_view<void(::ohos::bluetooth::ble::BLEConnectionChangeState const& data)> callback);
+    void OffConnectionStateChange(
+        ::taihe::optional_view<::taihe::callback<
+            void(::ohos::bluetooth::ble::BLEConnectionChangeState const& data)>> callback);
+    void OnDescriptorWrite(
+        ::taihe::callback_view<void(::ohos::bluetooth::ble::DescriptorWriteRequest const& data)> callback);
+    void OffDescriptorWrite(
+        ::taihe::optional_view<::taihe::callback<
+            void(::ohos::bluetooth::ble::DescriptorWriteRequest const& data)>> callback);
+    void OnDescriptorRead(
+        ::taihe::callback_view<void(::ohos::bluetooth::ble::DescriptorReadRequest const& data)> callback);
+    void OffDescriptorRead(
+        ::taihe::optional_view<::taihe::callback<
+            void(::ohos::bluetooth::ble::DescriptorReadRequest const& data)>> callback);
+    void RemoveAllServices();
+    ::taihe::array<::ohos::bluetooth::ble::GattService> GetServices();
 
     std::shared_ptr<GattServer> &GetServer()
     {

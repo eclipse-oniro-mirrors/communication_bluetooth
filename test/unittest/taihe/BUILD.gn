@@ -59,6 +59,7 @@ ohos_unittest("bluetooth_taihe_utils_module_test") {
         "c_utils:utils",
         "hilog:libhilog",
         "ipc:ipc_single",
+        "runtime_core:ani",
         "googletest:gmock_main",
         "googletest:gtest_main",
     ]

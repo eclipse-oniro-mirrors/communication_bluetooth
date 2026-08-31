@@ -19,6 +19,7 @@
 #include "taihe_bluetooth_utils.h"
 
 #include "bluetooth_gatt_characteristic.h"
+#include "bluetooth_gatt_rsp_context_parcel.h"
 
 namespace OHOS {
 namespace Bluetooth {
@@ -86,6 +87,27 @@ public:
     ani_ref ToTaiheValue(ani_env *env) const override;
 private:
     GattDescriptor descriptor_;
+};
+
+class TaiheNativePhyValue : public TaiheNativeObject {
+public:
+    TaiheNativePhyValue(int32_t txPhy, int32_t rxPhy) : txPhy_(txPhy), rxPhy_(rxPhy) {}
+    ~TaiheNativePhyValue() override = default;
+
+    ani_ref ToTaiheValue(ani_env *env) const override;
+private:
+    int32_t txPhy_;
+    int32_t rxPhy_;
+};
+
+class TaiheNativeGattResponseContext : public TaiheNativeObject {
+public:
+    explicit TaiheNativeGattResponseContext(const BluetoothGattRspContext &rspContext) : rspContext_(rspContext) {}
+    ~TaiheNativeGattResponseContext() override = default;
+
+    ani_ref ToTaiheValue(ani_env *env) const override;
+private:
+    BluetoothGattRspContext rspContext_;
 };
 }  // namespace Bluetooth
 }  // namespace OHOS

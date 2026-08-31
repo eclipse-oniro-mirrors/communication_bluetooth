@@ -30,6 +30,9 @@ public:
     uintptr_t StartScanPromise(const ohos::bluetooth::ble::ScanFilterNullValue &filters,
         taihe::optional_view<ohos::bluetooth::ble::ScanOptions> options);
     uintptr_t StopScanPromise();
+    void OnBLEDeviceFind(::taihe::callback_view<void(::ohos::bluetooth::ble::ScanReport const& data)> callback);
+    void OffBLEDeviceFind(
+        ::taihe::optional_view<::taihe::callback<void(::ohos::bluetooth::ble::ScanReport const& data)>> callback);
 
     const std::shared_ptr<BleCentralManager> &GetBleCentralManager()
     {

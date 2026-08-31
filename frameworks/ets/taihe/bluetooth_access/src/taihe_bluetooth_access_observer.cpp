@@ -37,12 +37,17 @@ std::shared_ptr<TaiheBluetoothAccessObserver> TaiheBluetoothAccessObserver::GetI
 
 void TaiheBluetoothAccessObserver::OnStateChanged(const int transport, const int status)
 {
-    std::shared_lock<std::shared_mutex> guard(stateChangedObserverLock);
     HILOGI("transport is %{public}d, status is %{public}d", transport, status);
     BluetoothState state = BluetoothState::STATE_OFF;
     DealStateChange(transport, status, state);
     auto taiheResult = static_cast<::ohos::bluetooth::access::BluetoothState::key_t>(state);
-    for (auto callback : stateChangedObserverVec) {
+    std::vector<::taihe::optional<::taihe::callback<void(
+        ::ohos::bluetooth::access::BluetoothState data)>>> callbacks;
+    {
+        std::shared_lock<std::shared_mutex> guard(stateChangedObserverLock);
+        callbacks = stateChangedObserverVec;
+    }
+    for (auto callback : callbacks) {
         if (callback) {
             (*callback)(taiheResult);
         }

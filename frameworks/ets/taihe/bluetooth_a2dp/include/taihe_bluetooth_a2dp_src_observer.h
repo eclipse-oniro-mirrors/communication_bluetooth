@@ -16,7 +16,6 @@
 #ifndef TAIHE_BLUETOOTH_A2DP_SRC_OBSERVER_H_
 #define TAIHE_BLUETOOTH_A2DP_SRC_OBSERVER_H_
 
-#include <shared_mutex>
 #include "bluetooth_a2dp_src.h"
 #include "ohos.bluetooth.a2dp.proj.hpp"
 #include "ohos.bluetooth.a2dp.impl.hpp"

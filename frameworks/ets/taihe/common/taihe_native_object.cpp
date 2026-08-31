@@ -76,5 +76,48 @@ ani_ref TaiheNativeBleDescriptor::ToTaiheValue(ani_env *env) const
     ani_object object = ConvertBLEDescriptorToJS(env, const_cast<GattDescriptor &>(descriptor_));
     return reinterpret_cast<ani_ref>(object);
 }
+
+ani_ref TaiheNativePhyValue::ToTaiheValue(ani_env *env) const
+{
+    ani_class cls;
+    ani_status status = ANI_ERROR;
+    if ((status = env->FindClass("ohos.bluetooth.ble.PhyValue", &cls)) != ANI_OK) {
+        HILOGE("FindClass status : %{public}d", status);
+        return nullptr;
+    }
+    ani_method ctor;
+    if ((status = env->Class_FindMethod(cls, "<ctor>", "ii?", &ctor)) != ANI_OK) {
+        HILOGE("Class_FindMethod status : %{public}d", status);
+        return nullptr;
+    }
+    ani_ref phyModeRef = TaiheGetNull(env);
+    ani_object object;
+    if ((status = env->Object_New(cls, ctor, &object, txPhy_, rxPhy_, phyModeRef)) != ANI_OK) {
+        HILOGE("Object_New status : %{public}d", status);
+        return nullptr;
+    }
+    return reinterpret_cast<ani_ref>(object);
+}
+
+ani_ref TaiheNativeGattResponseContext::ToTaiheValue(ani_env *env) const
+{
+    ani_class cls;
+    ani_status status = ANI_ERROR;
+    if ((status = env->FindClass("ohos.bluetooth.ble.GattRspContext", &cls)) != ANI_OK) {
+        HILOGE("FindClass status : %{public}d", status);
+        return nullptr;
+    }
+    ani_method ctor;
+    if ((status = env->Class_FindMethod(cls, "<ctor>", "l:", &ctor)) != ANI_OK) {
+        HILOGE("Class_FindMethod status : %{public}d", status);
+        return nullptr;
+    }
+    ani_object object;
+    if ((status = env->Object_New(cls, ctor, &object, rspContext_.GetTimeStamp())) != ANI_OK) {
+        HILOGE("Object_New status : %{public}d", status);
+        return nullptr;
+    }
+    return reinterpret_cast<ani_ref>(object);
+}
 }  // namespace Bluetooth
 }  // namespace OHOS

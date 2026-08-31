@@ -16,7 +16,6 @@
 #ifndef TAIHE_BLUETOOTH_HFP_AG_OBSERVER_H_
 #define TAIHE_BLUETOOTH_HFP_AG_OBSERVER_H_
 
-#include <shared_mutex>
 #include "bluetooth_hfp_ag.h"
 #include "ohos.bluetooth.hfp.proj.hpp"
 #include "ohos.bluetooth.hfp.impl.hpp"

@@ -22,6 +22,7 @@
 #include "ohos.bluetooth.connection.impl.hpp"
 #include "taihe/runtime.hpp"
 #include "stdexcept"
+#include "taihe_event_module.h"
 
 namespace OHOS {
 namespace Bluetooth {
@@ -69,6 +70,8 @@ public:
     std::vector<::taihe::optional<::taihe::callback<void(
         ::ohos::bluetooth::connection::BatteryInfo const& data)>>> remoteBatteryChangeVec = {};
     std::shared_mutex remoteBatteryChangeLock;
+
+    EventModule<void(::ohos::bluetooth::connection::AclStateResult const& data)> aclStateChangeEventModule_;
 };
 
 class TaiheBluetoothConnectionObserver : public BluetoothHostObserver {
@@ -99,6 +102,8 @@ public:
     std::vector<::taihe::optional<::taihe::callback<void(
         ::ohos::bluetooth::connection::PinRequiredParam const& data)>>> pinRequiredVec = {};
     std::shared_mutex pinRequiredLock;
+
+    EventModule<void(::ohos::bluetooth::connection::ScanMode data)> scanModeChangeEventModule_;
 
 private:
     void OnPairConfirmedCallBack(const std::shared_ptr<PairConfirmedCallBackInfo> &pairConfirmInfo);

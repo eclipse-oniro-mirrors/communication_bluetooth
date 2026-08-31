@@ -25,9 +25,13 @@
 #include "stdexcept"
 #include "taihe_async_callback.h"
 #include "taihe/runtime.hpp"
+#include "taihe_event_subscribe_module.h"
 
 namespace OHOS {
 namespace Bluetooth {
+
+const char * const REGISTER_BLE_ADVERTISING_STATE_INFO_TYPE = "advertisingStateChange";
+
 class TaiheBluetoothBleAdvertiseCallback : public BleAdvertiseCallback {
 public:
     TaiheBluetoothBleAdvertiseCallback();
@@ -44,6 +48,8 @@ public:
     void OnChangeAdvResultEvent(int result, int advHandle) override;
 
     TaiheAsyncWorkMap asyncWorkMap_ {};
+
+    const std::shared_ptr<TaiheEventSubscribeModule> &GetEventSubscribe();
 
     int advHandle_ = -1;
 };

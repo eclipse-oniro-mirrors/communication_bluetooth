@@ -33,7 +33,8 @@ constexpr int SDK_VERSION_20 = 20;
 
 enum class ScanReportType {
     ON_FOUND = 1, // the found of advertisement packet
-    ON_LOST = 2   // the lost of advertisement packet
+    ON_LOST = 2,  // the lost of advertisement packet
+    ON_BATCH = 3  // the batch scan report
 };
 
 enum class SensitivityMode {
@@ -50,6 +51,11 @@ TaiheStatus CheckBleScanParams(const ohos::bluetooth::ble::ScanFilterNullValue &
 ani_object ConvertBLECharacteristicToJS(ani_env *env, GattCharacteristic &characteristic);
 ani_object ConvertBLEDescriptorToJS(ani_env *env, GattDescriptor& descriptor);
 ani_object ConvertBLEDescriptorVectorToJS(ani_env *env, std::vector<GattDescriptor> &descriptors);
+::ohos::bluetooth::ble::GattProperties TaiheConvertGattProperties(int properties);
+::ohos::bluetooth::ble::GattPermissions TaiheConvertGattPermissions(int permissions);
+::ohos::bluetooth::ble::BLEDescriptor TaiheConvertGattDescriptor(const GattDescriptor &descriptor);
+::ohos::bluetooth::ble::GattService TaiheConvertGattService(GattService &service);
+bool IsValidPhyValue(int32_t txPhy, int32_t rxPhy, int32_t phyMode);
 } // namespace Bluetooth
 } // namespace OHOS
 #endif // TAIHE_BLUETOOTH_BLE_UTILS_H_
