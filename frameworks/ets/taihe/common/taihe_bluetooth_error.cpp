@@ -193,11 +193,8 @@ void ConvertInnerToBusinessErrCode(int32_t innerCode, ErrInfo &info)
 ErrInfo ProcessErrCode(int32_t originalCode, const std::vector<int32_t> &validErrCodes)
 {
     ErrInfo result = { originalCode, "" };
-    // inner code: originalCode -> business errCode + specific errMsg
-    if (IsInnerErrorCode(originalCode)) {
-        ConvertInnerToBusinessErrCode(originalCode, result);
-        return result;
-    }
+    // The error code declared by the API (validErrCodes) takes precedence and is thrown as is,
+    // even if it is also registered in innerToBusinessErrCodeMap.
     bool isValidCode = false;
     for (const auto &code: validErrCodes) {
         if (code == result.errCode) {
@@ -205,16 +202,21 @@ ErrInfo ProcessErrCode(int32_t originalCode, const std::vector<int32_t> &validEr
             break;
         }
     }
-    if (!isValidCode) {
-        // invalid code: BT_ERR_INTERNAL_ERROR + specific errMsg
-        result.errCode = BtErrCode::BT_ERR_INTERNAL_ERROR;
-        result.errMsg = "Operation failed";
-    } else {
+    if (isValidCode) {
         auto detailIter = taiheErrMsgMap.find(result.errCode);
         if (detailIter != taiheErrMsgMap.end()) {
             result.errMsg = detailIter->second;
         }
+        return result;
     }
+    // inner code: originalCode -> business errCode + specific errMsg
+    if (IsInnerErrorCode(originalCode)) {
+        ConvertInnerToBusinessErrCode(originalCode, result);
+        return result;
+    }
+    // invalid code: BT_ERR_INTERNAL_ERROR + specific errMsg
+    result.errCode = BtErrCode::BT_ERR_INTERNAL_ERROR;
+    result.errMsg = "Operation failed";
     return result;
 }
 } // namespace Bluetooth
