@@ -115,6 +115,7 @@ static std::map<int32_t, int32_t> innerToBusinessErrCodeMap {
     { BtErrCode::BT_ERR_BAS_NO_MATCH_OBSERVER, BtErrCode::BT_ERR_INTERNAL_ERROR },
     { BtErrCode::BT_ERR_BAS_OBSERVER_EXCEEDS_LIMIT, BtErrCode::BT_ERR_INTERNAL_ERROR },
     { BtErrCode::BT_ERR_BAS_REQUEST_BUSY, BtErrCode::BT_ERR_INTERNAL_ERROR },
+    { BtErrCode::BT_ERR_PROXY_NULL, BtErrCode::BT_ERR_INTERNAL_ERROR },
 };
 
 static std::map<int32_t, std::string> innerErrMsgMap {
@@ -156,6 +157,7 @@ static std::map<int32_t, std::string> innerErrMsgMap {
     { BtErrCode::BT_ERR_BAS_NO_MATCH_OBSERVER, "Operation failed. Unregistered bas observer." },
     { BtErrCode::BT_ERR_BAS_OBSERVER_EXCEEDS_LIMIT, "Operation failed. Bas observers exceeds the limit." },
     { BtErrCode::BT_ERR_BAS_REQUEST_BUSY, "Operation failed. Bas request busy." },
+    { BtErrCode::BT_ERR_PROXY_NULL, "Operation failed. The proxy is null." },
 };
 
 bool IsInnerErrorCode(int32_t errCode)
