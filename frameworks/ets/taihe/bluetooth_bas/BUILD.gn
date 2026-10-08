@@ -69,6 +69,9 @@ taihe_shared_library("bluetoothBas_taihe_native") {
     "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/parser"
   ]
   sources += [
+    "src/ani_constructor.cpp",
+    "src/ohos.bluetooth.bas.impl.cpp",
+    "src/taihe_bluetooth_bas_observer.cpp",
     "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/common/taihe_bluetooth_error.cpp",
     "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/common/taihe_bluetooth_utils.cpp",
     "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/common/taihe_async_callback.cpp",
