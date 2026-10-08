@@ -29,9 +29,13 @@
 #include "taihe_bluetooth_a2dp_src_observer.h"
 #include "taihe_bluetooth_a2dp_snk_observer.h"
 #include "taihe_bluetooth_utils.h"
+#include "taihe_ha_event_utils.h"
 
 namespace OHOS {
 namespace Bluetooth {
+constexpr int32_t MIN_AUTO_PLAY_DURATION_SEC = 3 * 1000;
+constexpr int32_t MAX_AUTO_PLAY_DURATION_SEC = 20 * 1000;
+
 class A2dpSourceProfileImpl {
 public:
     A2dpSourceProfileImpl()
@@ -150,6 +154,255 @@ public:
         TAIHE_BT_ASSERT_RETURN_VOID(ret == BT_NO_ERROR, ret);
     }
 
+    static taihe::array<ohos::bluetooth::a2dp::CodecBitsPerSample> ConvertCodecBitsPerSampleToTaihe(
+        uint8_t bitsPerSample)
+    {
+        std::vector<ohos::bluetooth::a2dp::CodecBitsPerSample> bitsVec;
+
+        if (bitsPerSample == A2dpUserCodecBitsPerSample::A2DP_SAMPLE_BITS_NONE_USER) {
+            bitsVec.push_back(ohos::bluetooth::a2dp::CodecBitsPerSample::key_t::CODEC_BITS_PER_SAMPLE_NONE);
+        }
+        if (static_cast<uint8_t>(bitsPerSample) & A2dpUserCodecBitsPerSample::A2DP_SAMPLE_BITS_16_USER) {
+            bitsVec.push_back(ohos::bluetooth::a2dp::CodecBitsPerSample::key_t::CODEC_BITS_PER_SAMPLE_16);
+        }
+        if (static_cast<uint8_t>(bitsPerSample) & A2dpUserCodecBitsPerSample::A2DP_SAMPLE_BITS_24_USER) {
+            bitsVec.push_back(ohos::bluetooth::a2dp::CodecBitsPerSample::key_t::CODEC_BITS_PER_SAMPLE_24);
+        }
+        if (static_cast<uint8_t>(bitsPerSample) & A2dpUserCodecBitsPerSample::A2DP_SAMPLE_BITS_32_USER) {
+            bitsVec.push_back(ohos::bluetooth::a2dp::CodecBitsPerSample::key_t::CODEC_BITS_PER_SAMPLE_32);
+        }
+
+        return taihe::array<ohos::bluetooth::a2dp::CodecBitsPerSample>{
+            taihe::copy_data_t{}, bitsVec.data(), bitsVec.size()};
+    }
+
+    static taihe::array<ohos::bluetooth::a2dp::CodecChannelMode> ConvertCodecChannelModeToTaihe(uint8_t channelMode)
+    {
+        std::vector<ohos::bluetooth::a2dp::CodecChannelMode> channelVec;
+
+        if (channelMode == A2dpUserCodecChannelMode::A2DP_CHANNEL_MODE_NONE_USER) {
+            channelVec.push_back(ohos::bluetooth::a2dp::CodecChannelMode::key_t::CODEC_CHANNEL_MODE_NONE);
+        }
+        if (static_cast<uint8_t>(channelMode) & A2dpUserCodecChannelMode::A2DP_SBC_CHANNEL_MODE_MONO_USER) {
+            channelVec.push_back(ohos::bluetooth::a2dp::CodecChannelMode::key_t::CODEC_CHANNEL_MODE_MONO);
+        }
+        if (static_cast<uint8_t>(channelMode) & A2dpUserCodecChannelMode::A2DP_SBC_CHANNEL_MODE_MONO_STEREO_USER) {
+            channelVec.push_back(ohos::bluetooth::a2dp::CodecChannelMode::key_t::CODEC_CHANNEL_MODE_STEREO);
+        }
+
+        return taihe::array<ohos::bluetooth::a2dp::CodecChannelMode>{
+            taihe::copy_data_t{}, channelVec.data(), channelVec.size()};
+    }
+
+    static taihe::array<ohos::bluetooth::a2dp::CodecSampleRate> ConvertCodecSampleRateToTaihe(uint32_t sampleRate)
+    {
+        std::vector<ohos::bluetooth::a2dp::CodecSampleRate> rateVec;
+
+        if (sampleRate == A2dpUserCodecSampleRate::A2DP_SAMPLE_RATE_NONE_USER) {
+            rateVec.push_back(ohos::bluetooth::a2dp::CodecSampleRate::key_t::CODEC_SAMPLE_RATE_NONE);
+        }
+        if (static_cast<uint32_t>(sampleRate) & A2dpUserCodecSampleRate::A2DP_SBC_SAMPLE_RATE_44100_USER) {
+            rateVec.push_back(ohos::bluetooth::a2dp::CodecSampleRate::key_t::CODEC_SAMPLE_RATE_44100);
+        }
+        if (static_cast<uint32_t>(sampleRate) & A2dpUserCodecSampleRate::A2DP_L2HCV2_SAMPLE_RATE_48000_USER) {
+            rateVec.push_back(ohos::bluetooth::a2dp::CodecSampleRate::key_t::CODEC_SAMPLE_RATE_48000);
+        }
+        if (static_cast<uint32_t>(sampleRate) & A2dpUserCodecSampleRate::A2DP_L2HCV2_SAMPLE_RATE_96000_USER) {
+            rateVec.push_back(ohos::bluetooth::a2dp::CodecSampleRate::key_t::CODEC_SAMPLE_RATE_96000);
+        }
+
+        return taihe::array<ohos::bluetooth::a2dp::CodecSampleRate>{
+            taihe::copy_data_t{}, rateVec.data(), rateVec.size()};
+    }
+
+    static taihe::array<ohos::bluetooth::a2dp::CodecFrameLength> ConvertCodecFrameLengthToTaihe(uint8_t codecType)
+    {
+        std::vector<ohos::bluetooth::a2dp::CodecFrameLength> frameLenVec;
+
+        // 仅 L2HC ST 和 L2HC V2 支持帧长配置，固定为 10ms
+        if (codecType == A2DP_CODEC_TYPE_L2HCST_USER || codecType == A2DP_CODEC_TYPE_L2HCV2_USER) {
+            frameLenVec.push_back(ohos::bluetooth::a2dp::CodecFrameLength::key_t::CODEC_FRAME_LENGTH_10MS);
+        }
+
+        return taihe::array<ohos::bluetooth::a2dp::CodecFrameLength>{
+            taihe::copy_data_t{}, frameLenVec.data(), frameLenVec.size()};
+    }
+
+    // 内部 codec type 值与 Taihe 枚举值不一致（如 L2HCST 内部值为 0x0B，Taihe 枚举值为 3），
+    // 需按 NAPI g_a2dpCodecTypeMap 的映射关系转换，不能直接 from_value
+    static ohos::bluetooth::a2dp::CodecType ConvertCodecTypeToTaihe(uint8_t codecType)
+    {
+        switch (codecType) {
+            case A2DP_CODEC_TYPE_SBC_USER:
+                return ohos::bluetooth::a2dp::CodecType::key_t::CODEC_TYPE_SBC;
+            case A2DP_CODEC_TYPE_AAC_USER:
+                return ohos::bluetooth::a2dp::CodecType::key_t::CODEC_TYPE_AAC;
+            case A2DP_CODEC_TYPE_L2HCV2_USER:
+                return ohos::bluetooth::a2dp::CodecType::key_t::CODEC_TYPE_L2HC;
+            case A2DP_CODEC_TYPE_L2HCST_USER:
+                return ohos::bluetooth::a2dp::CodecType::key_t::CODEC_TYPE_L2HCST;
+            case A2DP_CODEC_TYPE_LDAC_USER:
+                return ohos::bluetooth::a2dp::CodecType::key_t::CODEC_TYPE_LDAC;
+            default:
+                return ohos::bluetooth::a2dp::CodecType::key_t::CODEC_TYPE_INVALID;
+        }
+    }
+
+    // 精确匹配转换（对应 NAPI g_a2dpCodecBitsPerSampleMap），用于 GetCurrentCodecInfo
+    static ohos::bluetooth::a2dp::CodecBitsPerSample ConvertCodecBitsPerSampleValueToTaihe(uint8_t bitsPerSample)
+    {
+        if (bitsPerSample == A2dpUserCodecBitsPerSample::A2DP_SAMPLE_BITS_16_USER) {
+            return ohos::bluetooth::a2dp::CodecBitsPerSample::key_t::CODEC_BITS_PER_SAMPLE_16;
+        }
+        if (bitsPerSample == A2dpUserCodecBitsPerSample::A2DP_SAMPLE_BITS_24_USER) {
+            return ohos::bluetooth::a2dp::CodecBitsPerSample::key_t::CODEC_BITS_PER_SAMPLE_24;
+        }
+        if (bitsPerSample == A2dpUserCodecBitsPerSample::A2DP_SAMPLE_BITS_32_USER) {
+            return ohos::bluetooth::a2dp::CodecBitsPerSample::key_t::CODEC_BITS_PER_SAMPLE_32;
+        }
+        return ohos::bluetooth::a2dp::CodecBitsPerSample::key_t::CODEC_BITS_PER_SAMPLE_NONE;
+    }
+
+    // 精确匹配转换（对应 NAPI g_a2dpCodecChannelModeMap），用于 GetCurrentCodecInfo
+    static ohos::bluetooth::a2dp::CodecChannelMode ConvertCodecChannelModeValueToTaihe(uint8_t channelMode)
+    {
+        if (channelMode == A2dpUserCodecChannelMode::A2DP_SBC_CHANNEL_MODE_MONO_USER) {
+            return ohos::bluetooth::a2dp::CodecChannelMode::key_t::CODEC_CHANNEL_MODE_MONO;
+        }
+        if (channelMode == A2dpUserCodecChannelMode::A2DP_SBC_CHANNEL_MODE_MONO_STEREO_USER) {
+            return ohos::bluetooth::a2dp::CodecChannelMode::key_t::CODEC_CHANNEL_MODE_STEREO;
+        }
+        return ohos::bluetooth::a2dp::CodecChannelMode::key_t::CODEC_CHANNEL_MODE_NONE;
+    }
+
+    // 精确匹配转换（对应 NAPI g_a2dpCodecSampleRateMap），用于 GetCurrentCodecInfo
+    static ohos::bluetooth::a2dp::CodecSampleRate ConvertCodecSampleRateValueToTaihe(uint32_t sampleRate)
+    {
+        if (sampleRate == A2dpUserCodecSampleRate::A2DP_SBC_SAMPLE_RATE_44100_USER) {
+            return ohos::bluetooth::a2dp::CodecSampleRate::key_t::CODEC_SAMPLE_RATE_44100;
+        }
+        if (sampleRate == A2dpUserCodecSampleRate::A2DP_SBC_SAMPLE_RATE_48000_USER
+            || sampleRate == A2dpUserCodecSampleRate::A2DP_L2HCV2_SAMPLE_RATE_48000_USER) {
+            return ohos::bluetooth::a2dp::CodecSampleRate::key_t::CODEC_SAMPLE_RATE_48000;
+        }
+        if (sampleRate == A2dpUserCodecSampleRate::A2DP_L2HCV2_SAMPLE_RATE_96000_USER) {
+            return ohos::bluetooth::a2dp::CodecSampleRate::key_t::CODEC_SAMPLE_RATE_96000;
+        }
+        return ohos::bluetooth::a2dp::CodecSampleRate::key_t::CODEC_SAMPLE_RATE_NONE;
+    }
+
+    static taihe::array<ohos::bluetooth::a2dp::CodecBitRate> ConvertL2hcStCodecBitRateToTaihe(uint32_t codecBitRate)
+    {
+        std::vector<ohos::bluetooth::a2dp::CodecBitRate> bitRateVec;
+
+        if (codecBitRate & A2dpUserL2hcStCodecBitRate::A2DP_L2HCST_BIT_RATE_AUTO_RATE) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_ABR);
+        }
+        if (codecBitRate & A2dpUserL2hcStCodecBitRate::A2DP_L2HCST_BIT_RATE_96K) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_96000);
+        }
+        if (codecBitRate & A2dpUserL2hcStCodecBitRate::A2DP_L2HCST_BIT_RATE_192K) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_192000);
+        }
+        if (codecBitRate & A2dpUserL2hcStCodecBitRate::A2DP_L2HCST_BIT_RATE_256K) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_256000);
+        }
+        if (codecBitRate & A2dpUserL2hcStCodecBitRate::A2DP_L2HCST_BIT_RATE_320K) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_320000);
+        }
+        if (codecBitRate & A2dpUserL2hcStCodecBitRate::A2DP_L2HCST_BIT_RATE_480K) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_480000);
+        }
+        if (codecBitRate & A2dpUserL2hcStCodecBitRate::A2DP_L2HCST_BIT_RATE_640K) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_640000);
+        }
+        if (codecBitRate & A2dpUserL2hcStCodecBitRate::A2DP_L2HCST_BIT_RATE_960K) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_960000);
+        }
+
+        return taihe::array<ohos::bluetooth::a2dp::CodecBitRate>{
+            taihe::copy_data_t{}, bitRateVec.data(), bitRateVec.size()};
+    }
+
+    static taihe::array<ohos::bluetooth::a2dp::CodecBitRate> ConvertL2hcV2CodecBitRateToTaihe(uint32_t codecBitRate)
+    {
+        std::vector<ohos::bluetooth::a2dp::CodecBitRate> bitRateVec;
+
+        if (codecBitRate & A2dpUserL2hcV2CodecBitRate::A2DP_L2HCV2_BIT_RATE_AUTO_RATE) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_ABR);
+        }
+        if (codecBitRate & A2dpUserL2hcV2CodecBitRate::A2DP_L2HCV2_BIT_RATE_320K) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_320000);
+        }
+        if (codecBitRate & A2dpUserL2hcV2CodecBitRate::A2DP_L2HCV2_BIT_RATE_640K) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_640000);
+        }
+        if (codecBitRate & A2dpUserL2hcV2CodecBitRate::A2DP_L2HCV2_BIT_RATE_960K) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_960000);
+        }
+        if (codecBitRate & A2dpUserL2hcV2CodecBitRate::A2DP_L2HCV2_BIT_RATE_1500K) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_1500000);
+        }
+        if (codecBitRate & A2dpUserL2hcV2CodecBitRate::A2DP_L2HCV2_BIT_RATE_2300K) {
+            bitRateVec.push_back(ohos::bluetooth::a2dp::CodecBitRate::key_t::CODEC_BIT_RATE_2300000);
+        }
+
+        return taihe::array<ohos::bluetooth::a2dp::CodecBitRate>{
+            taihe::copy_data_t{}, bitRateVec.data(), bitRateVec.size()};
+    }
+
+    taihe::array<ohos::bluetooth::a2dp::CodecInfoList> GetCurrentFullCodecInfo(taihe::string_view deviceId)
+    {
+        HILOGI("start");
+        std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_SYSTEM_PERMISSION_FAILED,
+                                               BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT,
+                                               BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE,
+                                               BT_ERR_PROFILE_DISABLED, BT_ERR_INTERNAL_ERROR };
+        TAIHE_BT_CONTEXT_HA(taihe::get_env(), "a2dp.GetCurrentFullCodecInfo", validErrCodes);
+        std::string remoteAddr = static_cast<std::string>(deviceId);
+        bool checkRet = CheckDeviceIdParam(remoteAddr);
+
+        taihe::array<ohos::bluetooth::a2dp::CodecInfoList> result = {};
+
+        TAIHE_BT_HA_ASSERT_RETURN_VERIFY(checkRet, BT_ERR_INVALID_PARAM, result);
+
+        A2dpCodecStatus a2dpCodecStatus;
+        BluetoothRemoteDevice remoteDevice(remoteAddr, BT_TRANSPORT_BREDR);
+        A2dpSource *profile = A2dpSource::GetProfile();
+        a2dpCodecStatus = profile->GetCodecStatus(remoteDevice);
+
+        std::vector<ohos::bluetooth::a2dp::CodecInfoList> codecInfoListVec;
+
+        for (const auto& cap : a2dpCodecStatus.codecInfoConfirmedCap) {
+            ohos::bluetooth::a2dp::CodecInfoList codecInfoList = {
+                ohos::bluetooth::a2dp::CodecType::key_t::CODEC_TYPE_INVALID,
+                taihe::array<ohos::bluetooth::a2dp::CodecBitsPerSample>{},
+                taihe::array<ohos::bluetooth::a2dp::CodecChannelMode>{},
+                taihe::array<ohos::bluetooth::a2dp::CodecSampleRate>{},
+                taihe::array<ohos::bluetooth::a2dp::CodecBitRate>{},
+                taihe::array<ohos::bluetooth::a2dp::CodecFrameLength>{}
+            };
+            codecInfoList.codecType = ConvertCodecTypeToTaihe(cap.codecType);
+            codecInfoList.codecBitsPerSampleArray = ConvertCodecBitsPerSampleToTaihe(cap.bitsPerSample);
+            codecInfoList.codecChannelModeArray = ConvertCodecChannelModeToTaihe(cap.channelMode);
+            codecInfoList.codecSampleRateArray = ConvertCodecSampleRateToTaihe(cap.sampleRate);
+            if (cap.codecType == A2DP_CODEC_TYPE_L2HCST_USER) {
+                codecInfoList.codecBitRateArray =
+                    ConvertL2hcStCodecBitRateToTaihe(static_cast<uint32_t>(cap.codecSpecific3));
+            } else if (cap.codecType == A2DP_CODEC_TYPE_L2HCV2_USER) {
+                codecInfoList.codecBitRateArray =
+                    ConvertL2hcV2CodecBitRateToTaihe(static_cast<uint32_t>(cap.codecSpecific3));
+            }
+            codecInfoList.codecFrameLengthArray = ConvertCodecFrameLengthToTaihe(cap.codecType);
+            codecInfoListVec.push_back(codecInfoList);
+        }
+
+        result = taihe::array<ohos::bluetooth::a2dp::CodecInfoList>{
+            taihe::copy_data_t{}, codecInfoListVec.data(), codecInfoListVec.size()};
+
+        return result;
+    }
+
     int32_t GetAutoPlayDisabledDuration(taihe::string_view deviceId)
     {
         std::string remoteAddr = static_cast<std::string>(deviceId);
@@ -168,9 +421,16 @@ public:
 
     void DisableAutoPlay(taihe::string_view deviceId, int32_t duration)
     {
+        std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_SYSTEM_PERMISSION_FAILED,
+                                               BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT,
+                                               BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE,
+                                               BT_ERR_INTERNAL_ERROR };
+        TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
         std::string remoteAddr = static_cast<std::string>(deviceId);
         bool checkRet = CheckDeviceIdParam(remoteAddr);
-        TAIHE_BT_ASSERT_RETURN_VOID(checkRet, BT_ERR_INVALID_PARAM);
+        TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(checkRet, BT_ERR_INVALID_PARAM);
+        TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(
+            duration >= MIN_AUTO_PLAY_DURATION_SEC && duration <= MAX_AUTO_PLAY_DURATION_SEC, BT_ERR_INVALID_PARAM);
 
         BluetoothRemoteDevice device(remoteAddr, BT_TRANSPORT_BREDR);
         A2dpSource *profile = A2dpSource::GetProfile();

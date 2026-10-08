@@ -47,6 +47,60 @@ public:
     taihe::string GetDeviceNameSync();
     static int GattStatusFromService(int status);
 
+    uintptr_t ReadPhyPromise();
+    uintptr_t SetPhyPromise(::ohos::bluetooth::ble::PhyValue const& phyValue);
+    uintptr_t WriteCharacteristicValueWithContextPromise(
+        ::ohos::bluetooth::ble::BLECharacteristic const& characteristic,
+        ::ohos::bluetooth::ble::GattWriteType writeType);
+    uintptr_t WriteDescriptorValuePromise(::ohos::bluetooth::ble::BLEDescriptor const& descriptor);
+    void WriteDescriptorValueAsync(::ohos::bluetooth::ble::BLEDescriptor const& descriptor, uintptr_t callback);
+    ::taihe::array<::ohos::bluetooth::ble::GattService> GetServicesSync();
+
+    void OnBlePhyUpdate(::taihe::callback_view<void(::ohos::bluetooth::ble::PhyValue const& data)> callback);
+    void OffBlePhyUpdate(
+        ::taihe::optional_view<::taihe::callback<void(::ohos::bluetooth::ble::PhyValue const& data)>> callback);
+
+    uintptr_t SetCharacteristicChangeNotificationPromise(
+        ::ohos::bluetooth::ble::BLECharacteristic const& characteristic, bool enable);
+    void SetCharacteristicChangeNotificationAsync(
+        ::ohos::bluetooth::ble::BLECharacteristic const& characteristic, bool enable, uintptr_t callback);
+
+    uintptr_t GetRssiValuePromise();
+    void GetRssiValueAsync(uintptr_t callback);
+    uintptr_t SetBLEMtuPromise(int32_t mtu);
+    void SetBLEMtuAsync(int32_t mtu, uintptr_t callback);
+
+    uintptr_t WriteCharacteristicValuePromise(
+        ::ohos::bluetooth::ble::BLECharacteristic const& characteristic,
+        ::ohos::bluetooth::ble::GattWriteType writeType);
+    void WriteCharacteristicValueAsync(
+        ::ohos::bluetooth::ble::BLECharacteristic const& characteristic,
+        ::ohos::bluetooth::ble::GattWriteType writeType, uintptr_t callback);
+
+    void OnBLEMtuChange(::taihe::callback_view<void(int32_t data)> callback);
+    void OffBLEMtuChange(::taihe::optional_view<::taihe::callback<void(int32_t data)>> callback);
+
+    void OnServiceChange(::taihe::callback_view<void(::ohos::bluetooth::ble::UndefinedType const& data)> callback);
+    void OffServiceChange(
+        ::taihe::optional_view<::taihe::callback<void(::ohos::bluetooth::ble::UndefinedType const& data)>> callback);
+
+    void OnBLECharacteristicChange(
+        ::taihe::callback_view<void(::ohos::bluetooth::ble::BLECharacteristic const& data)> callback);
+    void OffBLECharacteristicChange(
+        ::taihe::optional_view<::taihe::callback<
+            void(::ohos::bluetooth::ble::BLECharacteristic const& data)>> callback);
+
+    uintptr_t UpdateConnectionParamPromise(::ohos::bluetooth::ble::ConnectionParam param);
+    void UpdateConnectionParamAsync(::ohos::bluetooth::ble::ConnectionParam param, uintptr_t callback);
+
+    void OnBLEConnectionStateChange(
+        ::taihe::callback_view<void(::ohos::bluetooth::ble::BLEConnectionChangeState const& data)> callback);
+    void OffBLEConnectionStateChange(
+        ::taihe::optional_view<::taihe::callback<
+            void(::ohos::bluetooth::ble::BLEConnectionChangeState const& data)>> callback);
+
+    ::ohos::bluetooth::constant::ProfileConnectionState GetConnectedState();
+
     std::shared_ptr<GattClient> &GetClient()
     {
         return client_;

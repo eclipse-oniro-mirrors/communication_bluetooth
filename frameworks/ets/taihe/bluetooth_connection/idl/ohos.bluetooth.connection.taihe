@@ -18,6 +18,7 @@
 static { loadLibraryWithPermissionCheck("bluetoothConnection_taihe_native.z", "@ohos.bluetooth.connection") }
 """)
 from ohos.bluetooth.constant use MajorClass, MajorMinorClass, ProfileConnectionState, ProfileId, ProfileUuids;
+from ohos.bluetooth.common use BluetoothAddress;
 
 @!sts_inject("""
 export function on(type: string, cb: (arg_0: Object) => void): void {
@@ -270,3 +271,64 @@ function CancelPairedDeviceSync(deviceId: String): void;
 @gen_async("pairCredibleDevice")
 @gen_promise("pairCredibleDevice")
 function PairCredibleDeviceSync(deviceId: String, transport: BluetoothTransport): void;
+
+function SetLocalName(name: String): void;
+
+@gen_promise("startPairOutOfBand")
+function StartPairOutOfBandSync(deviceId: String, transport: BluetoothTransport, p192Data: Optional<OobData>, p256Data: Optional<OobData>): void;
+
+@rename("generateLocalOobData")
+function GenerateLocalOobDataPromise(transport: BluetoothTransport): @sts_type("Promise<OobData>") Opaque;
+
+function GetVirtualAddressByHash(algorithmType: HashAlgorithmType, hashValue: String): String;
+
+@gen_promise("pairDeviceOutOfBand")
+function PairDeviceOutOfBandSync(transport: BluetoothTransport, p192Data: OobDataNullValue, p256Data: OobDataNullValue): void;
+
+function GetCarKeyDfxData(): String;
+function GetRemoteDeviceTransport(deviceId: String): BluetoothTransport;
+function SetCarKeyDfxData(deviceId: String, action: CarKeyActionType): void;
+
+function OnAclStateChange(callback: (data: AclStateResult) => void): void;
+function OffAclStateChange(callback: Optional<(data: AclStateResult) => void>): void;
+function OnScanModeChange(callback: (data: ScanMode) => void): void;
+function OffScanModeChange(callback: Optional<(data: ScanMode) => void>): void;
+
+struct OobData {
+    deviceId: BluetoothAddress;
+    confirmationHash: @typedarray Array<u8>;
+    randomizerHash: Optional<@typedarray Array<u8>>;
+    deviceName: Optional<String>;
+    deviceRole: Optional<DeviceRole>;
+}
+
+enum DeviceRole: i32 {
+    DEVICE_ROLE_PERIPHERAL_ONLY = 0,
+    DEVICE_ROLE_CENTRAL_ONLY = 1,
+    DEVICE_ROLE_BOTH_PREFER_PERIPHERAL = 2,
+    DEVICE_ROLE_BOTH_PREFER_CENTRAL = 3
+}
+
+enum HashAlgorithmType: i32 {
+    HASH_ALGORITHM_SHA256 = 0
+}
+
+enum CarKeyActionType: i32 {
+    CAR_KEY_ACTION_ADD = 0,
+    CAR_KEY_ACTION_DELETE = 1
+}
+
+struct AclStateResult {
+    deviceId: String;
+    state: AclState;
+}
+
+enum AclState: i32 {
+    STATE_CONNECTED = 0,
+    STATE_DISCONNECTED = 1
+}
+
+union OobDataNullValue {
+    data: OobData;
+    @null nValue;
+}

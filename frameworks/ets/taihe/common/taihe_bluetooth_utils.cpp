@@ -28,6 +28,11 @@
 
 namespace OHOS {
 namespace Bluetooth {
+namespace {
+// The BT stack restricts the local name to 248 bytes at most.
+constexpr size_t MAX_LOCAL_NAME_LENGTH = 248;
+}  // namespace
+
 ani_ref TaiheGetNull(ani_env *env)
 {
     ani_ref nullRef = nullptr;
@@ -156,6 +161,24 @@ bool IsValidTransport(int transport)
     return transport == BT_TRANSPORT_BREDR || transport == BT_TRANSPORT_BLE;
 }
 
+// Value range of ohos.bluetooth.constant AccessAuthorization enum (UNKNOWN/ALLOWED/REJECTED).
+constexpr int32_t ACCESS_AUTHORIZATION_MIN = 0;
+constexpr int32_t ACCESS_AUTHORIZATION_MAX = 2;
+
+bool IsAccessAuthorizationValid(int32_t accessAuthorization)
+{
+    return accessAuthorization >= ACCESS_AUTHORIZATION_MIN && accessAuthorization <= ACCESS_AUTHORIZATION_MAX;
+}
+
+// Value range of ohos.bluetooth.pbap ShareType enum (SHARE_NAME_AND_PHONE_NUMBER/SHARE_ALL/SHARE_NOTHING).
+constexpr int32_t SHARE_TYPE_MIN = 0;
+constexpr int32_t SHARE_TYPE_MAX = 2;
+
+bool IsShareTypeValid(int32_t shareType)
+{
+    return shareType >= SHARE_TYPE_MIN && shareType <= SHARE_TYPE_MAX;
+}
+
 // This function applies to interfaces with a single address as a parameter.
 bool CheckDeviceIdParam(std::string &addr)
 {
@@ -174,6 +197,19 @@ bool CheckPairCredibleDeviceParam(std::string &addr, int &transport)
 {
     TAIHE_BT_RETURN_IF(!IsValidAddress(addr), "Invalid addr", false);
     TAIHE_BT_RETURN_IF(!IsValidTransport(transport), "Invalid transport", false);
+    return true;
+}
+
+bool CheckLocalNameParam(std::string &name)
+{
+    TAIHE_BT_RETURN_IF(name.empty(), "Invalid local name", false);
+    TAIHE_BT_RETURN_IF(name.size() > MAX_LOCAL_NAME_LENGTH, "Invalid local name length", false);
+    return true;
+}
+
+bool CheckSppFdParam(int32_t serverSocket)
+{
+    TAIHE_BT_RETURN_IF(serverSocket < 0, "Invalid server socket id", false);
     return true;
 }
 

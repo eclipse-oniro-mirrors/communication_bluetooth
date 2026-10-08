@@ -38,10 +38,30 @@ std::shared_ptr<TaiheAsyncWork> TaiheAsyncWorkFactory::CreateAsyncWork(ani_env *
     }
     std::shared_ptr<TaiheAsyncWork> taiheAsyncWork(
         new TaiheAsyncWork(env, asyncWork, asyncCallback, haUtils),
-        [env](TaiheAsyncWork *ptr) {
-            if (ptr) {
-                delete ptr;
+        [](TaiheAsyncWork *ptr) {
+            if (ptr == nullptr) {
+                return;
             }
+            std::thread([ptr]() { delete ptr; }).detach();
+        });
+    return taiheAsyncWork;
+}
+
+std::shared_ptr<TaiheAsyncWork> TaiheAsyncWorkFactory::CreateAsyncWork(ani_env *env, ani_object info,
+    std::function<TaiheAsyncWorkRet(void)> asyncWork, ApiContext apiContext)
+{
+    auto asyncCallback = TaiheParseAsyncCallback(env, info);
+    if (!asyncCallback) {
+        HILOGE("asyncCallback is nullptr!");
+        return nullptr;
+    }
+    std::shared_ptr<TaiheAsyncWork> taiheAsyncWork(
+        new TaiheAsyncWork(env, asyncWork, asyncCallback, apiContext),
+        [](TaiheAsyncWork *ptr) {
+            if (ptr == nullptr) {
+                return;
+            }
+            std::thread([ptr]() { delete ptr; }).detach();
         });
     return taiheAsyncWork;
 }
@@ -61,14 +81,14 @@ void TaiheAsyncWork::Info::Execute(void)
 
 void TaiheAsyncWork::Info::Complete(void)
 {
-    HILOGD("errCode: %{public}d", errCode);
+    HILOGD("needCallback: %{public}d, errCode: %{public}d", needCallback, errCode);
     if (taiheAsyncWork == nullptr) {
         HILOGE("taiheAsyncWork is nullptr");
         return;
     }
 
     // need wait callback
-    if (errCode == BT_NO_ERROR) {
+    if (needCallback && (errCode == BT_NO_ERROR)) {
         if (taiheAsyncWork->triggered_) {
             HILOGE("TaiheAsyncWork is triggered, Callback is earlier than Complete in thread scheduling");
             return;
@@ -83,7 +103,9 @@ void TaiheAsyncWork::Info::Complete(void)
             }
             asyncWorkSptr->TimeoutCallback();
         };
-        BluetoothTimer::GetInstance()->Register(func, taiheAsyncWork->timerId_);
+        uint32_t timerId = 0;
+        BluetoothTimer::GetInstance()->Register(func, timerId);
+        taiheAsyncWork->timerId_.store(timerId);
         return;
     }
 
@@ -93,10 +115,20 @@ void TaiheAsyncWork::Info::Complete(void)
     }
 
     if (taiheAsyncWork->taiheAsyncCallback_) {
-        taiheAsyncWork->triggered_ = true;
+        // CAS gate: the success callback / timeout timer may race with this
+        // error settlement, only the first one wins.
+        if (taiheAsyncWork->triggered_.exchange(true)) {
+            HILOGE("TaiheAsyncWork is triggered, skip duplicate settlement");
+            return;
+        }
         auto haUtils = taiheAsyncWork->GetHaUtilsPtr();
         if (haUtils) {
             haUtils->WriteErrCode(errCode);
+        }
+        std::vector<int32_t> validErrCodes = taiheAsyncWork->validErrCodes_;
+        if (!validErrCodes.empty()) {
+            validErrCodes.emplace_back(BT_NO_ERROR); // BT_NO_ERROR is valid error code
+            errCode = ProcessErrCode(errCode, validErrCodes).errCode;
         }
         taiheAsyncWork->taiheAsyncCallback_->CallFunction(errCode, object);
     }
@@ -105,6 +137,7 @@ void TaiheAsyncWork::Info::Complete(void)
 void TaiheAsyncWork::Run(void)
 {
     auto info = std::make_unique<TaiheAsyncWork::Info>();
+    info->needCallback = needCallback_.load();
     info->taiheAsyncWork = shared_from_this();
 
     std::thread([info = std::move(info)]() mutable {
@@ -126,17 +159,40 @@ void TaiheAsyncWork::TimeoutCallback(void)
 
 void TaiheAsyncWork::CallFunction(int errCode, std::shared_ptr<TaiheNativeObject> object)
 {
+    if (!needCallback_.load()) {
+        HILOGE("Unsupported in no needCallback mode");
+        if (haUtils_) {
+            haUtils_->WriteErrCode(BT_ERR_INTERNAL_ERROR);
+        }
+        return;
+    }
+
     HILOGI("enter");
+    // CAS gate: the success callback and the timeout timer share this single
+    // settlement entry, only the first arrival wins and the loser returns.
+    if (triggered_.exchange(true)) {
+        HILOGE("TaiheAsyncWork already settled, ignore duplicate settlement");
+        return;
+    }
     auto nativeObj = object;
     if (nativeObj == nullptr) {
         HILOGD("taihe native object is nullptr");
         nativeObj = std::make_shared<TaiheNativeUndefined>();
     }
     // Check timer triggered & remove timer if supported
-    BluetoothTimer::GetInstance()->UnRegister(timerId_);
+    BluetoothTimer::GetInstance()->UnRegister(timerId_.load());
 
-    triggered_ = true;
+    std::vector<int32_t> validErrCodes = validErrCodes_;
+    if (!validErrCodes.empty()) {
+        validErrCodes.emplace_back(BT_NO_ERROR); // BT_NO_ERROR is valid error code
+        errCode = ProcessErrCode(errCode, validErrCodes).errCode;
+    }
     taiheAsyncCallback_->CallFunction(errCode, nativeObj);
+}
+
+bool TaiheAsyncWork::IsCallbackWork(void) const
+{
+    return taiheAsyncCallback_ != nullptr && taiheAsyncCallback_->callback != nullptr;
 }
 
 ani_object TaiheAsyncWork::GetRet(void)
@@ -160,6 +216,32 @@ void AsyncWorkCallFunction(TaiheAsyncWorkMap &map, TaiheAsyncType type, std::sha
     map.Erase(type);
 
     asyncWork->CallFunction(status, nativeObject);
+}
+
+void TaiheAsyncWorkSettleIntResult(TaiheAsyncWorkMap &map, TaiheAsyncType type, int result)
+{
+    auto asyncWork = map.Get(type);
+    if (asyncWork == nullptr) {
+        HILOGE("asyncWork is nullptr");
+        return;
+    }
+    map.Erase(type);
+    std::shared_ptr<TaiheNativeObject> nativeObject =
+        asyncWork->IsCallbackWork() ? std::make_shared<TaiheNativeInt>(result) : nullptr;
+    asyncWork->CallFunction(result, nativeObject);
+}
+
+void TaiheAsyncWorkSettleWithObject(TaiheAsyncWorkMap &map, TaiheAsyncType type,
+    std::shared_ptr<TaiheNativeObject> object, int result)
+{
+    auto asyncWork = map.Get(type);
+    if (asyncWork == nullptr) {
+        HILOGE("asyncWork is nullptr");
+        return;
+    }
+    map.Erase(type);
+    std::shared_ptr<TaiheNativeObject> nativeObject = asyncWork->IsCallbackWork() ? object : nullptr;
+    asyncWork->CallFunction(result, nativeObject);
 }
 
 bool TaiheAsyncWorkMap::TryPush(TaiheAsyncType type, std::shared_ptr<TaiheAsyncWork> asyncWork)

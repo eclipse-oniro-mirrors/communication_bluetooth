@@ -1,0 +1,92 @@
+/*
+ * Copyright (C) 2026 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@!namespace("@ohos.bluetooth.opp", "opp")
+@!sts_inject("""
+static { loadLibraryWithPermissionCheck("bluetoothOpp_taihe_native.z", "@ohos.bluetooth.opp") }
+""")
+from ohos.bluetooth.baseProfile use BaseProfile;
+from ohos.bluetooth.constant use AccessAuthorization;
+@!sts_inject_into_module("import {baseProfile} from './@ohos.bluetooth.baseProfile';")
+
+function CreateOppServerProfile(): OppServerProfile;
+interface OppServerProfile : BaseProfile {
+    @!sts_inject_into_class("""on(type: String, callback: object): void {
+        if (type === "connectionStateChange") {
+            this.onConnectionStateChange(callback as (info: baseProfile.StateChangeParam) => void);
+        }
+    }
+    """)
+
+    @!sts_inject_into_class("""off(type: String, callback?: object): void {
+        if (type === "connectionStateChange") {
+            this.offConnectionStateChange(callback as ((info: baseProfile.StateChangeParam) => void) | undefined);
+        }
+    }
+    """)
+
+    @gen_promise("setIncomingFileConfirmation")
+    SetIncomingFileConfirmationSync(accept: bool, fileFd: i32): void;
+
+    @gen_promise("setLastReceivedFileUri")
+    SetLastReceivedFileUriSync(uri: String): void;
+
+    @gen_promise("getCurrentTransferInformation")
+    GetCurrentTransferInformationSync(): OppTransferInformation;
+
+    @gen_promise("cancelTransfer")
+    CancelTransferSync(): void;
+
+    OnTransferStateChange(callback: (data: OppTransferInformation) => void): void;
+    OffTransferStateChange(callback: Optional<(data: OppTransferInformation) => void>): void;
+
+    OnReceiveIncomingFile(callback: (data: OppTransferInformation) => void): void;
+    OffReceiveIncomingFile(callback: Optional<(data: OppTransferInformation) => void>): void;
+}
+
+struct OppTransferInformation {
+    filePath: String;
+    remoteDeviceName: String;
+    remoteDeviceId: String;
+    direction: DirectionType;
+    status: TransferStatus;
+    result: TransferResult;
+    currentBytes: i64;
+    totalBytes: i64;
+    currentCount: i32;
+    totalCount: i32;
+}
+
+enum DirectionType: i32 {
+    OUTBOUND = 0,
+    INBOUND = 1
+}
+
+enum TransferStatus: i32 {
+    PENDING = 0,
+    RUNNING = 1,
+    FINISH = 2
+}
+
+enum TransferResult: i32 {
+    SUCCESS = 0,
+    ERROR_UNSUPPORTED_TYPE = 1,
+    ERROR_BAD_REQUEST = 2,
+    ERROR_NOT_ACCEPTABLE = 3,
+    ERROR_CANCELED = 4,
+    ERROR_CONNECTION_FAILED = 5,
+    ERROR_TRANSFER_FAILED = 6,
+    ERROR_UNKNOWN = 7
+}

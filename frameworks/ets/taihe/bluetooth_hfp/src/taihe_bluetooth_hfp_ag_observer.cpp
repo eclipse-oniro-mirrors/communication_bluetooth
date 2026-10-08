@@ -34,7 +34,6 @@ TaiheHandsFreeAudioGatewayObserver::TaiheHandsFreeAudioGatewayObserver()
 void TaiheHandsFreeAudioGatewayObserver::OnConnectionStateChanged(const BluetoothRemoteDevice &device,
     int state, int cause)
 {
-    std::shared_lock<std::shared_mutex> guard(eventSubscribe_.lock_);
     HILOGD("enter, remote device address: %{public}s, state: %{public}d, cause: %{public}d",
         GET_ENCRYPT_ADDR(device), state, cause);
     ::taihe::string deviceId_(device.GetDeviceAddr());
@@ -46,11 +45,7 @@ void TaiheHandsFreeAudioGatewayObserver::OnConnectionStateChanged(const Bluetoot
         .state = state_,
         .cause = cause_,
     };
-    for (auto callback : eventSubscribe_.callbackVec_) {
-        if (callback) {
-            (*callback)(taiheResult);
-        }
-    }
+    eventSubscribe_.PublishEvent(taiheResult);
 }
 
 void TaiheHandsFreeAudioGatewayObserver::OnScoStateChanged(const BluetoothRemoteDevice &device, int state, int reason)

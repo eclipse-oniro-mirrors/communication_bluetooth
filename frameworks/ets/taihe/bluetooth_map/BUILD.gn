@@ -1,0 +1,125 @@
+# Copyright (C) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/config/components/ets_frontend/ets2abc_config.gni")
+import("//build/ohos.gni")
+import("//build/ohos/taihe_idl/taihe.gni")
+
+SUBSYSTEM_DIR = "//foundation/communication"
+
+copy_taihe_idl("bluetooth_map_taihe") {
+  sources = [
+    "idl/ohos.bluetooth.map.taihe"
+  ]
+  deps = [
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/bluetooth_baseProfile:bluetooth_baseProfile_taihe",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/bluetooth_constant:bluetooth_constant_taihe"
+  ]
+}
+
+subsystem_name = "communication"
+part_name = "bluetooth"
+taihe_generated_file_path_map = "$taihe_file_path/out/$subsystem_name/$part_name/map"
+
+ohos_taihe("run_taihe") {
+  taihe_generated_file_path = "${taihe_generated_file_path_map}"
+  deps = [ ":bluetooth_map_taihe" ]
+  outputs = [
+    "$taihe_generated_file_path/src/ohos.bluetooth.map.ani.cpp",
+    "$taihe_generated_file_path/src/ohos.bluetooth.map.abi.c",
+  ]
+}
+
+taihe_shared_library("bluetoothMap_taihe_native") {
+  cflags_cc = [
+    "-Os",
+    "-fno-rtti",
+    "-fno-exceptions",
+    "-fdata-sections",
+    "-ffunction-sections",
+    "-fno-unwind-tables",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-merge-all-constants",
+    "-flto",
+  ]
+  ldflags = [
+    "-Wl,--as-needed",
+    "-Wl,--gc-sections",
+  ]
+  shlib_type = "ani"
+  taihe_generated_file_path = "${taihe_generated_file_path_map}"
+  part_name = "$part_name"
+  subsystem_name = "$subsystem_name"
+  sources = get_target_outputs(":run_taihe")
+  include_dirs = [
+    "include",
+    "src",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/inner/include",
+    "$SUBSYSTEM_DIR/bluetooth/interfaces/inner_api/include",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/common"
+  ]
+  sources += [
+    "src/ani_constructor.cpp",
+    "src/ohos.bluetooth.map.impl.cpp",
+    "src/taihe_bluetooth_map_mse_observer.cpp",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/common/taihe_bluetooth_error.cpp",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/common/taihe_bluetooth_utils.cpp",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/common/taihe_event_module.cpp",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/common/taihe_ha_event_utils.cpp"
+  ]
+  deps = [
+    ":run_taihe",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/inner:btframework",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/bluetooth_baseProfile:bluetoothBaseProfile_taihe_native",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/bluetooth_constant:bluetoothConstant_taihe_native"
+  ]
+  external_deps = [
+    "c_utils:utils",
+    "hiappevent:hiappevent_innerapi",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+  ]
+  sanitize = {
+    cfi = true  # Enable/disable control flow integrity detection
+    boundary_sanitize = true  # Enable boundary san detection
+    cfi_cross_dso = true  # Cross-SO CFI Checks
+    cfi_vcall_icall_only = true  # CFI optimization, restrict CFI detection scope
+    integer_overflow = true  # Enable integer overflow detection
+    ubsan = true  # Enable some Ubsan options
+    debug = false
+  }
+}
+
+generate_static_abc("bluetoothMap_abc") {
+  base_url = "${taihe_generated_file_path_map}"
+  files = [ "${taihe_generated_file_path_map}/@ohos.bluetooth.map.ets" ]
+  is_boot_abc = "True"
+  device_dst_file = "/system/framework/bluetoothMap_abc.abc"
+  dependencies = [ ":run_taihe" ]
+}
+
+ohos_prebuilt_etc("bluetoothMap_etc") {
+  source = "$target_out_dir/bluetoothMap_abc.abc"
+  module_install_dir = "framework"
+  part_name = "$part_name"
+  subsystem_name = "$subsystem_name"
+  deps = [ ":bluetoothMap_abc" ]
+}
+
+group("bluetoothMap_taihe") {
+  deps = [
+    ":bluetoothMap_etc",
+    ":bluetoothMap_taihe_native"
+  ]
+  # deps = [":run_taihe"]
+}

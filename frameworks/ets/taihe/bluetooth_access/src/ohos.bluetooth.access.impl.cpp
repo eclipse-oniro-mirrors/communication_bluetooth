@@ -28,6 +28,7 @@
 #include "bluetooth_remote_device.h"
 #include "taihe_bluetooth_access_observer.h"
 #include "taihe_bluetooth_utils.h"
+#include "taihe_ha_event_utils.h"
 
 namespace OHOS {
 namespace Bluetooth {
@@ -212,18 +213,24 @@ void FactoryResetSync()
     TAIHE_BT_ASSERT_RETURN_VOID(ret == BT_NO_ERROR, ret);
 }
 
+bool IsBluetoothSupported()
+{
+    bool isSupported = BluetoothHost::GetDefaultHost().IsBluetoothSupported();
+    HILOGI("IsBluetoothSupported: %{public}d", isSupported);
+    return isSupported;
+}
+
 ::taihe::string ConvertUuid(::taihe::string uuid)
 {
     std::vector<int32_t> validErrCodes = { BT_ERR_INVALID_PARAM };
-    TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
+    TAIHE_BT_CONTEXT_HA(taihe::get_env(), "access.ConvertUuid", validErrCodes);
     ::taihe::string completeUuid = "";
     std::string uuidForCheck(uuid);
     std::string completeUuidCheck = "";
     if (uuidForCheck.size() != STR_LEN_OF_2_BYTES_UUID && uuidForCheck.size() != STR_LEN_OF_4_BYTES_UUID &&
         uuidForCheck.size() != STR_LEN_OF_16_BYTES_UUID) {
         HILOGE("invalid param");
-        HandleSyncErrAdapter(BT_ERR_INVALID_PARAM, validErrCodes);
-        return completeUuid;
+        TAIHE_BT_HA_ASSERT_RETURN_VERIFY(false, BT_ERR_INVALID_PARAM, completeUuid);
     }
     if (uuidForCheck.size() == STR_LEN_OF_2_BYTES_UUID) {
         completeUuidCheck = "0000" + uuidForCheck + "-0000-1000-8000-00805f9b34fb";
@@ -232,7 +239,7 @@ void FactoryResetSync()
     } else {
         completeUuidCheck = uuidForCheck;
     }
-    TAIHE_BT_ASSERT_RETURN_VERIFY(IsValidUuid(completeUuidCheck), BT_ERR_INVALID_PARAM, completeUuidCheck);
+    TAIHE_BT_HA_ASSERT_RETURN_VERIFY(IsValidUuid(completeUuidCheck), BT_ERR_INVALID_PARAM, completeUuidCheck);
     std::for_each(completeUuidCheck.begin(), completeUuidCheck.end(), [](char &c) { c = std::tolower(c); });
     completeUuid = completeUuidCheck;
     return completeUuid;
@@ -257,5 +264,6 @@ TH_EXPORT_CPP_API_DeletePersistentDeviceId(OHOS::Bluetooth::DeletePersistentDevi
 TH_EXPORT_CPP_API_AddPersistentDeviceId(OHOS::Bluetooth::AddPersistentDeviceId);
 TH_EXPORT_CPP_API_NotifyDialogResult(OHOS::Bluetooth::NotifyDialogResult);
 TH_EXPORT_CPP_API_FactoryResetSync(OHOS::Bluetooth::FactoryResetSync);
+TH_EXPORT_CPP_API_IsBluetoothSupported(OHOS::Bluetooth::IsBluetoothSupported);
 TH_EXPORT_CPP_API_ConvertUuid(OHOS::Bluetooth::ConvertUuid);
 // NOLINTEND

@@ -226,7 +226,6 @@ ani_env* GetCurrentEnv(ani_vm *vm, bool &isAttach)
         HILOGE("null vm");
         return nullptr;
     }
-
     ani_env *threadEnv;
     if (ANI_OK != vm->GetEnv(ANI_VERSION_1, &threadEnv)) {
         HILOGE("GetEnv failed, AttachCurrentThread");
@@ -238,7 +237,6 @@ ani_env* GetCurrentEnv(ani_vm *vm, bool &isAttach)
         }
         isAttach = true;
     }
-
     return threadEnv;
 }
 }  // namespace Bluetooth

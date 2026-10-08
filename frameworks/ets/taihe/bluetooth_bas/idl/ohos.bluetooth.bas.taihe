@@ -1,0 +1,40 @@
+/*
+ * Copyright (C) 2026 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+@!namespace("@ohos.bluetooth.bas", "bas")
+@!sts_inject_into_module("import { BusinessError, AsyncCallback } from '@ohos.base';")
+@!sts_inject("""
+static { loadLibraryWithPermissionCheck("bluetoothBas_taihe_native.z", "@ohos.bluetooth.bas") }
+""")
+
+from ohos.bluetooth.common use BluetoothAddress;
+
+function IsBasSupported(): bool;
+
+@rename("getRemoteDeviceBatteryInfo")
+function GetRemoteDeviceBatteryInfoPromise(deviceId: BluetoothAddress): @sts_type("Promise<BatteryInfo>") Opaque;
+
+@rename("getRemoteDeviceBatteryInfo")
+function GetRemoteDeviceBatteryInfoAsync(deviceId: BluetoothAddress, callback: @sts_type("AsyncCallback<BatteryInfo>") Opaque): void;
+
+function OnBatteryChange(callback:(data: BatteryInfo) => void): void;
+function OffBatteryChange(callback: Optional<(data: BatteryInfo) => void>): void;
+
+struct BatteryInfo {
+    deviceId: BluetoothAddress;
+    batteryLevel: i32;
+}
+
+

@@ -94,9 +94,13 @@ enum TaiheStatus {
 bool IsValidAddress(std::string bdaddr);
 bool IsValidConnectStrategy(int strategy);
 bool IsValidTransport(int transport);
+bool IsAccessAuthorizationValid(int32_t accessAuthorization);
+bool IsShareTypeValid(int32_t shareType);
 bool CheckDeviceIdParam(std::string &addr);
 bool CheckSetConnectStrategyParam(std::string &addr, int32_t &strategy);
 bool CheckPairCredibleDeviceParam(std::string &addr, int &transport);
+bool CheckLocalNameParam(std::string &name);
+bool CheckSppFdParam(int32_t serverSocket);
 TaiheStatus ParseUuidParams(const std::string &uuid, UUID &outUuid);
 template<typename T>
 void ParseArrayBufferParams(const taihe::array<T>& data, std::vector<T> &outParam)
