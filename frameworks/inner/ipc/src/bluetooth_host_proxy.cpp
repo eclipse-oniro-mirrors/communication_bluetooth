@@ -1879,7 +1879,7 @@ void BluetoothHostProxy::UpdateVirtualDevice(int32_t action, const std::string &
     return;
 }
 
-int32_t BluetoothHostProxy::EnableBluetoothToRestrictMode(const std::string &callingName)
+int32_t BluetoothHostProxy::EnableBluetoothToRestrictMode(const std::string &callingName, bool isBleOwnerMode)
 {
     MessageParcel data;
     CHECK_AND_RETURN_LOG_RET(data.WriteInterfaceToken(BluetoothHostProxy::GetDescriptor()), BT_ERR_IPC_TRANS_FAILED,
@@ -1887,6 +1887,9 @@ int32_t BluetoothHostProxy::EnableBluetoothToRestrictMode(const std::string &cal
     MessageParcel reply;
     MessageOption option = {MessageOption::TF_SYNC};
     if (!data.WriteString(callingName)) {
+        return BT_ERR_IPC_TRANS_FAILED;
+    }
+    if (!data.WriteBool(isBleOwnerMode)) {
         return BT_ERR_IPC_TRANS_FAILED;
     }
     int32_t error = InnerTransact(

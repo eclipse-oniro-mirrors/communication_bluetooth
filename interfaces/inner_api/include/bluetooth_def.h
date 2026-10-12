@@ -96,7 +96,9 @@ enum class BluetoothState {
     /** Indicates the local Bluetooth is in LE only mode */
     STATE_BLE_ON = 5,
     /** Indicates the local Bluetooth is turning off LE only mode */
-    STATE_BLE_TURNING_OFF = 6
+    STATE_BLE_TURNING_OFF = 6,
+    /** Indicates only ble owner app can use bluetooth */
+    STATE_BLE_OWNER_MODE = 7,
 };
 
 /**
@@ -576,7 +578,7 @@ typedef enum {
     BLE_SCAN_ENHANCE_MODE_ULTRA_FAST = 0x03,
     BLE_SCAN_ENHANCE_MODE_INVALID = 0xFF,
 } EnhanceMode;
- 
+
 // ble scan enhance mode max timeout
 constexpr int64_t BLE_SCAN_ENHANCE_MODE_MAX_TIMEOUT_MS = 2500;
 

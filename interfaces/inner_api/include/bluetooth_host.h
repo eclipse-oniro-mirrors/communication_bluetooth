@@ -429,6 +429,7 @@ public:
      *         BluetoothState::STATE_BLE_TURNING_ON;
      *         BluetoothState::STATE_BLE_ON;
      *         BluetoothState::STATE_BLE_TURNING_OFF;
+     *         BluetoothState::STATE_BLE_OWNER_MODE;
      * @since 14
      */
     BluetoothState GetBluetoothState(void) const;
@@ -472,7 +473,7 @@ public:
      *         returns others if the operation is rejected.
      * @since 12
      */
-    int EnableBluetoothToRestrictMode(std::string name = "");
+    int EnableBluetoothToRestrictMode(std::string name = "", bool isBleOwnerMode = false);
 
     /**
      * @brief Get br/edr enable/disable state.

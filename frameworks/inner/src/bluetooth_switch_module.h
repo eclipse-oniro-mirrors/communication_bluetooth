@@ -33,7 +33,7 @@ public:
 
     virtual int EnableBluetooth(bool, std::string, bool) = 0;
     virtual int DisableBluetooth(std::string, bool) = 0;
-    virtual int EnableBluetoothToRestrictMode(std::string) = 0;
+    virtual int EnableBluetoothToRestrictMode(std::string, bool) = 0;
 };
 
 enum class BluetoothSwitchEvent : int {
@@ -57,13 +57,14 @@ public:
         : ffrtQueue_("bt_switch"), switchAction_(std::move(switchAction)) {}
     ~BluetoothSwitchModule() = default;
 
-    int ProcessBluetoothSwitchEvent(BluetoothSwitchEvent event, std::string callingName = "", bool isAsync = false);
+    int ProcessBluetoothSwitchEvent(
+        BluetoothSwitchEvent event, std::string callingName = "", bool isAsync = false, bool isBleOwnerMode = false);
     void SetNoAutoConnect(bool noAutoConnect);
 
 private:
     int ProcessEnableBluetoothEvent(const std::string &callingName, bool isAsync);
     int ProcessDisableBluetoothEvent(const std::string &callingName, bool isAsync);
-    int ProcessEnableBluetoothToRestrictModeEvent(const std::string &callingName);
+    int ProcessEnableBluetoothToRestrictModeEvent(const std::string &callingName, bool isBleOwnerMode);
     int ProcessBluetoothOnEvent(void);
     int ProcessBluetoothOffEvent(void);
     int ProcessBluetoothHalfEvent(void);
