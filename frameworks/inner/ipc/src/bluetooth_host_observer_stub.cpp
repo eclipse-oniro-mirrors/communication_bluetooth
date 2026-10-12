@@ -110,8 +110,9 @@ int32_t BluetoothHostObserverStub::OnDiscoveryResultInner(BluetoothHostObserverS
     int32_t rssi = data.ReadInt32();
     std::string deviceName = data.ReadString();
     int32_t deviceClass = data.ReadInt32();
+    int32_t transport = data.ReadInt32();
     HILOGD("OnDiscoveryResultInner starts");
-    stub->OnDiscoveryResult(*device, rssi, deviceName, deviceClass);
+    stub->OnDiscoveryResult(*device, rssi, deviceName, deviceClass, transport);
 
     return NO_ERROR;
 }

@@ -17,6 +17,7 @@
 #endif
 
 #include "napi_native_object.h"
+#include "connection/napi_bluetooth_connection.h"
 #include "securec.h"
 
 namespace OHOS {
@@ -205,6 +206,15 @@ napi_value NapiNativeDiscoveryInfoResultArray::ToNapiValue(napi_env env) const
     napi_create_object(env, &deviceClass);
     ConvertDeviceClassToJS(env, deviceClass, deviceClass_);
     napi_set_named_property(env, result, "deviceClass", deviceClass);
+
+    // transport value contract: same as BluetoothTransport enum, invalid values fall back to TRANSPORT_UNKNOWN.
+    int transport = (transport_ >= static_cast<int>(BluetoothTransport::TRANSPORT_BR_EDR) &&
+                        transport_ <= static_cast<int>(BluetoothTransport::TRANSPORT_DUAL))
+                        ? transport_
+                        : static_cast<int>(BluetoothTransport::TRANSPORT_UNKNOWN);
+    napi_value transportValue = nullptr;
+    napi_create_int32(env, transport, &transportValue);
+    napi_set_named_property(env, result, "transport", transportValue);
     napi_set_element(env, array, 0, result);
     return array;
 }

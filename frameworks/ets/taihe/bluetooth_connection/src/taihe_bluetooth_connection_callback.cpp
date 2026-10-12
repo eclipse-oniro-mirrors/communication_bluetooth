@@ -182,8 +182,8 @@ void TaiheBluetoothConnectionObserver::OnDiscoveryStateChanged(int status)
     }
 }
 
-void TaiheBluetoothConnectionObserver::OnDiscoveryResult(
-    const BluetoothRemoteDevice &device, int rssi, const std::string deviceName, int deviceClass)
+void TaiheBluetoothConnectionObserver::OnDiscoveryResult(const BluetoothRemoteDevice &device, int rssi,
+    const std::string deviceName, int deviceClass, int transport)
 {
     OnDiscoveryResultCallBack(device);
     OnDiscoveryResultCallBack(device, rssi, deviceName, deviceClass);

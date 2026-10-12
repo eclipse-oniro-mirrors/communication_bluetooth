@@ -80,8 +80,8 @@ public:
 
     void OnStateChanged(const int transport, const int status) override{};
     void OnDiscoveryStateChanged(int status) override;
-    void OnDiscoveryResult(
-        const BluetoothRemoteDevice &device, int rssi, const std::string deviceName, int deviceClass) override;
+    void OnDiscoveryResult(const BluetoothRemoteDevice &device, int rssi, const std::string deviceName,
+        int deviceClass, int transport) override;
     void OnPairRequested(const BluetoothRemoteDevice &device) override;
     void OnPairConfirmed(const BluetoothRemoteDevice &device, int reqType, int number) override;
     void OnScanModeChanged(int mode) override;
@@ -103,8 +103,8 @@ public:
 private:
     void OnPairConfirmedCallBack(const std::shared_ptr<PairConfirmedCallBackInfo> &pairConfirmInfo);
     void OnDiscoveryResultCallBack(const BluetoothRemoteDevice &device);
-    void OnDiscoveryResultCallBack(
-        const BluetoothRemoteDevice &device, int rssi, const std::string &deviceName, int deviceClass);
+    void OnDiscoveryResultCallBack(const BluetoothRemoteDevice &device, int rssi, const std::string &deviceName,
+        int deviceClass);
     static std::string GetFormatPinCode(uint32_t pinType, uint32_t pinCode);
 };
 }  // namespace Bluetooth
