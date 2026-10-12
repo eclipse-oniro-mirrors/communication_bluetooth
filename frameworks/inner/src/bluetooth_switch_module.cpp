@@ -49,7 +49,7 @@ void BluetoothSwitchModule::LogBluetoothSwitchEvent(BluetoothSwitchEvent event)
 }
 
 int BluetoothSwitchModule::ProcessBluetoothSwitchEvent(
-    BluetoothSwitchEvent event, std::string callingName, bool isAsync)
+    BluetoothSwitchEvent event, std::string callingName, bool isAsync, bool isBleOwnerMode)
 {
     CHECK_AND_RETURN_LOG_RET(switchAction_, BT_ERR_INTERNAL_ERROR, "switchAction is nullptr");
 
@@ -61,7 +61,7 @@ int BluetoothSwitchModule::ProcessBluetoothSwitchEvent(
         case BluetoothSwitchEvent::DISABLE_BLUETOOTH:
             return ProcessDisableBluetoothEvent(callingName, isAsync);
         case BluetoothSwitchEvent::ENABLE_BLUETOOTH_TO_RESTRICE_MODE:
-            return ProcessEnableBluetoothToRestrictModeEvent(callingName);
+            return ProcessEnableBluetoothToRestrictModeEvent(callingName, isBleOwnerMode);
         case BluetoothSwitchEvent::BLUETOOTH_ON:
             return ProcessBluetoothOnEvent();
         case BluetoothSwitchEvent::BLUETOOTH_OFF:
@@ -149,7 +149,8 @@ int BluetoothSwitchModule::ProcessDisableBluetoothEvent(const std::string &calli
         cachedEvent);
 }
 
-int BluetoothSwitchModule::ProcessEnableBluetoothToRestrictModeEvent(const std::string &callingName)
+int BluetoothSwitchModule::ProcessEnableBluetoothToRestrictModeEvent(
+    const std::string &callingName, bool isBleOwnerMode)
 {
     BluetoothSwitchCacheEvent cachedEvent = {
         .event = BluetoothSwitchEvent::ENABLE_BLUETOOTH_TO_RESTRICE_MODE,
@@ -157,7 +158,9 @@ int BluetoothSwitchModule::ProcessEnableBluetoothToRestrictModeEvent(const std::
     };
 
     return ProcessBluetoothSwitchAction(
-        [this, callingName]() { return switchAction_->EnableBluetoothToRestrictMode(callingName); },
+        [this, callingName, isBleOwnerMode]() {
+            return switchAction_->EnableBluetoothToRestrictMode(callingName, isBleOwnerMode);
+        },
         cachedEvent);
 }
 
