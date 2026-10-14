@@ -58,10 +58,10 @@ void NapiBluetoothConnectionObserver::OnDiscoveryStateChanged(int status)
 }
 
 void NapiBluetoothConnectionObserver::OnDiscoveryResult(
-    const BluetoothRemoteDevice &device, int rssi, const std::string deviceName, int deviceClass)
+    const BluetoothRemoteDevice &device, int rssi, const std::string deviceName, int deviceClass, int transport)
 {
     OnDiscoveryResultCallBack(device);
-    OnDiscoveryResultCallBack(device, rssi, deviceName, deviceClass);
+    OnDiscoveryResultCallBack(device, rssi, deviceName, deviceClass, transport);
 }
 
 void NapiBluetoothConnectionObserver::OnPairRequested(const BluetoothRemoteDevice &device)
@@ -118,12 +118,12 @@ void NapiBluetoothConnectionObserver::OnDiscoveryResultCallBack(const BluetoothR
     eventSubscribe_.PublishEvent(REGISTER_DEVICE_FIND_TYPE, nativeObject);
 }
 
-void NapiBluetoothConnectionObserver::OnDiscoveryResultCallBack(
-    const BluetoothRemoteDevice &device, int rssi, const std::string &deviceName, int deviceClass)
+void NapiBluetoothConnectionObserver::OnDiscoveryResultCallBack(const BluetoothRemoteDevice &device,
+    int rssi, const std::string &deviceName, int deviceClass, int transport)
 {
     std::shared_ptr<BluetoothRemoteDevice> remoteDevice = std::make_shared<BluetoothRemoteDevice>(device);
     auto nativeObject =
-        std::make_shared<NapiNativeDiscoveryInfoResultArray>(remoteDevice, rssi, deviceName, deviceClass);
+        std::make_shared<NapiNativeDiscoveryInfoResultArray>(remoteDevice, rssi, deviceName, deviceClass, transport);
     eventSubscribe_.PublishEvent(REGISTER_DISCOVERY_RESULT_TYPE, nativeObject);
 }
 

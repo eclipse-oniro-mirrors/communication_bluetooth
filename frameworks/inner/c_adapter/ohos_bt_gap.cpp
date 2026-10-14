@@ -90,8 +90,8 @@ public:
      * @param deviceClass Class of device.
      * @since 6
      */
-    void OnDiscoveryResult(
-        const BluetoothRemoteDevice &device, int rssi, const std::string deviceName, int deviceClass) override
+    void OnDiscoveryResult(const BluetoothRemoteDevice &device, int rssi, const std::string deviceName,
+        int deviceClass, int transport) override
     {
         return;
     }

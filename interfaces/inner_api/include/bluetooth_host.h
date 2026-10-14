@@ -106,8 +106,22 @@ public:
      * @param deviceClass Class of device.
      * @since 6
      */
-    virtual void OnDiscoveryResult(
-        const BluetoothRemoteDevice &device, int rssi, const std::string deviceName, int deviceClass) = 0;
+    virtual void OnDiscoveryResult(const BluetoothRemoteDevice &device, int rssi, const std::string deviceName,
+        int deviceClass) {}
+
+    /**
+     * @brief Discovery result observer.
+     *
+     * @param device Remote device.
+     * @param rssi Rssi of device.
+     * @param deviceName Name of device.
+     * @param deviceClass Class of device.
+     * @param transport Transport of device, same value as BluetoothTransport:
+     *        0 BR/EDR, 1 LE, 2 DUAL, 3 unknown.
+     * @since 6
+     */
+    virtual void OnDiscoveryResult(const BluetoothRemoteDevice &device, int rssi, const std::string deviceName,
+        int deviceClass, int transport) {}
 
     /**
      * @brief Pair request observer.

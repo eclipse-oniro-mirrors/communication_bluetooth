@@ -100,9 +100,10 @@ private:
 
 class NapiNativeDiscoveryInfoResultArray : public NapiNativeObject {
 public:
-    explicit NapiNativeDiscoveryInfoResultArray(
-        const std::shared_ptr<BluetoothRemoteDevice> &device, int rssi, const std::string deviceName, int deviceClass)
-        : remoteDevice_(device), rssi_(rssi), deviceName_(deviceName), deviceClass_(deviceClass) {}
+    explicit NapiNativeDiscoveryInfoResultArray(const std::shared_ptr<BluetoothRemoteDevice> &device, int rssi,
+        const std::string deviceName, int deviceClass, int transport)
+        : remoteDevice_(device), rssi_(rssi), deviceName_(deviceName), deviceClass_(deviceClass),
+          transport_(transport) {}
     ~NapiNativeDiscoveryInfoResultArray() override = default;
 
     napi_value ToNapiValue(napi_env env) const override;
@@ -111,6 +112,7 @@ private:
     int rssi_ = 0;
     std::string deviceName_ = "";
     int deviceClass_ = MajorClass::MAJOR_UNCATEGORIZED;
+    int transport_ = 0;
 };
 
 class NapiNativeOobData : public NapiNativeObject {
