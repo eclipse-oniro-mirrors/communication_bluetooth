@@ -97,6 +97,7 @@ static std::map<int32_t, int32_t> innerToBusinessErrCodeMap {
     { BtErrCode::BT_ERR_CHARACTER_VALUE_ERROR, BtErrCode::BT_ERR_INVALID_PARAM },
     { BtErrCode::BT_ERR_BLE_SCAN_NO_RESOURCE, BtErrCode::BT_ERR_INTERNAL_ERROR },
     { BtErrCode::BT_ERR_GATT_CONNECT_STATE_ERROR, BtErrCode::BT_ERR_INTERNAL_ERROR },
+    { BtErrCode::BT_ERR_PROXY_NULL, BtErrCode::BT_ERR_INTERNAL_ERROR },
 };
 
 static std::map<int32_t, std::string> innerErrMsgMap {
@@ -123,6 +124,7 @@ static std::map<int32_t, std::string> innerErrMsgMap {
         "Invalid parameter. CharacteristicValue is null or length of characteristicValue is zero." },
     { BtErrCode::BT_ERR_BLE_SCAN_NO_RESOURCE, "Fails to start scan as it is out of hardware resources."},
     { BtErrCode::BT_ERR_GATT_CONNECT_STATE_ERROR, "Operation failed. GATT not in connected state." },
+    { BtErrCode::BT_ERR_PROXY_NULL, "Operation failed. The proxy is null." },
 };
 
 std::string GetTaiheErrMsg(const int32_t errCode)
