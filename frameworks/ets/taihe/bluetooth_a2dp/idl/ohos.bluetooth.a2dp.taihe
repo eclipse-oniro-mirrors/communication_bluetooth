@@ -45,6 +45,8 @@ interface A2dpSourceProfile : BaseProfile {
 
     Disconnect(deviceId: String): void;
 
+    GetCurrentFullCodecInfo(deviceId: String): Array<CodecInfoList>;
+
     @promise GetAutoPlayDisabledDuration(deviceId: String): i32;
 
     @promise DisableAutoPlay(deviceId: String, duration: i32): void;
@@ -105,6 +107,11 @@ enum PlayingState: i32 {
     STATE_PLAYING
 }
 
+enum CodecFrameLength: i32 {
+    CODEC_FRAME_LENGTH_5MS = 0,
+    CODEC_FRAME_LENGTH_10MS = 1
+}
+
 struct CodecInfo {
     codecType: CodecType;
     codecBitsPerSample: CodecBitsPerSample;
@@ -112,4 +119,51 @@ struct CodecInfo {
     codecSampleRate: CodecSampleRate;
 }
 
+struct CodecInfoList {
+    codecType: CodecType;
+    codecBitsPerSampleArray: Array<CodecBitsPerSample>;
+    codecChannelModeArray: Array<CodecChannelMode>;
+    codecSampleRateArray: Array<CodecSampleRate>;
+    codecBitRateArray: Array<CodecBitRate>;
+    codecFrameLengthArray: Array<CodecFrameLength>;
+}
+
+enum CodecBitRate: i32 {
+    CODEC_BIT_RATE_96000 = 0,
+    CODEC_BIT_RATE_128000 = 1,
+    CODEC_BIT_RATE_192000 = 2,
+    CODEC_BIT_RATE_256000 = 3,
+    CODEC_BIT_RATE_320000 = 4,
+    CODEC_BIT_RATE_480000 = 5,
+    CODEC_BIT_RATE_640000 = 6,
+    CODEC_BIT_RATE_960000 = 7,
+    CODEC_BIT_RATE_ABR = 8,
+    CODEC_BIT_RATE_1500000 = 9,
+    CODEC_BIT_RATE_2300000 = 10
+}
+
 function CreateA2dpSrcProfile(): A2dpSourceProfile;
+
+interface A2dpSinkProfile : BaseProfile {
+    @!sts_inject_into_class("""on(type: string, callback: object): void{
+        if (type === "connectionStateChange") {
+            this.onConnectionStateChange(callback as (info: baseProfile.StateChangeParam) => void);
+        }
+    }
+    """)
+
+    @!sts_inject_into_class("""off(type: string, callback?: object): void{
+        if (type === "connectionStateChange") {
+            this.offConnectionStateChange(callback as ((info: baseProfile.StateChangeParam) => void) | undefined);
+        }
+    }
+    """)
+
+    Connect(deviceId: String): void;
+
+    Disconnect(deviceId: String): void;
+
+    GetPlayingState(deviceId: String): PlayingState;
+}
+
+function CreateA2dpSnkProfile(): A2dpSinkProfile;

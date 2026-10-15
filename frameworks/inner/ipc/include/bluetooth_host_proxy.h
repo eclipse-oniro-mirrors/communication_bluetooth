@@ -114,7 +114,7 @@ public:
     int32_t SetVirtualAutoConnectType(const std::string &address, int connType, int businessType) override;
     int32_t SetFastScanLevel(int level) override;
     void UpdateVirtualDevice(int32_t action, const std::string &address) override;
-    int32_t EnableBluetoothToRestrictMode(const std::string &callingName) override;
+    int32_t EnableBluetoothToRestrictMode(const std::string &callingName, bool isBleOwnerMode) override;
     int32_t ControlDeviceAction(const std::string &deviceId, uint32_t controlType,
         uint32_t controlTypeVal, uint32_t controlObject) override;
     int32_t GetLastConnectionTime(const std::string &address, int64_t &connectionTime) override;
@@ -139,6 +139,7 @@ public:
     int32_t UpdateSecondaryPhonePairMode(int32_t mode) override;
     int32_t SetBtChannelScan(bool isEnable, uint32_t interval) override;
     int32_t GetBrAddressByBleAddress(const std::string &bleAddr, std::string &brAddr) override;
+    int32_t GetBleMacByBrMac(const std::string &brMac, std::string &bleMac) override;
 private:
     int32_t InnerTransact(uint32_t code, MessageOption &flags, MessageParcel &data, MessageParcel &reply);
     static inline BrokerDelegator<BluetoothHostProxy> delegator_;

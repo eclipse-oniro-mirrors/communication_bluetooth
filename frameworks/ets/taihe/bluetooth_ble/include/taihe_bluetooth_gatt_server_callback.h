@@ -17,13 +17,32 @@
 #define TAIHE_BLUETOOTH_GATT_SERVER_CALLBACK_H_
 
 #include "bluetooth_gatt_server.h"
+#include "ohos.bluetooth.ble.impl.hpp"
+#include "ohos.bluetooth.ble.proj.hpp"
+#include "taihe/runtime.hpp"
 #include "taihe_async_callback.h"
+#include "taihe_event_subscribe_module.h"
 
 namespace OHOS {
 namespace Bluetooth {
+
+const char * const STR_BT_GATT_SERVER_CALLBACK_CHARACTERISTIC_READ = "characteristicRead";
+const char * const STR_BT_GATT_SERVER_CALLBACK_CHARACTERISTIC_WRITE = "characteristicWrite";
+const char * const STR_BT_GATT_SERVER_CALLBACK_DESCRIPTOR_READ = "descriptorRead";
+const char * const STR_BT_GATT_SERVER_CALLBACK_DESCRIPTOR_WRITE = "descriptorWrite";
+
+// #ifdef BLUETOOTH_API_SINCE_10
+// const char * const STR_BT_GATT_SERVER_CALLBACK_CONNECT_STATE_CHANGE = "connectionStateChange";
+// #else
+const char * const STR_BT_GATT_SERVER_CALLBACK_CONNECT_STATE_CHANGE = "connectStateChange";
+// #endif
+const char * const STR_BT_GATT_SERVER_CALLBACK_MTU_CHANGE = "BLEMtuChange";
+const char * const STR_BT_GATT_SERVER_CALLBACK_BLE_PHY_UPDATE = "BlePhyUpdate";
 class TaiheGattServerCallback : public GattServerCallback {
 public:
     void OnConnectionStateUpdate(const BluetoothRemoteDevice &device, int state) override;
+    void OnConnectionStateUpdateWithMessage(const BluetoothRemoteDevice &device, int state,
+        GattDisconnectParam disconnectParam) override;
     void OnServiceAdded(GattService service, int ret) override {}
     void OnCharacteristicReadRequest(const BluetoothRemoteDevice &device,
         GattCharacteristic &characteristic, int requestId) override;
@@ -38,10 +57,15 @@ public:
         int result) override;
     void OnConnectionParameterChanged(const BluetoothRemoteDevice &device,
         int interval, int latency, int timeout, int status) override {}
+    void OnBlePhyUpdate(const BluetoothRemoteDevice &device,
+        int32_t txPhy, int32_t rxPhy, int32_t status) override;
+    void OnBlePhyRead(int32_t txPhy, int32_t rxPhy, int32_t status) override;
 
     TaiheAsyncWorkMap asyncWorkMap_ {};
     TaiheGattServerCallback();
     ~TaiheGattServerCallback() override = default;
+
+    TaiheEventSubscribeModule eventSubscribe_;
 };
 }  // namespace Bluetooth
 }  // namespace OHOS

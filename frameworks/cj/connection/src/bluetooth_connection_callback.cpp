@@ -37,7 +37,7 @@ bool g_flag = false;
 CjBluetoothConnectionObserver::CjBluetoothConnectionObserver() {}
 
 void CjBluetoothConnectionObserver::OnDiscoveryResult(
-    const BluetoothRemoteDevice& device, int rssi, const std::string deviceName, int deviceClass)
+    const BluetoothRemoteDevice& device, int rssi, const std::string deviceName, int deviceClass, int transport)
 {
     std::function<void(CArrString)> deviceFindFuncCopy;
     {

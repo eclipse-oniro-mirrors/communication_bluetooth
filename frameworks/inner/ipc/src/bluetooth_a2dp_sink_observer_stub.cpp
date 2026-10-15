@@ -59,10 +59,6 @@ int BluetoothA2dpSinkObserverStub::OnRemoteRequest(
 
 ErrCode BluetoothA2dpSinkObserverStub::OnConnectionStateChangedInner(MessageParcel &data, MessageParcel &reply)
 {
-    if (BluetoothA2dpSinkObserverStub::GetDescriptor() != data.ReadInterfaceToken()) {
-        HILOGE("check interface token failed");
-        return ERR_INVALID_STATE;
-    }
     std::string addr = data.ReadString();
     int state = data.ReadInt32();
     int cause = data.ReadInt32();

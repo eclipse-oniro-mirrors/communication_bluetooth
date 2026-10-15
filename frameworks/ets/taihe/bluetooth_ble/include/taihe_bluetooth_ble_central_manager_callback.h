@@ -17,11 +17,18 @@
 #define TAIHE_BLUETOOTH_BLE_CENTRAL_MANAGER_H
 
 #include "bluetooth_ble_central_manager.h"
+#include "ohos.bluetooth.ble.impl.hpp"
+#include "ohos.bluetooth.ble.proj.hpp"
+#include "taihe/runtime.hpp"
 #include "taihe_async_callback.h"
 #include "taihe_bluetooth_ble_utils.h"
+#include "taihe_event_subscribe_module.h"
 
 namespace OHOS {
 namespace Bluetooth {
+
+const char * const REGISTER_BLE_FIND_DEVICE_TYPE = "BLEDeviceFind";
+
 class TaiheBluetoothBleCentralManagerCallback : public BleCentralManagerCallback {
 public:
     TaiheBluetoothBleCentralManagerCallback(bool isLatestTaiheBleScannerObj);
@@ -38,6 +45,8 @@ public:
     void ConvertScanReportType(ScanReportType &scanReportType, uint8_t callbackType);
     TaiheAsyncWorkMap asyncWorkMap_ {};
     bool isLatestTaiheBleScannerObj_ = false;
+
+    TaiheEventSubscribeModule eventSubscribe_;
 };
 }  // namespace Bluetooth
 }  // namespace OHOS

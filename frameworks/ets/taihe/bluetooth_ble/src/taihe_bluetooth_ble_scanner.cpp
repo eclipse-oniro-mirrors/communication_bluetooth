@@ -34,7 +34,6 @@ uintptr_t BleScannerImpl::StartScanPromise(const ohos::bluetooth::ble::ScanFilte
     ani_env *env = taihe::get_env();
     TAIHE_BT_ASSERT_RETURN(env != nullptr, BT_ERR_INVALID_PARAM, reinterpret_cast<uintptr_t>(nullptr));
 
-    std::shared_ptr<TaiheHaEventUtils> haUtils = std::make_shared<TaiheHaEventUtils>(env, "ble.BleScanner.StartScan");
     std::vector<BleScanFilter> scanFilters;
     BleScanSettings settings;
     auto status = CheckBleScanParams(filters, options, scanFilters, settings);
@@ -55,7 +54,7 @@ uintptr_t BleScannerImpl::StartScanPromise(const ohos::bluetooth::ble::ScanFilte
         return TaiheAsyncWorkRet(ret);
     };
 
-    auto asyncWork = TaiheAsyncWorkFactory::CreateAsyncWork(env, nullptr, func, haUtils);
+    auto asyncWork = TaiheAsyncWorkFactory::CreateAsyncWork(env, nullptr, func);
     TAIHE_BT_ASSERT_RETURN(asyncWork != nullptr, BT_ERR_INTERNAL_ERROR, reinterpret_cast<uintptr_t>(nullptr));
     bool success = this->GetCallback()->asyncWorkMap_.TryPush(TaiheAsyncType::BLE_START_SCAN, asyncWork);
     TAIHE_BT_ASSERT_RETURN(success, BT_ERR_INTERNAL_ERROR, reinterpret_cast<uintptr_t>(nullptr));
@@ -69,8 +68,6 @@ uintptr_t BleScannerImpl::StopScanPromise()
     HILOGI("enter");
     ani_env *env = taihe::get_env();
     TAIHE_BT_ASSERT_RETURN(env != nullptr, BT_ERR_INVALID_PARAM, reinterpret_cast<uintptr_t>(nullptr));
-
-    std::shared_ptr<TaiheHaEventUtils> haUtils = std::make_shared<TaiheHaEventUtils>(env, "ble.BleScanner.StopScan");
 
     TAIHE_BT_ASSERT_RETURN(this->GetBleCentralManager() != nullptr,
         BT_ERR_INVALID_PARAM, reinterpret_cast<uintptr_t>(nullptr));
@@ -86,7 +83,7 @@ uintptr_t BleScannerImpl::StopScanPromise()
         return TaiheAsyncWorkRet(ret);
     };
 
-    auto asyncWork = TaiheAsyncWorkFactory::CreateAsyncWork(env, nullptr, func, haUtils);
+    auto asyncWork = TaiheAsyncWorkFactory::CreateAsyncWork(env, nullptr, func);
     TAIHE_BT_ASSERT_RETURN(asyncWork != nullptr, BT_ERR_INTERNAL_ERROR, reinterpret_cast<uintptr_t>(nullptr));
     bool success = this->GetCallback()->asyncWorkMap_.TryPush(TaiheAsyncType::BLE_STOP_SCAN, asyncWork);
     TAIHE_BT_ASSERT_RETURN(success, BT_ERR_INTERNAL_ERROR, reinterpret_cast<uintptr_t>(nullptr));
@@ -94,5 +91,30 @@ uintptr_t BleScannerImpl::StopScanPromise()
     asyncWork->Run();
     return reinterpret_cast<uintptr_t>(asyncWork->GetRet());
 }
+
+void BleScannerImpl::OnBLEDeviceFind(
+    ::taihe::callback_view<void(::ohos::bluetooth::ble::ScanReport const& data)> callback)
+{
+    HILOGI("enter");
+    std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM,
+                                           BT_ERR_INTERNAL_ERROR };
+    TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
+    TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(callback_ != nullptr, BT_ERR_INTERNAL_ERROR);
+    callback_->eventSubscribe_.RegisterEvent<
+        void(::ohos::bluetooth::ble::ScanReport const&)>(REGISTER_BLE_FIND_DEVICE_TYPE, callback);
+}
+
+void BleScannerImpl::OffBLEDeviceFind(
+    ::taihe::optional_view<::taihe::callback<void(::ohos::bluetooth::ble::ScanReport const& data)>> callback)
+{
+    HILOGI("enter");
+    std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM,
+                                           BT_ERR_INTERNAL_ERROR };
+    TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
+    TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(callback_ != nullptr, BT_ERR_INTERNAL_ERROR);
+    callback_->eventSubscribe_.DeregisterEvent<
+        void(::ohos::bluetooth::ble::ScanReport const&)>(REGISTER_BLE_FIND_DEVICE_TYPE, callback);
+}
+
 } // namespace Bluetooth
 } // namespace OHOS

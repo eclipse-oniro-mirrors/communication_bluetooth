@@ -22,7 +22,8 @@ copy_taihe_idl("bluetooth_ble_taihe") {
     "idl/ohos.bluetooth.ble.taihe",
   ]
   deps = [
-    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/bluetooth_constant:bluetooth_constant_taihe"
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/bluetooth_constant:bluetooth_constant_taihe",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/bluetooth_connection:bluetooth_connection_taihe"
   ]
 }
 
@@ -86,10 +87,12 @@ taihe_shared_library("bluetoothBle_taihe_native") {
     "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/common/taihe_async_work.cpp",
     "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/common/taihe_ha_event_utils.cpp",
     "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/common/taihe_native_object.cpp",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/common/taihe_event_module.cpp",
     "$SUBSYSTEM_DIR/bluetooth/frameworks/ets/taihe/parser/taihe_parser_utils.cpp",
   ]
   deps = [
     ":run_taihe",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/inner:btcommon",
     "$SUBSYSTEM_DIR/bluetooth/frameworks/inner:btframework",
   ]
   external_deps = [

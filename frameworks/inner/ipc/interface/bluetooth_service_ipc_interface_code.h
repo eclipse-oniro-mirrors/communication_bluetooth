@@ -352,6 +352,7 @@ enum BluetoothHostInterfaceCode {
     BT_UPDATE_PHONE_TYPE,
     SET_BT_CHANNEL_SCAN,
     GET_BR_ADDRESS_BY_BLE_ADDRESS,
+    GET_BLE_MAC_BY_BR_MAC,
     // The last code, if you want to add a new code, please add it before this
     BT_HOST_BUTT
 };
@@ -466,8 +467,7 @@ enum class BluetoothPanInterfaceCode {
 
 enum BluetoothPbapPceObserverInterfaceCode {
     PBAP_PCE_ON_SERVICE_CONNECTION_STATE_CHANGED = 0,
-    PBAP_PCE_ON_SERVICE_PASSWORD_REQUIRED,
-    PBAP_PCE_ON_ACTION_COMPLETED,
+    PBAP_PCE_ON_SYNC_STATE_CHANGE,
     // The last code, if you want to add a new code, please add it before this
     PBAP_PCE_OBSERVER_BUTT
 };
@@ -488,6 +488,7 @@ enum BluetoothPbapPceInterfaceCode {
     PBAP_PCE_GET_DEVICES_BY_STATE,
     PBAP_PCE_REGISTER_OBSERVER,
     PBAP_PCE_DEREGISTER_OBSERVER,
+    PBAP_PCE_GET_PHONEBOOK_STATE,
     // The last code, if you want to add a new code, please add it before this
     PBAP_PCE_BUTT
 };

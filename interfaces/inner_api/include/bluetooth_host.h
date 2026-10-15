@@ -106,8 +106,22 @@ public:
      * @param deviceClass Class of device.
      * @since 6
      */
-    virtual void OnDiscoveryResult(
-        const BluetoothRemoteDevice &device, int rssi, const std::string deviceName, int deviceClass) = 0;
+    virtual void OnDiscoveryResult(const BluetoothRemoteDevice &device, int rssi, const std::string deviceName,
+        int deviceClass) {}
+
+    /**
+     * @brief Discovery result observer.
+     *
+     * @param device Remote device.
+     * @param rssi Rssi of device.
+     * @param deviceName Name of device.
+     * @param deviceClass Class of device.
+     * @param transport Transport of device, same value as BluetoothTransport:
+     *        0 BR/EDR, 1 LE, 2 DUAL, 3 unknown.
+     * @since 6
+     */
+    virtual void OnDiscoveryResult(const BluetoothRemoteDevice &device, int rssi, const std::string deviceName,
+        int deviceClass, int transport) {}
 
     /**
      * @brief Pair request observer.
@@ -429,6 +443,7 @@ public:
      *         BluetoothState::STATE_BLE_TURNING_ON;
      *         BluetoothState::STATE_BLE_ON;
      *         BluetoothState::STATE_BLE_TURNING_OFF;
+     *         BluetoothState::STATE_BLE_OWNER_MODE;
      * @since 14
      */
     BluetoothState GetBluetoothState(void) const;
@@ -472,7 +487,7 @@ public:
      *         returns others if the operation is rejected.
      * @since 12
      */
-    int EnableBluetoothToRestrictMode(std::string name = "");
+    int EnableBluetoothToRestrictMode(std::string name = "", bool isBleOwnerMode = false);
 
     /**
      * @brief Get br/edr enable/disable state.
@@ -1044,6 +1059,17 @@ public:
      * @since 26
      */
     int GetBrAddressByBleAddress(const std::string &bleAddr, std::string &brAddr);
+
+    /**
+     * @brief Obtains the real BLE address of a paired remote device based on its real BR address.
+     *
+     * @param brMac BR/EDR address of the device.
+     * @param[out] bleMac BLE address of the device.
+     * @return Returns {@link BT_NO_ERROR} if the operation is successfully;
+     *         returns an error code defined in {@link BtErrCode} otherwise.
+     * @since 26
+     */
+    int GetBleMacByBrMac(const std::string &brMac, std::string &bleMac);
 private:
     /**
      * @brief A constructor used to create a <b>BluetoothHost</b> instance.

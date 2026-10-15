@@ -148,7 +148,7 @@ public:
     virtual int32_t SetVirtualAutoConnectType(const std::string &address, int connType, int businessType) = 0;
     virtual int32_t SetFastScanLevel(int level) = 0;
     virtual void UpdateVirtualDevice(int32_t action, const std::string &address) = 0;
-    virtual int32_t EnableBluetoothToRestrictMode(const std::string &callingName) = 0;
+    virtual int32_t EnableBluetoothToRestrictMode(const std::string &callingName, bool isBleOwnerMode) = 0;
     virtual int32_t ControlDeviceAction(const std::string &deviceId, uint32_t controlType,
         uint32_t controlTypeVal, uint32_t controlObject) = 0;
     virtual int32_t GetLastConnectionTime(const std::string &address, int64_t &connectionTime) = 0;
@@ -173,6 +173,7 @@ public:
     virtual int32_t UpdateSecondaryPhonePairMode(int32_t mode) = 0;
     virtual int32_t SetBtChannelScan(bool isEnable, uint32_t interval) = 0;
     virtual int32_t GetBrAddressByBleAddress(const std::string &bleAddr, std::string &brAddr) = 0;
+    virtual int32_t GetBleMacByBrMac(const std::string &brMac, std::string &bleMac) = 0;
 };
 }  // namespace Bluetooth
 }  // namespace OHOS

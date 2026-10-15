@@ -83,4 +83,6 @@ function GetLocalAddress(): String;
 @gen_promise("factoryReset")
 function FactoryResetSync(): void;
 
+function IsBluetoothSupported(): bool;
+
 function ConvertUuid(uuid: String): String;

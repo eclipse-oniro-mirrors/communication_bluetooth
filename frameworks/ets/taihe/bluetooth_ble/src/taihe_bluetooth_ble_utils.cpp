@@ -156,6 +156,137 @@ bool HasPermission(int permissions, int permissionMask)
     return (static_cast<unsigned int>(permissions) & static_cast<unsigned int>(permissionMask)) != 0;
 }
 
+::ohos::bluetooth::ble::GattProperties TaiheConvertGattProperties(int properties)
+{
+    ::ohos::bluetooth::ble::GattProperties taiheProperties;
+    taiheProperties.write.emplace(HasProperty(properties, GattCharacteristic::WRITE));
+    taiheProperties.writeNoResponse.emplace(
+        HasProperty(properties, GattCharacteristic::WRITE_WITHOUT_RESPONSE));
+    taiheProperties.read.emplace(HasProperty(properties, GattCharacteristic::READ));
+    taiheProperties.notify.emplace(HasProperty(properties, GattCharacteristic::NOTIFY));
+    taiheProperties.indicate.emplace(HasProperty(properties, GattCharacteristic::INDICATE));
+    taiheProperties.broadcast.emplace(HasProperty(properties, GattCharacteristic::BROADCAST));
+    taiheProperties.authenticatedSignedWrite.emplace(
+        HasProperty(properties, GattCharacteristic::AUTHENTICATED_SIGNED_WRITES));
+    taiheProperties.extendedProperties.emplace(
+        HasProperty(properties, GattCharacteristic::EXTENDED_PROPERTIES));
+    return taiheProperties;
+}
+
+::ohos::bluetooth::ble::GattPermissions TaiheConvertGattPermissions(int permissions)
+{
+    ::ohos::bluetooth::ble::GattPermissions taihePermissions;
+    taihePermissions.read.emplace(HasPermission(permissions, GattCharacteristic::READABLE));
+    taihePermissions.readEncrypted.emplace(
+        HasPermission(permissions, GattCharacteristic::READ_ENCRYPTED));
+    taihePermissions.readEncryptedMitm.emplace(
+        HasPermission(permissions, GattCharacteristic::READ_ENCRYPTED_MITM));
+    taihePermissions.write.emplace(HasPermission(permissions, GattCharacteristic::WRITEABLE));
+    taihePermissions.writeEncrypted.emplace(
+        HasPermission(permissions, GattCharacteristic::WRITE_ENCRYPTED));
+    taihePermissions.writeEncryptedMitm.emplace(
+        HasPermission(permissions, GattCharacteristic::WRITE_ENCRYPTED_MITM));
+    taihePermissions.writeSigned.emplace(HasPermission(permissions, GattCharacteristic::WRITE_SIGNED));
+    taihePermissions.writeSignedMitm.emplace(
+        HasPermission(permissions, GattCharacteristic::WRITE_SIGNED_MITM));
+    return taihePermissions;
+}
+
+::ohos::bluetooth::ble::BLEDescriptor TaiheConvertGattDescriptor(const GattDescriptor &descriptor)
+{
+    std::string characteristicUuid;
+    std::string serviceUuid;
+    GattCharacteristic *characteristic = descriptor.GetCharacteristic();
+    if (characteristic != nullptr) {
+        characteristicUuid = characteristic->GetUuid().ToString();
+        GattService *service = characteristic->GetService();
+        if (service != nullptr) {
+            serviceUuid = service->GetUuid().ToString();
+        }
+    }
+    size_t valueSize = 0;
+    const auto &valueData = descriptor.GetValue(&valueSize);
+    ::ohos::bluetooth::ble::BLEDescriptor taiheDescriptor{
+        taihe::string(serviceUuid),
+        taihe::string(characteristicUuid),
+        taihe::string(descriptor.GetUuid().ToString()),
+        taihe::array<uint8_t>(taihe::copy_data, valueData.get(), valueSize)
+    };
+    taiheDescriptor.descriptorHandle.emplace(static_cast<int32_t>(descriptor.GetHandle()));
+    taiheDescriptor.permissions.emplace(TaiheConvertGattPermissions(descriptor.GetPermissions()));
+    return taiheDescriptor;
+}
+
+::ohos::bluetooth::ble::GattService TaiheConvertGattService(GattService &service)
+{
+    std::string serviceUuid = service.GetUuid().ToString();
+    std::vector<GattCharacteristic> &characteristics = service.GetCharacteristics();
+    std::vector<::ohos::bluetooth::ble::BLECharacteristic> charVec;
+    charVec.reserve(characteristics.size());
+    for (auto &character : characteristics) {
+        std::vector<GattDescriptor> &descriptors = character.GetDescriptors();
+        std::vector<::ohos::bluetooth::ble::BLEDescriptor> descVec;
+        descVec.reserve(descriptors.size());
+        for (const auto &descriptor : descriptors) {
+            descVec.push_back(TaiheConvertGattDescriptor(descriptor));
+        }
+        size_t valueSize = 0;
+        const auto &valueData = character.GetValue(&valueSize);
+        ::ohos::bluetooth::ble::BLECharacteristic taiheChar{
+            taihe::string(serviceUuid),
+            taihe::string(character.GetUuid().ToString()),
+            taihe::array<uint8_t>(taihe::copy_data, valueData.get(), valueSize),
+            taihe::array<::ohos::bluetooth::ble::BLEDescriptor>(
+                taihe::move_data, descVec.data(), descVec.size())
+        };
+        taiheChar.properties.emplace(TaiheConvertGattProperties(character.GetProperties()));
+        taiheChar.characteristicValueHandle.emplace(static_cast<int32_t>(character.GetHandle()));
+        taiheChar.permissions.emplace(TaiheConvertGattPermissions(character.GetPermissions()));
+        charVec.push_back(std::move(taiheChar));
+    }
+    std::vector<::ohos::bluetooth::ble::GattService> includeVec;
+    const std::vector<std::reference_wrapper<GattService>> &includedServices = service.GetIncludedServices();
+    includeVec.reserve(includedServices.size());
+    for (const auto &inner : includedServices) {
+        includeVec.push_back(TaiheConvertGattService(inner.get()));
+    }
+    ::ohos::bluetooth::ble::GattService taiheService{
+        taihe::string(serviceUuid),
+        service.IsPrimary(),
+        taihe::array<::ohos::bluetooth::ble::BLECharacteristic>(
+            taihe::move_data, charVec.data(), charVec.size()),
+        std::nullopt
+    };
+    taiheService.includeServices.emplace(taihe::array<::ohos::bluetooth::ble::GattService>(
+        taihe::move_data, includeVec.data(), includeVec.size()));
+    return taiheService;
+}
+
+bool IsValidPhyValue(int32_t txPhy, int32_t rxPhy, int32_t phyMode)
+{
+    using BlePhy = ::ohos::bluetooth::ble::BlePhy;
+    using CodedPhyMode = ::ohos::bluetooth::ble::CodedPhyMode;
+    constexpr int32_t BLE_PHY_MIN = BlePhy::table[0];
+    constexpr int32_t BLE_PHY_MAX = BlePhy::table[static_cast<int>(BlePhy::key_t::BLE_PHY_CODED)];
+    constexpr int32_t CODED_PHY_MODE_MIN = CodedPhyMode::table[0];
+    constexpr int32_t CODED_PHY_MODE_MAX =
+        CodedPhyMode::table[static_cast<int>(CodedPhyMode::key_t::BLE_PHY_CODED_S8)];
+    if (txPhy < BLE_PHY_MIN || txPhy > BLE_PHY_MAX) {
+        HILOGE("invalid txPhy: %{public}d", txPhy);
+        return false;
+    }
+    if (rxPhy < BLE_PHY_MIN || rxPhy > BLE_PHY_MAX) {
+        HILOGE("invalid rxPhy: %{public}d", rxPhy);
+        return false;
+    }
+    // phyMode == 0 means the coded phy mode is not set, which is allowed.
+    if (phyMode != 0 && (phyMode < CODED_PHY_MODE_MIN || phyMode > CODED_PHY_MODE_MAX)) {
+        HILOGE("invalid phyMode: %{public}d", phyMode);
+        return false;
+    }
+    return true;
+}
+
 ani_object ConvertGattPermissionsToJs(ani_env *env, int permissions)
 {
     ani_object read = {};

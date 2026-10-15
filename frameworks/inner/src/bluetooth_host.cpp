@@ -187,13 +187,14 @@ public:
             [status](std::shared_ptr<BluetoothHostObserver> observer) { observer->OnDiscoveryStateChanged(status); });
     }
 
-    void OnDiscoveryResult(
-        const BluetoothRawAddress &device, int rssi, const std::string deviceName, int deviceClass) override
+    void OnDiscoveryResult(const BluetoothRawAddress &device, int rssi, const std::string deviceName,
+        int deviceClass, int transport) override
     {
         BluetoothRemoteDevice remoteDevice(device.GetAddress(), BTTransport::ADAPTER_BREDR);
-        host_.observers_.ForEach([remoteDevice, rssi, deviceName, deviceClass](
+        host_.observers_.ForEach([remoteDevice, rssi, deviceName, deviceClass, transport](
             std::shared_ptr<BluetoothHostObserver> observer) {
             observer->OnDiscoveryResult(remoteDevice, rssi, deviceName, deviceClass);
+            observer->OnDiscoveryResult(remoteDevice, rssi, deviceName, deviceClass, transport);
         });
     }
 
@@ -561,7 +562,7 @@ public:
         return proxy->DisableBt(isAsync, callingName);
     }
 
-    int EnableBluetoothToRestrictMode(std::string callingName) override
+    int EnableBluetoothToRestrictMode(std::string callingName, bool isBleOwnerMode) override
     {
         CHECK_AND_RETURN_LOG_RET(BluetoothHost::GetDefaultHost().IsBluetoothSupported(),
             BT_ERR_API_NOT_SUPPORT, "bluetooth is not supported!");
@@ -572,7 +573,7 @@ public:
 
         sptr<IBluetoothHost> proxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
         CHECK_AND_RETURN_LOG_RET(proxy != nullptr, BT_ERR_INTERNAL_ERROR, "proxy is nullptr");
-        return proxy->EnableBluetoothToRestrictMode(callingName);
+        return proxy->EnableBluetoothToRestrictMode(callingName, isBleOwnerMode);
     }
 };
 
@@ -924,13 +925,13 @@ int BluetoothHost::DisableBle()
     return proxy->DisableBle();
 }
 
-int BluetoothHost::EnableBluetoothToRestrictMode(std::string name)
+int BluetoothHost::EnableBluetoothToRestrictMode(std::string name, bool isBleOwnerMode)
 {
     HILOGI("enter");
     std::lock_guard<std::mutex> lock(pimpl->switchModuleMutex_);
     CHECK_AND_RETURN_LOG_RET(pimpl->switchModule_, BT_ERR_INTERNAL_ERROR, "switchModule is nullptr");
     return pimpl->switchModule_->ProcessBluetoothSwitchEvent(
-        BluetoothSwitchEvent::ENABLE_BLUETOOTH_TO_RESTRICE_MODE, name);
+        BluetoothSwitchEvent::ENABLE_BLUETOOTH_TO_RESTRICE_MODE, name, false, isBleOwnerMode);
 }
 
 bool BluetoothHost::IsBrEnabled() const
@@ -945,7 +946,8 @@ bool BluetoothHost::IsBleEnabled() const
     return (state == BluetoothState::STATE_ON ||
         state == BluetoothState::STATE_BLE_ON ||
         state == BluetoothState::STATE_TURNING_ON ||
-        state == BluetoothState::STATE_TURNING_OFF);
+        state == BluetoothState::STATE_TURNING_OFF ||
+        state == BluetoothState::STATE_BLE_OWNER_MODE);
 }
 
 int BluetoothHost::GetLocalAddress(std::string &addr) const
@@ -1564,6 +1566,14 @@ int BluetoothHost::GetBrAddressByBleAddress(const std::string &bleAddr, std::str
     sptr<IBluetoothHost> proxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
     CHECK_AND_RETURN_LOG_RET(proxy != nullptr, BT_ERR_UNAVAILABLE_PROXY, "proxy is nullptr");
     return proxy->GetBrAddressByBleAddress(bleAddr, brAddr);
+}
+
+int BluetoothHost::GetBleMacByBrMac(const std::string &brMac, std::string &bleMac)
+{
+    CHECK_AND_RETURN_LOG_RET(IS_BT_ENABLED(), BT_ERR_INVALID_STATE, "bluetooth is off.");
+    sptr<IBluetoothHost> proxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
+    CHECK_AND_RETURN_LOG_RET(proxy != nullptr, BT_ERR_UNAVAILABLE_PROXY, "proxy is nullptr");
+    return proxy->GetBleMacByBrMac(brMac, bleMac);
 }
 } // namespace Bluetooth
 } // namespace OHOS

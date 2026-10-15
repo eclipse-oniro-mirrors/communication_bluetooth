@@ -22,6 +22,7 @@
 #include "ohos.bluetooth.connection.impl.hpp"
 #include "taihe/runtime.hpp"
 #include "stdexcept"
+#include "taihe_event_module.h"
 
 namespace OHOS {
 namespace Bluetooth {
@@ -69,6 +70,8 @@ public:
     std::vector<::taihe::optional<::taihe::callback<void(
         ::ohos::bluetooth::connection::BatteryInfo const& data)>>> remoteBatteryChangeVec = {};
     std::shared_mutex remoteBatteryChangeLock;
+
+    EventModule<void(::ohos::bluetooth::connection::AclStateResult const& data)> aclStateChangeEventModule_;
 };
 
 class TaiheBluetoothConnectionObserver : public BluetoothHostObserver {
@@ -80,8 +83,8 @@ public:
 
     void OnStateChanged(const int transport, const int status) override{};
     void OnDiscoveryStateChanged(int status) override;
-    void OnDiscoveryResult(
-        const BluetoothRemoteDevice &device, int rssi, const std::string deviceName, int deviceClass) override;
+    void OnDiscoveryResult(const BluetoothRemoteDevice &device, int rssi, const std::string deviceName,
+        int deviceClass, int transport) override;
     void OnPairRequested(const BluetoothRemoteDevice &device) override;
     void OnPairConfirmed(const BluetoothRemoteDevice &device, int reqType, int number) override;
     void OnScanModeChanged(int mode) override;
@@ -100,11 +103,13 @@ public:
         ::ohos::bluetooth::connection::PinRequiredParam const& data)>>> pinRequiredVec = {};
     std::shared_mutex pinRequiredLock;
 
+    EventModule<void(::ohos::bluetooth::connection::ScanMode data)> scanModeChangeEventModule_;
+
 private:
     void OnPairConfirmedCallBack(const std::shared_ptr<PairConfirmedCallBackInfo> &pairConfirmInfo);
     void OnDiscoveryResultCallBack(const BluetoothRemoteDevice &device);
-    void OnDiscoveryResultCallBack(
-        const BluetoothRemoteDevice &device, int rssi, const std::string &deviceName, int deviceClass);
+    void OnDiscoveryResultCallBack(const BluetoothRemoteDevice &device, int rssi, const std::string &deviceName,
+        int deviceClass);
     static std::string GetFormatPinCode(uint32_t pinType, uint32_t pinCode);
 };
 }  // namespace Bluetooth

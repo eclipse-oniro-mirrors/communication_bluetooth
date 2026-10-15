@@ -100,9 +100,10 @@ private:
 
 class NapiNativeDiscoveryInfoResultArray : public NapiNativeObject {
 public:
-    explicit NapiNativeDiscoveryInfoResultArray(
-        const std::shared_ptr<BluetoothRemoteDevice> &device, int rssi, const std::string deviceName, int deviceClass)
-        : remoteDevice_(device), rssi_(rssi), deviceName_(deviceName), deviceClass_(deviceClass) {}
+    explicit NapiNativeDiscoveryInfoResultArray(const std::shared_ptr<BluetoothRemoteDevice> &device, int rssi,
+        const std::string deviceName, int deviceClass, int transport)
+        : remoteDevice_(device), rssi_(rssi), deviceName_(deviceName), deviceClass_(deviceClass),
+          transport_(transport) {}
     ~NapiNativeDiscoveryInfoResultArray() override = default;
 
     napi_value ToNapiValue(napi_env env) const override;
@@ -111,6 +112,7 @@ private:
     int rssi_ = 0;
     std::string deviceName_ = "";
     int deviceClass_ = MajorClass::MAJOR_UNCATEGORIZED;
+    int transport_ = 0;
 };
 
 class NapiNativeOobData : public NapiNativeObject {
@@ -183,6 +185,22 @@ public:
         std::string deviceAddr, int connectState, int cause, bool isDisconnected, GattDisconnectParam disconnectParam)
         : NapiNativeStateChangeParam(deviceAddr, connectState, cause, isDisconnected, disconnectParam) {}
     ~NapiNativeBleConnectionStateChangeParam() override = default;
+};
+
+/**
+ * Phonebook sync state change parameters: only carries deviceId and a
+ * PhoneBookSyncStateType value (already mapped from service-side state).
+ */
+class NapiNativeSyncStateChangeParam : public NapiNativeObject {
+public:
+    NapiNativeSyncStateChangeParam(std::string deviceAddr, int syncState)
+        : deviceAddr_(std::move(deviceAddr)), syncState_(syncState) {}
+    ~NapiNativeSyncStateChangeParam() override = default;
+
+    napi_value ToNapiValue(napi_env env) const override;
+private:
+    std::string deviceAddr_ = "";
+    int syncState_ = -1;
 };
 
 class NapiNativeGattsCharacterReadRequest : public NapiNativeObject {

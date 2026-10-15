@@ -16,7 +16,6 @@
 #ifndef TAIHE_BLUETOOTH_HID_HOST_OBSERVER_H_
 #define TAIHE_BLUETOOTH_HID_HOST_OBSERVER_H_
 
-#include <shared_mutex>
 #include "bluetooth_hid_host.h"
 #include "ohos.bluetooth.hid.proj.hpp"
 #include "ohos.bluetooth.hid.impl.hpp"

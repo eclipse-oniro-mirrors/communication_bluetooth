@@ -34,7 +34,6 @@ TaiheBluetoothHidHostObserver::TaiheBluetoothHidHostObserver()
 void TaiheBluetoothHidHostObserver::OnConnectionStateChanged(const BluetoothRemoteDevice &device,
     int state, int cause)
 {
-    std::shared_lock<std::shared_mutex> guard(eventSubscribe_.lock_);
     HILOGD("enter, remote device address: %{public}s, state: %{public}d, cause: %{public}d",
         GET_ENCRYPT_ADDR(device), state, cause);
     ::taihe::string deviceId_(device.GetDeviceAddr());
@@ -46,11 +45,7 @@ void TaiheBluetoothHidHostObserver::OnConnectionStateChanged(const BluetoothRemo
         .state = state_,
         .cause = cause_,
     };
-    for (auto callback : eventSubscribe_.callbackVec_) {
-        if (callback) {
-            (*callback)(taiheResult);
-        }
-    }
+    eventSubscribe_.PublishEvent(taiheResult);
 }
 }  // namespace Bluetooth
 }  // namespace OHOS

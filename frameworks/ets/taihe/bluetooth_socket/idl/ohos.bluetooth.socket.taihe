@@ -1,0 +1,97 @@
+/*
+ * Copyright (C) 2026 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@!namespace("@ohos.bluetooth.socket", "socket")
+@!sts_inject_into_module("import { BusinessError, AsyncCallback } from '@ohos.base';")
+
+@!sts_inject("""
+static { loadLibraryWithPermissionCheck("bluetoothSocket_taihe_native.z", "@ohos.bluetooth.socket"); }
+
+export function sppListen(name: string, options: SppOptions, callback: AsyncCallback<int>): void {
+    taskpool.execute((name: string, options: SppOptions): int => {
+        return sppListenSync(name, options);
+    }, name, options)
+    .then((ret: Any): void => {
+        callback(new BusinessError(), ret as int);
+    })
+    .catch((err: Error): void => {
+        callback(err as BusinessError, -1);
+    });
+}
+
+export function sppAccept(serverSocket: int, callback: AsyncCallback<int>): void {
+    taskpool.execute((serverSocket: int): int => {
+        return sppAcceptSync(serverSocket);
+    }, serverSocket)
+    .then((ret: Any): void => {
+        callback(new BusinessError(), ret as int);
+    })
+    .catch((err: Error): void => {
+        callback(err as BusinessError, -1);
+    });
+}
+
+export function sppConnect(deviceId: string, options: SppOptions, callback: AsyncCallback<int>): void {
+    taskpool.execute((deviceId: string, options: SppOptions): int => {
+        return sppConnectSync(deviceId, options);
+    }, deviceId, options)
+    .then((ret: Any): void => {
+        callback(new BusinessError(), ret as int);
+    })
+    .catch((err: Error): void => {
+        callback(err as BusinessError, -1);
+    });
+}
+""")
+
+function SppListenSync(name: String, options: SppOptions): i32;
+
+function SppAcceptSync(serverSocket: i32): i32;
+
+function SppConnectSync(deviceId: String, options: SppOptions): i32;
+
+function SppCloseServerSocket(socket: i32): void;
+
+function SppWrite(clientSocket: i32, data: @arraybuffer Array<u8>): void;
+function SppCloseClientSocket(socket: i32): void;
+
+function GetMaxReceiveDataSize(clientSocket: i32): i32;
+
+function OnSppRead(clientSocket: i32, callback:(data: @arraybuffer Array<u8>) => void): void;
+function OffSppRead(clientSocket: i32, callback: Optional<(data: @arraybuffer Array<u8>) => void>): void;
+
+function IsConnected(clientSocket: i32): bool;
+function GetL2capPsm(serverSocket: i32): i32;
+function GetDeviceId(clientSocket: i32): String;
+function GetMaxTransmitDataSize(clientSocket: i32): i32;
+
+@gen_promise("sppWriteAsync")
+function SppWriteAsyncSync(clientSocket: i32, data: @arraybuffer Array<u8>): void;
+
+@gen_promise("sppReadAsync")
+function SppReadAsyncSync(clientSocket: i32): @arraybuffer Array<u8>;
+
+struct SppOptions {
+    uuid: String;
+    secure: bool;
+    type: SppType;
+    psm: Optional<i32>;
+}
+
+enum SppType: i32 {
+    SPP_RFCOMM = 0,
+    SPP_L2CAP = 1,
+    SPP_L2CAP_BLE = 2
+}
