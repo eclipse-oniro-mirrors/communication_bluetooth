@@ -58,6 +58,8 @@ export struct BtServicesComponent {
         parameters: {
           'ability.want.params.uiExtensionType': 'sys/commonUI',
         }
+      }, {
+        dpiFollowStrategy: DpiFollowStrategy.FOLLOW_HOST_DPI
       })
         .backgroundColor('#01111111')
         .onRemoteReady((proxy) => {
