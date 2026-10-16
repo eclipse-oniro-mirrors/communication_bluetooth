@@ -1478,7 +1478,7 @@ int BluetoothHost::GetCarKeyDfxData(std::string &dfxData) const
     HILOGI("enter");
     CHECK_AND_RETURN_LOG_RET(IS_BT_ENABLED(), BT_ERR_INVALID_STATE, "bluetooth is off.");
     sptr<IBluetoothHost> proxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
-    CHECK_AND_RETURN_LOG_RET(proxy != nullptr, BT_ERR_UNAVAILABLE_PROXY, "proxy is nullptr");
+    CHECK_AND_RETURN_LOG_RET(proxy != nullptr, BT_ERR_PROXY_NULL, "proxy is nullptr");
     return proxy->GetCarKeyDfxData(dfxData);
 }
 
@@ -1487,7 +1487,7 @@ int BluetoothHost::SetCarKeyCardData(const std::string &address, int32_t action)
     HILOGI("enter");
     CHECK_AND_RETURN_LOG_RET(IS_BT_ENABLED(), BT_ERR_INVALID_STATE, "bluetooth is off.");
     sptr<IBluetoothHost> proxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
-    CHECK_AND_RETURN_LOG_RET(proxy != nullptr, BT_ERR_UNAVAILABLE_PROXY, "proxy is nullptr");
+    CHECK_AND_RETURN_LOG_RET(proxy != nullptr, BT_ERR_PROXY_NULL, "proxy is nullptr");
     return proxy->SetCarKeyCardData(address, action);
 }
 

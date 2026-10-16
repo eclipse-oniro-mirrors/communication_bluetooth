@@ -116,6 +116,7 @@ static std::map<int32_t, int32_t> innerToBusinessErrCodeMap {
     { BtErrCode::BT_ERR_BAS_NO_MATCH_OBSERVER, BtErrCode::BT_ERR_INTERNAL_ERROR },
     { BtErrCode::BT_ERR_BAS_OBSERVER_EXCEEDS_LIMIT, BtErrCode::BT_ERR_INTERNAL_ERROR },
     { BtErrCode::BT_ERR_BAS_REQUEST_BUSY, BtErrCode::BT_ERR_INTERNAL_ERROR },
+    { BtErrCode::BT_ERR_PROXY_NULL, BtErrCode::BT_ERR_INTERNAL_ERROR },
 };
 
 static std::map<int32_t, std::string> innerErrMsgMap {
@@ -157,6 +158,7 @@ static std::map<int32_t, std::string> innerErrMsgMap {
     { BtErrCode::BT_ERR_BAS_NO_MATCH_OBSERVER, "Operation failed. Unregistered bas observer." },
     { BtErrCode::BT_ERR_BAS_OBSERVER_EXCEEDS_LIMIT, "Operation failed. Bas observers exceeds the limit." },
     { BtErrCode::BT_ERR_BAS_REQUEST_BUSY, "Operation failed. Bas request busy." },
+    { BtErrCode::BT_ERR_PROXY_NULL, "Operation failed. The proxy is null." },
 };
 
 bool IsInnerErrorCode(int32_t errCode)
@@ -289,11 +291,8 @@ void ConvertInnerToBusinessErrCode(int32_t innerCode, ErrInfo &info)
 ErrInfo ProcessErrCode(int32_t originalCode, const std::vector<int32_t> &validErrCodes)
 {
     ErrInfo result = { originalCode, "" };
-    // inner code: originalCode -> business errCode + specific errMsg
-    if (IsInnerErrorCode(originalCode)) {
-        ConvertInnerToBusinessErrCode(originalCode, result);
-        return result;
-    }
+    // The error code declared by the API (validErrCodes) takes precedence and is thrown as is,
+    // even if it is also registered in innerToBusinessErrCodeMap.
     bool isValidCode = false;
     for (const auto &code: validErrCodes) {
         if (code == result.errCode) {
@@ -301,16 +300,21 @@ ErrInfo ProcessErrCode(int32_t originalCode, const std::vector<int32_t> &validEr
             break;
         }
     }
-    if (!isValidCode) {
-        // invalid code: BT_ERR_INTERNAL_ERROR + specific errMsg
-        result.errCode = BtErrCode::BT_ERR_INTERNAL_ERROR;
-        result.errMsg = "Operation failed";
-    } else {
+    if (isValidCode) {
         auto detailIter = napiErrMsgMap.find(result.errCode);
         if (detailIter != napiErrMsgMap.end()) {
             result.errMsg = detailIter->second;
         }
+        return result;
     }
+    // inner code: originalCode -> business errCode + specific errMsg
+    if (IsInnerErrorCode(originalCode)) {
+        ConvertInnerToBusinessErrCode(originalCode, result);
+        return result;
+    }
+    // invalid code: BT_ERR_INTERNAL_ERROR + specific errMsg
+    result.errCode = BtErrCode::BT_ERR_INTERNAL_ERROR;
+    result.errMsg = "Operation failed";
     return result;
 }
 }

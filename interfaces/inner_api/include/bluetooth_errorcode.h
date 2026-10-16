@@ -147,6 +147,10 @@ enum BtErrCode {
     BT_ERR_BAS_NO_MATCH_OBSERVER = BT_ERR_INNER_BASE - 33,
     BT_ERR_BAS_OBSERVER_EXCEEDS_LIMIT = BT_ERR_INNER_BASE - 34,
     BT_ERR_BAS_REQUEST_BUSY = BT_ERR_INNER_BASE - 35,
+
+    // Connection inner error
+    BT_CONNECTION_ERROR = -1700,
+    BT_ERR_PROXY_NULL = BT_CONNECTION_ERROR - 1,
 };
 }  // namespace Bluetooth
 }  // namespace OHOS

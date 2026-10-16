@@ -2094,7 +2094,7 @@ int32_t BluetoothHostProxy::GetCarKeyDfxData(std::string &dfxData)
     MessageParcel data;
     if (!data.WriteInterfaceToken(BluetoothHostProxy::GetDescriptor())) {
         HILOGE("BluetoothHostProxy::GetCarKeyDfxData WriteInterfaceToken error");
-        return BT_ERR_IPC_TRANS_FAILED;
+        return BT_ERR_IPC_TRANSACTION_FAILED;
     }
     MessageParcel reply;
     MessageOption option = {MessageOption::TF_SYNC};
@@ -2102,7 +2102,7 @@ int32_t BluetoothHostProxy::GetCarKeyDfxData(std::string &dfxData)
         BluetoothHostInterfaceCode::BT_GET_CAR_KEY_DFX_DATA, option, data, reply);
     if (error != BT_NO_ERROR) {
         HILOGE("BluetoothHostProxy::GetCarKeyDfxData done fail error: %{public}d", error);
-        return BT_ERR_IPC_TRANS_FAILED;
+        return BT_ERR_IPC_TRANSACTION_FAILED;
     }
     int32_t exception = reply.ReadInt32();
     if (exception == BT_NO_ERROR) {
@@ -2116,17 +2116,17 @@ int32_t BluetoothHostProxy::SetCarKeyCardData(const std::string &address, int32_
     MessageParcel data;
     if (!data.WriteInterfaceToken(BluetoothHostProxy::GetDescriptor())) {
         HILOGE("BluetoothHostProxy::SetCarKeyCardData WriteInterfaceToken error");
-        return BT_ERR_IPC_TRANS_FAILED;
+        return BT_ERR_IPC_TRANSACTION_FAILED;
     }
-    CHECK_AND_RETURN_LOG_RET(data.WriteString(address), BT_ERR_IPC_TRANS_FAILED, "write address error");
-    CHECK_AND_RETURN_LOG_RET(data.WriteUint32(action), BT_ERR_IPC_TRANS_FAILED, "write action error");
+    CHECK_AND_RETURN_LOG_RET(data.WriteString(address), BT_ERR_IPC_TRANSACTION_FAILED, "write address error");
+    CHECK_AND_RETURN_LOG_RET(data.WriteUint32(action), BT_ERR_IPC_TRANSACTION_FAILED, "write action error");
     MessageParcel reply;
     MessageOption option = {MessageOption::TF_SYNC};
     int32_t error = InnerTransact(
         BluetoothHostInterfaceCode::BT_SET_CAR_KEY_CARD_DATA, option, data, reply);
     if (error != BT_NO_ERROR) {
         HILOGE("BluetoothHostProxy::SetCarKeyCardData done fail error: %{public}d", error);
-        return BT_ERR_IPC_TRANS_FAILED;
+        return BT_ERR_IPC_TRANSACTION_FAILED;
     }
     return reply.ReadInt32();
 }
