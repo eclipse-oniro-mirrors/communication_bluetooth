@@ -1028,9 +1028,9 @@ uintptr_t GenerateLocalOobDataPromise(::ohos::bluetooth::connection::BluetoothTr
 ::taihe::string GetBleMacByBrMac(::taihe::string_view brMacValue)
 {
     HILOGD("enter");
-    std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_SYSTEM_PERMISSION_FAILED, BT_ERR_INVALID_PARAM,
-                                           BT_ERR_API_NOT_SUPPORT, BT_ERR_INVALID_STATE, BT_ERR_UNPAIRED_DEVICE,
-                                           BT_ERR_INTERNAL_ERROR, BT_ERR_NO_BLE_ASSOCIATION };
+    std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_SYSTEM_PERMISSION_FAILED,
+                                           BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT, BT_ERR_INVALID_STATE,
+                                           BT_ERR_UNPAIRED_DEVICE, BT_ERR_INTERNAL_ERROR, BT_ERR_NO_BLE_ASSOCIATION };
     TAIHE_BT_CONTEXT_HA(taihe::get_env(), "connection.GetBleMacByBrMac", validErrCodes);
     std::string brMac = static_cast<std::string>(brMacValue);
     std::string bleMac = "";
