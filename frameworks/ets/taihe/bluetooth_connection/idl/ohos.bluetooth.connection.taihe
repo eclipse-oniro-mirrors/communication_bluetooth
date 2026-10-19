@@ -282,6 +282,8 @@ function GenerateLocalOobDataPromise(transport: BluetoothTransport): @sts_type("
 
 function GetVirtualAddressByHash(algorithmType: HashAlgorithmType, hashValue: String): String;
 
+function GetBleMacByBrMac(brMac: String): String;
+
 @gen_promise("pairDeviceOutOfBand")
 function PairDeviceOutOfBandSync(transport: BluetoothTransport, p192Data: OobDataNullValue, p256Data: OobDataNullValue): void;
 

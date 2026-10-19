@@ -1025,6 +1025,21 @@ uintptr_t GenerateLocalOobDataPromise(::ohos::bluetooth::connection::BluetoothTr
     return virtualAddress;
 }
 
+::taihe::string GetBleMacByBrMac(::taihe::string_view brMacValue)
+{
+    HILOGD("enter");
+    std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_SYSTEM_PERMISSION_FAILED, BT_ERR_INVALID_PARAM,
+                                           BT_ERR_API_NOT_SUPPORT, BT_ERR_INVALID_STATE, BT_ERR_UNPAIRED_DEVICE,
+                                           BT_ERR_INTERNAL_ERROR, BT_ERR_NO_BLE_ASSOCIATION };
+    TAIHE_BT_CONTEXT_HA(taihe::get_env(), "connection.GetBleMacByBrMac", validErrCodes);
+    std::string brMac = static_cast<std::string>(brMacValue);
+    std::string bleMac = "";
+    BluetoothHost *host = &BluetoothHost::GetDefaultHost();
+    int32_t err = host->GetBleMacByBrMac(brMac, bleMac);
+    TAIHE_BT_HA_ASSERT_RETURN_VERIFY(err == BT_NO_ERROR, err, bleMac);
+    return bleMac;
+}
+
 void PairDeviceOutOfBandSync(::ohos::bluetooth::connection::BluetoothTransport transport,
     ::ohos::bluetooth::connection::OobDataNullValue const& p192Data,
     ::ohos::bluetooth::connection::OobDataNullValue const& p256Data)
@@ -1179,6 +1194,7 @@ TH_EXPORT_CPP_API_SetLocalName(OHOS::Bluetooth::SetLocalName);
 TH_EXPORT_CPP_API_StartPairOutOfBandSync(OHOS::Bluetooth::StartPairOutOfBandSync);
 TH_EXPORT_CPP_API_GenerateLocalOobDataPromise(OHOS::Bluetooth::GenerateLocalOobDataPromise);
 TH_EXPORT_CPP_API_GetVirtualAddressByHash(OHOS::Bluetooth::GetVirtualAddressByHash);
+TH_EXPORT_CPP_API_GetBleMacByBrMac(OHOS::Bluetooth::GetBleMacByBrMac);
 TH_EXPORT_CPP_API_PairDeviceOutOfBandSync(OHOS::Bluetooth::PairDeviceOutOfBandSync);
 TH_EXPORT_CPP_API_GetCarKeyDfxData(OHOS::Bluetooth::GetCarKeyDfxData);
 TH_EXPORT_CPP_API_GetRemoteDeviceTransport(OHOS::Bluetooth::GetRemoteDeviceTransport);
