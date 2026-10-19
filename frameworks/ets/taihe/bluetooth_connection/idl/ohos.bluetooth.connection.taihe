@@ -55,7 +55,9 @@ function OffPinRequired(callback: Optional<(data: PinRequiredParam) => void>): v
 
 enum BluetoothTransport: i32 {
     TRANSPORT_BR_EDR = 0,
-    TRANSPORT_LE = 1
+    TRANSPORT_LE = 1,
+    TRANSPORT_DUAL = 2,
+    TRANSPORT_UNKNOWN = 3
 }
 
 enum ScanMode: i32 {
