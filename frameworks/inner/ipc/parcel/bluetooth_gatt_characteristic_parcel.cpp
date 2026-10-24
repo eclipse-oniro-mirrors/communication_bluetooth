@@ -21,6 +21,7 @@
 #include "bluetooth_gatt_characteristic_parcel.h"
 #include "bluetooth_gatt_descriptor_parcel.h"
 #include "bluetooth_log.h"
+#include "bluetooth_parcel_depth.h"
 
 namespace OHOS {
 namespace Bluetooth {
@@ -104,6 +105,11 @@ bool BluetoothGattCharacteristic::IsReadParcelDataSuccess(Parcel &parcel)
 
 bool BluetoothGattCharacteristic::ReadFromParcel(Parcel &parcel)
 {
+    if (ParcelDepthExceeded<BluetoothGattCharacteristic>()) {
+        HILOGE("gatt characteristic nesting depth exceeds limit, max=%{public}u", BT_PARCEL_MAX_NESTING_DEPTH);
+        return false;
+    }
+    ParcelDepthGuard<BluetoothGattCharacteristic> depthGuard;
     if (!IsReadParcelDataSuccess(parcel)) {
         HILOGE("read parcel data error");
         return false;

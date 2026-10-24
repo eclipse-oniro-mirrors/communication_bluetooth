@@ -20,6 +20,7 @@
 #include "bluetooth_bt_uuid.h"
 #include "bluetooth_gatt_descriptor_parcel.h"
 #include "bluetooth_log.h"
+#include "bluetooth_parcel_depth.h"
 
 namespace OHOS {
 namespace Bluetooth {
@@ -64,6 +65,11 @@ bool BluetoothGattDescriptor::WriteToParcel(Parcel &parcel)
 
 bool BluetoothGattDescriptor::ReadFromParcel(Parcel &parcel)
 {
+    if (ParcelDepthExceeded<BluetoothGattDescriptor>()) {
+        HILOGE("gatt descriptor nesting depth exceeds limit, max=%{public}u", BT_PARCEL_MAX_NESTING_DEPTH);
+        return false;
+    }
+    ParcelDepthGuard<BluetoothGattDescriptor> depthGuard;
     if (!parcel.ReadUint16(handle_)) {
         return false;
     }
