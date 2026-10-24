@@ -443,6 +443,35 @@ typedef struct {
     unsigned char *rspData;
     /** Scan response data length */
     unsigned int rspDataLen;
+    /**
+     * Whether the local device name is included in the advertisement packet, used by {@link BleStartAdvEx}.
+     *
+     * This structure is available for system applications only. The name is a snapshot of the
+     * adapter local name (the one shown in system settings) taken when {@link BleStartAdvEx} is called;
+     * it is not refreshed automatically after the local name changes.
+     * The name is carried on a best-effort basis: if the total length of the raw advertising data
+     * plus the name exceeds the legacy advertising data limit, the name is not carried in the
+     * advertisement packet and the advertising starts with the raw advertising data only.
+     * Zero-initialize the structure (or set this field explicitly) before calling;
+     * other entry points ignore this field.
+     *
+     * @since 26.2.0
+     */
+    bool advIncludeDeviceName;
+    /**
+     * Whether the local device name is included in the scan response, used by {@link BleStartAdvEx}.
+     *
+     * Same snapshot semantics as {@link advIncludeDeviceName}: the name is the adapter local
+     * name taken when {@link BleStartAdvEx} is called and is not refreshed on name change.
+     * The name is carried on a best-effort basis: if the total length of the raw scan response
+     * data plus the name exceeds the legacy advertising data limit, the name is not carried in
+     * the scan response and the advertising starts with the raw scan response data only.
+     * Zero-initialize the structure (or set this field explicitly) before calling;
+     * other entry points ignore this field.
+     *
+     * @since 26.2.0
+     */
+    bool rspIncludeDeviceName;
 } StartAdvRawData;
 
 /**

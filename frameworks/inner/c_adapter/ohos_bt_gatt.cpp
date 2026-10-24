@@ -25,6 +25,7 @@
 #include "__config"
 #include "bluetooth_ble_advertiser.h"
 #include "bluetooth_ble_central_manager.h"
+#include "bluetooth_host.h"
 #include "bluetooth_log.h"
 #include "bluetooth_remote_device.h"
 #include "bluetooth_utils.h"
@@ -729,6 +730,28 @@ int BleStartAdvWithAddr(int *advId, const StartAdvRawData *rawData, const BleAdv
 }
 
 /**
+ * @brief Append the local device name AD to a raw payload on a best-effort basis.
+ *
+ * The name is a snapshot of the adapter local name. It is appended only when it fits within
+ * the legacy advertising data limit; otherwise the name is not carried, so the advertising
+ * always goes out with the payload as-is.
+ */
+static void AppendLocalName(std::vector<uint8_t> &payload)
+{
+    std::string localName = BluetoothHost::GetDefaultHost().GetLocalName();
+    uint32_t nameAdBytes =
+        static_cast<uint32_t>(localName.length()) + BLE_ADV_DATA_FIELD_TYPE_AND_LEN;
+    if (payload.size() + nameAdBytes > BLE_ADV_MAX_LEGACY_ADVERTISING_DATA_BYTES) {
+        HILOGW("payload plus device name exceeds the legacy limit, drop the name, name len %{public}zu",
+            localName.length());
+        return;
+    }
+    payload.push_back(static_cast<uint8_t>(localName.length() + 1));  // AD length byte: type byte + name
+    payload.push_back(BLE_AD_TYPE_NAME_CMPL);
+    payload.insert(payload.end(), localName.begin(), localName.end());
+}
+
+/**
  * @brief Sets advertising data and parameters and starts advertising.
  *
  * This function is available for system applications only. \n
@@ -749,6 +772,16 @@ int BleStartAdvEx(int *advId, const StartAdvRawData rawData, BleAdvParams advPar
         return OHOS_BT_STATUS_NOT_READY;
     }
 
+    // AppendLocalName may issue a GetLocalName proxy call, keep it outside g_advMutex
+    auto advData = ConvertDataToVec(rawData.advData, rawData.advDataLen);
+    auto scanResponse = ConvertDataToVec(rawData.rspData, rawData.rspDataLen);
+    if (rawData.advIncludeDeviceName) {
+        AppendLocalName(advData);
+    }
+    if (rawData.rspIncludeDeviceName) {
+        AppendLocalName(scanResponse);
+    }
+
     lock_guard<ffrt::mutex> lock(g_advMutex);
     if (g_BleAdvertiser == nullptr) {
         g_BleAdvertiser = BleAdvertiser::CreateInstance();
@@ -761,8 +794,6 @@ int BleStartAdvEx(int *advId, const StartAdvRawData rawData, BleAdvParams advPar
     if (advParam.advType == OHOS_BLE_ADV_SCAN_IND || advParam.advType == OHOS_BLE_ADV_NONCONN_IND) {
         settings.SetConnectable(false);
     }
-    auto advData = ConvertDataToVec(rawData.advData, rawData.advDataLen);
-    auto scanResponse = ConvertDataToVec(rawData.rspData, rawData.rspDataLen);
 
     RegisterAdvIdAppType(*advId, advParam.appType);
     std::function startAdvFunc = [i, advData, scanResponse, settings]() {
