@@ -369,21 +369,30 @@ static vector<uint8_t> ConvertDataToVec(uint8_t *data, unsigned int len)
  * returns an error code defined in {@link BtStatus} otherwise.
  * @since 6
  */
+static void AppendLocalName(std::vector<uint8_t> &payload);
+
 int BleSetAdvData(int advId, const StartAdvRawData data)
 {
     if (advId < 0 || advId >= MAX_BLE_ADV_NUM) {
         HILOGE("Invalid advId (%{public}d)", advId);
         return OHOS_BT_STATUS_PARM_INVALID;
     }
+    // the flags of THIS call decide whether the name is carried after the whole-replacement
+    // update; AppendLocalName may issue a GetLocalName proxy call, keep it outside g_advMutex
+    auto advData = ConvertDataToVec(data.advData, data.advDataLen);
+    auto rspData = ConvertDataToVec(data.rspData, data.rspDataLen);
+    if (data.advIncludeDeviceName) {
+        AppendLocalName(advData);
+    }
+    if (data.rspIncludeDeviceName) {
+        AppendLocalName(rspData);
+    }
     lock_guard<ffrt::mutex> lock(g_advMutex);
     if (g_BleAdvertiser == nullptr || g_bleAdvCallbacks[advId] == nullptr) {
         HILOGE("Adv is not started, need call 'BleStartAdvEx' first.");
         return OHOS_BT_STATUS_FAIL;
     }
-    HILOGD("advId: %{public}d, advLen: %{public}u, scanRspLen: %{public}u", advId, data.advDataLen, data.rspDataLen);
-
-    auto advData = ConvertDataToVec(data.advData, data.advDataLen);
-    auto rspData = ConvertDataToVec(data.rspData, data.rspDataLen);
+    HILOGD("advId: %{public}d, advLen: %{public}zu, scanRspLen: %{public}zu", advId, advData.size(), rspData.size());
     g_BleAdvertiser->SetAdvertisingData(advData, rspData, g_bleAdvCallbacks[advId]);
     return OHOS_BT_STATUS_SUCCESS;
 }
