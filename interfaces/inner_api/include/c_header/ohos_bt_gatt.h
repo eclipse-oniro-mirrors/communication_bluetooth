@@ -444,7 +444,8 @@ typedef struct {
     /** Scan response data length */
     unsigned int rspDataLen;
     /**
-     * Whether the local device name is included in the advertisement packet, used by {@link BleStartAdvEx}.
+     * Whether the local device name is included in the advertisement packet, used by
+     * {@link BleStartAdvEx} and {@link BleSetAdvData}.
      *
      * This structure is available for system applications only. The name is a snapshot of the
      * adapter local name (the one shown in system settings) taken when {@link BleStartAdvEx} is called;
@@ -452,22 +453,31 @@ typedef struct {
      * The name is carried on a best-effort basis: if the total length of the raw advertising data
      * plus the name exceeds the legacy advertising data limit, the name is not carried in the
      * advertisement packet and the advertising starts with the raw advertising data only.
+     * This flag is also consumed by {@link BleSetAdvData}: a data update replaces the
+     * payloads as a whole and applies the flags passed in that call (still best-effort,
+     * with a fresh name snapshot), so callers control whether the name is carried on
+     * every update independently of the flags used to start the advertising.
      * Zero-initialize the structure (or set this field explicitly) before calling;
-     * other entry points ignore this field.
+     * entry points other than {@link BleStartAdvEx} and {@link BleSetAdvData} ignore this field.
      *
      * @since 26.2.0
      */
     bool advIncludeDeviceName;
     /**
-     * Whether the local device name is included in the scan response, used by {@link BleStartAdvEx}.
+     * Whether the local device name is included in the scan response, used by
+     * {@link BleStartAdvEx} and {@link BleSetAdvData}.
      *
      * Same snapshot semantics as {@link advIncludeDeviceName}: the name is the adapter local
      * name taken when {@link BleStartAdvEx} is called and is not refreshed on name change.
      * The name is carried on a best-effort basis: if the total length of the raw scan response
      * data plus the name exceeds the legacy advertising data limit, the name is not carried in
      * the scan response and the advertising starts with the raw scan response data only.
+     * This flag is also consumed by {@link BleSetAdvData}: a data update replaces the
+     * payloads as a whole and applies the flags passed in that call (still best-effort,
+     * with a fresh name snapshot), so callers control whether the name is carried on
+     * every update independently of the flags used to start the advertising.
      * Zero-initialize the structure (or set this field explicitly) before calling;
-     * other entry points ignore this field.
+     * entry points other than {@link BleStartAdvEx} and {@link BleSetAdvData} ignore this field.
      *
      * @since 26.2.0
      */
