@@ -459,6 +459,21 @@ struct GattService {
 struct BLEConnectionChangeState {
     deviceId: String;
     state: ProfileConnectionState;
+    reason: Optional<GattDisconnectReason>;
+    reasonMessage: Optional<String>;
+}
+
+enum GattDisconnectReason: i32 {
+    CONN_TIMEOUT = 1,
+    CONN_TERMINATE_PEER_USER = 2,
+    CONN_TERMINATE_LOCAL_HOST = 3,
+    CONN_UNKNOWN = 4
+}
+
+enum BleProfile: i32 {
+    GATT = 1,
+    GATT_CLIENT = 2,
+    GATT_SERVER = 3
 }
 
 struct AdvertisingDisableParams {

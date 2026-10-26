@@ -573,7 +573,7 @@ static TaihePromiseAndCallback TaiheStartAdvertising(const ohos::bluetooth::ble:
     TAIHE_BT_ASSERT_RETURN(status == TAIHE_OK, BT_ERR_INVALID_PARAM,
         TaihePromiseAndCallback::Failure(BT_ERR_INVALID_PARAM));
 
-    auto callback = std::make_shared<TaiheBluetoothBleAdvertiseCallback>();
+    auto callback = std::make_shared<TaiheBluetoothBleAdvertiseAsyncCallback>();
     auto func = [settings, advData, rspData, duration, bleAdvertiser, callback]() {
         int ret = bleAdvertiser->StartAdvertising(settings, advData, rspData, duration, callback);
         ret = GetSDKAdaptedStatusCode(ret); // Adaptation for old sdk

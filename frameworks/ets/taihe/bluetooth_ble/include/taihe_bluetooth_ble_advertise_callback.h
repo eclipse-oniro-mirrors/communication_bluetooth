@@ -53,6 +53,15 @@ public:
 
     int advHandle_ = -1;
 };
+
+class TaiheBluetoothBleAdvertiseAsyncCallback : public TaiheBluetoothBleAdvertiseCallback {
+public:
+    TaiheBluetoothBleAdvertiseAsyncCallback() = default;
+    ~TaiheBluetoothBleAdvertiseAsyncCallback() override = default;
+
+    void OnStartResultEvent(int result, int advHandle) override;
+    void OnStopResultEvent(int result, int advHandle) override;
+};
 }  // namespace Bluetooth
 }  // namespace OHOS
 #endif  // TAIHE_BLUETOOTH_BLE_ADVERTISE_CALLBACK_H

@@ -28,6 +28,15 @@ namespace Bluetooth {
 auto g_eventSubscribe = std::make_shared<TaiheEventSubscribeModule>(
     REGISTER_BLE_ADVERTISING_STATE_INFO_TYPE, "bluetoothBleAdvertise_taihe");
 
+static void PublishAdvertisingStateEvent(int advHandle, ::ohos::bluetooth::ble::AdvertisingState::key_t state)
+{
+    ::ohos::bluetooth::ble::AdvertisingStateChangeInfo info{
+        advHandle, ::ohos::bluetooth::ble::AdvertisingState(state) };
+    auto &module = g_eventSubscribe->GetModule<
+        void(::ohos::bluetooth::ble::AdvertisingStateChangeInfo const&)>(REGISTER_BLE_ADVERTISING_STATE_INFO_TYPE);
+    module.PublishEvent(info);
+}
+
 TaiheBluetoothBleAdvertiseCallback::TaiheBluetoothBleAdvertiseCallback()
 {}
 
@@ -52,13 +61,6 @@ void TaiheBluetoothBleAdvertiseCallback::OnStartResultEvent(int result, int advH
         auto taiheAdvHandle = std::make_shared<TaiheNativeInt>(advHandle);
         AsyncWorkCallFunction(asyncWorkMap_, TaiheAsyncType::GET_ADVERTISING_HANDLE, taiheAdvHandle, result);
     }
-    ::ohos::bluetooth::ble::AdvertisingStateChangeInfo info{
-        advHandle,
-        ::ohos::bluetooth::ble::AdvertisingState(::ohos::bluetooth::ble::AdvertisingState::key_t::STARTED)
-    };
-    auto &module = g_eventSubscribe->GetModule<
-        void(::ohos::bluetooth::ble::AdvertisingStateChangeInfo const&)>(REGISTER_BLE_ADVERTISING_STATE_INFO_TYPE);
-    module.PublishEvent(info);
 }
 
 void TaiheBluetoothBleAdvertiseCallback::OnEnableResultEvent(int result, int advHandle)
@@ -99,18 +101,34 @@ void TaiheBluetoothBleAdvertiseCallback::OnStopResultEvent(int result, int advHa
 {
     HILOGI("enter, result: %{public}d advHandle: %{public}d", result, advHandle);
     if (advHandle_ == advHandle) {
+        result = GetSDKAdaptedStatusCode(result); // Adaptation for old sdk
+        TaiheAsyncWorkSettleIntResult(asyncWorkMap_, TaiheAsyncType::BLE_STOP_ADVERTISING, result);
+        advHandle_ = -1;
+    }
+}
+
+void TaiheBluetoothBleAdvertiseAsyncCallback::OnStartResultEvent(int result, int advHandle)
+{
+    HILOGI("enter, result: %{public}d advHandle: %{public}d", result, advHandle);
+    if (advHandle_ == advHandle) {
+        HILOGI("OnStartResultEvent, advHandle is same, advHandle: %{public}d", advHandle_);
+        result = GetSDKAdaptedStatusCode(result); // Adaptation for old sdk
+        auto taiheAdvHandle = std::make_shared<TaiheNativeInt>(advHandle);
+        AsyncWorkCallFunction(asyncWorkMap_, TaiheAsyncType::GET_ADVERTISING_HANDLE, taiheAdvHandle, result);
+    }
+    PublishAdvertisingStateEvent(advHandle, ::ohos::bluetooth::ble::AdvertisingState::key_t::STARTED);
+}
+
+void TaiheBluetoothBleAdvertiseAsyncCallback::OnStopResultEvent(int result, int advHandle)
+{
+    HILOGI("enter, result: %{public}d advHandle: %{public}d", result, advHandle);
+    if (advHandle_ == advHandle) {
         HILOGI("OnStopResultEvent, advHandle is same, advHandle: %{public}d", advHandle_);
         result = GetSDKAdaptedStatusCode(result); // Adaptation for old sdk
         TaiheAsyncWorkSettleIntResult(asyncWorkMap_, TaiheAsyncType::BLE_STOP_ADVERTISING, result);
         advHandle_ = -1;
     }
-    ::ohos::bluetooth::ble::AdvertisingStateChangeInfo info{
-        advHandle,
-        ::ohos::bluetooth::ble::AdvertisingState(::ohos::bluetooth::ble::AdvertisingState::key_t::STOPPED)
-    };
-    auto &module = g_eventSubscribe->GetModule<
-        void(::ohos::bluetooth::ble::AdvertisingStateChangeInfo const&)>(REGISTER_BLE_ADVERTISING_STATE_INFO_TYPE);
-    module.PublishEvent(info);
+    PublishAdvertisingStateEvent(advHandle, ::ohos::bluetooth::ble::AdvertisingState::key_t::STOPPED);
 }
 
 void TaiheBluetoothBleAdvertiseCallback::OnSetAdvDataEvent(int result)

@@ -37,6 +37,8 @@ const char * const STR_BT_GATT_CLIENT_CALLBACK_BLE_PHY_UPDATE = "BlePhyUpdate";
 class TaiheGattClientCallback : public GattClientCallback {
 public:
     void OnConnectionStateChanged(int connectionState, int ret) override;
+    void OnConnectionStateChangedWithMessage(
+        int connectionState, int ret, GattDisconnectParam disconnectParam) override;
     void OnCharacteristicChanged(const GattCharacteristic &characteristic) override;
     void OnCharacteristicReadResult(const GattCharacteristic &characteristic, int ret)  override;
     void OnCharacteristicWriteResult(const GattCharacteristic &characteristic, int ret) override;

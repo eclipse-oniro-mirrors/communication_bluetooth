@@ -87,11 +87,25 @@ void TaiheGattClientCallback::OnDescriptorReadResult(const GattDescriptor &descr
 void TaiheGattClientCallback::OnConnectionStateChanged(int connectionState, int ret)
 {
     HILOGI("connectionState:%{public}d, ret:%{public}d", connectionState, ret);
+}
+
+void TaiheGattClientCallback::OnConnectionStateChangedWithMessage(
+    int connectionState, int ret, GattDisconnectParam disconnectParam)
+{
+    HILOGI("connectionState:%{public}d, ret:%{public}d, reason:%{public}d",
+        connectionState, ret, disconnectParam.disconnectReason_);
     ::ohos::bluetooth::ble::BLEConnectionChangeState state{
         taihe::string(deviceAddr_),
         ::ohos::bluetooth::constant::ProfileConnectionState::from_value(
             TaiheUtils::GetProfileConnectionState(connectionState))
     };
+    if (connectionState == static_cast<int>(BTConnectState::DISCONNECTED)) {
+        state.reason.emplace(
+            ::ohos::bluetooth::ble::GattDisconnectReason::from_value(disconnectParam.disconnectReason_));
+        if (!disconnectParam.reasonMessage_.empty()) {
+            state.reasonMessage.emplace(taihe::string(disconnectParam.reasonMessage_));
+        }
+    }
     auto &module = eventSubscribe_.GetModule<void(::ohos::bluetooth::ble::BLEConnectionChangeState const&)
         >(STR_BT_GATT_CLIENT_CALLBACK_BLE_CONNECTION_STATE_CHANGE);
     module.PublishEvent(state);
