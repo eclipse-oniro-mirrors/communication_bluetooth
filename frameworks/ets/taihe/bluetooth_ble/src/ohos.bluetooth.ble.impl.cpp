@@ -69,12 +69,6 @@ void StopAdvertising()
     if (callbacks.empty()) {
         int ret = bleAdvertiser->StopAdvertising(TaiheBluetoothBleAdvertiseCallback::GetInstance());
         TAIHE_BT_HA_ASSERT_RETURN_VOID_VERIFY(ret == BT_NO_ERROR, ret);
-    } else {
-        for (auto &callback : callbacks) {
-            int ret = bleAdvertiser->StopAdvertising(callback);
-            ret = GetSDKAdaptedStatusCode(ret); // Adaptation for old sdk
-            TAIHE_BT_HA_ASSERT_RETURN_VOID_VERIFY(ret == BT_NO_ERROR, ret);
-        }
     }
 }
 
