@@ -16,6 +16,8 @@
 #define LOG_TAG "bt_cj_socket_spp_client"
 #endif
 
+#include <vector>
+
 #include "bluetooth_spp_client_impl.h"
 
 #include "bluetooth_errorcode.h"
@@ -30,6 +32,7 @@ namespace Bluetooth {
 std::map<int, std::shared_ptr<SppClientImpl>> SppClientImpl::clientMap;
 int SppClientImpl::count = 0;
 const int SOCKET_BUFFER_SIZE = 1024;
+constexpr uint32_t L2CAP_SOCKET_BUFFER_SIZE = 65535;
 
 int32_t SppClientImpl::SppConnect(std::string deviceId, SppOption sppOption, int32_t* errCode)
 {
@@ -141,6 +144,69 @@ int32_t SppClientImpl::Off(std::string type, int32_t clientSocket, int64_t cbId)
     return 0;
 }
 
+uint8_t* SppClientImpl::SppReadOnce(int32_t clientSocket, int64_t* size, int32_t* errCode)
+{
+    if (size == nullptr || errCode == nullptr) {
+        return nullptr;
+    }
+    *size = 0;
+    auto it = clientMap.find(clientSocket);
+    if (it == clientMap.end() || it->second == nullptr) {
+        HILOGE("client is nullptr.");
+        *errCode = BT_ERR_INVALID_PARAM;
+        return nullptr;
+    }
+    std::shared_ptr<SppClientImpl> client = it->second;
+    if (client->client_ == nullptr) {
+        HILOGE("client_ is nullptr.");
+        *errCode = BT_ERR_INVALID_PARAM;
+        return nullptr;
+    }
+    bool expected = false;
+    if (!client->sppReadFlag.compare_exchange_strong(expected, true)) {
+        HILOGE("client is reading, wait for the previous read to finish.");
+        *errCode = BT_ERR_INVALID_PARAM;
+        return nullptr;
+    }
+    std::shared_ptr<InputStream> inputStream = client->client_->GetInputStream();
+    if (inputStream == nullptr) {
+        HILOGE("inputStream is nullptr.");
+        client->sppReadFlag = false;
+        *errCode = BT_ERR_SPP_IO;
+        return nullptr;
+    }
+    uint32_t bufferSize = static_cast<uint32_t>(SOCKET_BUFFER_SIZE);
+    if (client->client_->GetType() != TYPE_RFCOMM) {
+        bufferSize = client->client_->GetMaxReceivePacketSize();
+        if (bufferSize == 0 || bufferSize > L2CAP_SOCKET_BUFFER_SIZE) {
+            bufferSize = L2CAP_SOCKET_BUFFER_SIZE;
+        }
+    }
+    std::vector<uint8_t> buf(bufferSize);
+    int ret = inputStream->Read(buf.data(), buf.size());
+    client->sppReadFlag = false;
+    if (ret <= 0) {
+        HILOGE("inputStream.Read failed, ret = %{public}d", ret);
+        *errCode = BT_ERR_SPP_IO;
+        return nullptr;
+    }
+    uint8_t* out = static_cast<uint8_t*>(malloc(static_cast<size_t>(ret)));
+    if (out == nullptr) {
+        HILOGE("malloc failed!");
+        *errCode = BT_ERR_INTERNAL_ERROR;
+        return nullptr;
+    }
+    if (memcpy_s(out, static_cast<size_t>(ret), buf.data(), static_cast<size_t>(ret)) != EOK) {
+        HILOGE("memcpy_s failed!");
+        free(out);
+        *errCode = BT_ERR_INTERNAL_ERROR;
+        return nullptr;
+    }
+    *size = static_cast<int64_t>(ret);
+    *errCode = BT_NO_ERROR;
+    return out;
+}
+
 void SppClientImpl::SppRead(int id)
 {
     auto client = clientMap[id];
@@ -157,16 +223,19 @@ void SppClientImpl::SppRead(int id)
         int ret = inputStream->Read(buf, sizeof(buf));
         if (ret <= 0) {
             HILOGE("inputStream.Read failed, ret = %{public}d", ret);
+            client->sppReadFlag = false;
             return;
         } else {
-            if (client == nullptr || !client->sppReadFlag || !client->callbackInfos_[REGISTER_SPP_READ_TYPE]) {
+            if (!client->sppReadFlag || !client->callbackInfos_[REGISTER_SPP_READ_TYPE]) {
                 HILOGE("failed");
+                client->sppReadFlag = false;
                 return;
             }
             std::shared_ptr<BufferCallbackInfo> callbackInfo =
                 std::static_pointer_cast<BufferCallbackInfo>(client->callbackInfos_[REGISTER_SPP_READ_TYPE]);
             if (callbackInfo == nullptr) {
                 HILOGE("callbackInfo nullptr");
+                client->sppReadFlag = false;
                 return;
             }
 
@@ -174,12 +243,14 @@ void SppClientImpl::SppRead(int id)
             buffer.head = static_cast<uint8_t*>(malloc(sizeof(uint8_t) * ret));
             if (buffer.head == nullptr) {
                 HILOGE("malloc failed!");
+                client->sppReadFlag = false;
                 return;
             }
             buffer.size = ret;
             if (memcpy_s(buffer.head, ret, buf, ret) != EOK) {
                 HILOGE("memcpy_s failed!");
                 free(buffer.head);
+                client->sppReadFlag = false;
                 return;
             }
 

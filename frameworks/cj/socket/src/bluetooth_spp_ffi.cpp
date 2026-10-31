@@ -69,6 +69,11 @@ void FfiBluetoothSocketSppWrite(int32_t clientSocket, CArrUI8 data, int32_t* err
     *errCode = SppClientImpl::SppWrite(clientSocket, data);
 }
 
+uint8_t* FfiBluetoothSocketSppRead(int32_t clientSocket, int64_t* size, int32_t* errCode)
+{
+    return SppClientImpl::SppReadOnce(clientSocket, size, errCode);
+}
+
 void FfiBluetoothSocketOn(char* type, int32_t clientSocket, int64_t cbId, int32_t* errCode)
 {
     *errCode = SppServerImpl::RegisterSocketObserver(type, clientSocket, cbId);
