@@ -144,28 +144,101 @@ int32_t SppClientImpl::Off(std::string type, int32_t clientSocket, int64_t cbId)
     return 0;
 }
 
+namespace {
+bool AcquireReadClient(int32_t clientSocket, std::shared_ptr<SppClientImpl> &client, int32_t *errCode)
+{
+    auto it = SppClientImpl::clientMap.find(clientSocket);
+    if (it == SppClientImpl::clientMap.end() || it->second == nullptr) {
+        HILOGE("client is nullptr.");
+        *errCode = BT_ERR_INVALID_PARAM;
+        return false;
+    }
+    if (it->second->client_ == nullptr) {
+        HILOGE("client_ is nullptr.");
+        *errCode = BT_ERR_INVALID_PARAM;
+        return false;
+    }
+    bool expected = false;
+    if (!it->second->sppReadFlag.compare_exchange_strong(expected, true)) {
+        HILOGE("client is reading, wait for the previous read to finish.");
+        *errCode = BT_ERR_INVALID_PARAM;
+        return false;
+    }
+    client = it->second;
+    return true;
+}
+
+uint32_t GetSocketBufferSize(const std::shared_ptr<SppClientImpl> &client)
+{
+    if (client->client_->GetType() == TYPE_RFCOMM) {
+        return static_cast<uint32_t>(SOCKET_BUFFER_SIZE);
+    }
+    uint32_t bufferSize = client->client_->GetMaxReceivePacketSize();
+    if (bufferSize == 0 || bufferSize > L2CAP_SOCKET_BUFFER_SIZE) {
+        bufferSize = L2CAP_SOCKET_BUFFER_SIZE;
+    }
+    return bufferSize;
+}
+
+uint8_t *CopyReadData(const uint8_t *data, int ret, int32_t *errCode)
+{
+    uint8_t *out = static_cast<uint8_t*>(malloc(static_cast<size_t>(ret)));
+    if (out == nullptr) {
+        HILOGE("malloc failed!");
+        *errCode = BT_ERR_INTERNAL_ERROR;
+        return nullptr;
+    }
+    if (memcpy_s(out, static_cast<size_t>(ret), data, static_cast<size_t>(ret)) != EOK) {
+        HILOGE("memcpy_s failed!");
+        free(out);
+        *errCode = BT_ERR_INTERNAL_ERROR;
+        return nullptr;
+    }
+    return out;
+}
+
+bool DispatchReadCallback(const std::shared_ptr<SppClientImpl> &client, const uint8_t *buf, int ret)
+{
+    if (!client->sppReadFlag || !client->callbackInfos_[REGISTER_SPP_READ_TYPE]) {
+        HILOGE("failed");
+        return false;
+    }
+    std::shared_ptr<BufferCallbackInfo> callbackInfo =
+        std::static_pointer_cast<BufferCallbackInfo>(client->callbackInfos_[REGISTER_SPP_READ_TYPE]);
+    if (callbackInfo == nullptr) {
+        HILOGE("callbackInfo nullptr");
+        return false;
+    }
+
+    CArrUI8 buffer {};
+    buffer.head = static_cast<uint8_t*>(malloc(sizeof(uint8_t) * ret));
+    if (buffer.head == nullptr) {
+        HILOGE("malloc failed!");
+        return false;
+    }
+    buffer.size = ret;
+    if (memcpy_s(buffer.head, ret, buf, ret) != EOK) {
+        HILOGE("memcpy_s failed!");
+        free(buffer.head);
+        return false;
+    }
+
+    auto cFunc = reinterpret_cast<void (*)(CArrUI8)>(callbackInfo->callback_);
+    std::function<void(CArrUI8)> func = CJLambda::Create(cFunc);
+    func(buffer);
+    free(buffer.head);
+    return true;
+}
+} // namespace
+
 uint8_t* SppClientImpl::SppReadOnce(int32_t clientSocket, int64_t* size, int32_t* errCode)
 {
     if (size == nullptr || errCode == nullptr) {
         return nullptr;
     }
     *size = 0;
-    auto it = clientMap.find(clientSocket);
-    if (it == clientMap.end() || it->second == nullptr) {
-        HILOGE("client is nullptr.");
-        *errCode = BT_ERR_INVALID_PARAM;
-        return nullptr;
-    }
-    std::shared_ptr<SppClientImpl> client = it->second;
-    if (client->client_ == nullptr) {
-        HILOGE("client_ is nullptr.");
-        *errCode = BT_ERR_INVALID_PARAM;
-        return nullptr;
-    }
-    bool expected = false;
-    if (!client->sppReadFlag.compare_exchange_strong(expected, true)) {
-        HILOGE("client is reading, wait for the previous read to finish.");
-        *errCode = BT_ERR_INVALID_PARAM;
+    std::shared_ptr<SppClientImpl> client = nullptr;
+    if (!AcquireReadClient(clientSocket, client, errCode)) {
         return nullptr;
     }
     std::shared_ptr<InputStream> inputStream = client->client_->GetInputStream();
@@ -175,14 +248,7 @@ uint8_t* SppClientImpl::SppReadOnce(int32_t clientSocket, int64_t* size, int32_t
         *errCode = BT_ERR_SPP_IO;
         return nullptr;
     }
-    uint32_t bufferSize = static_cast<uint32_t>(SOCKET_BUFFER_SIZE);
-    if (client->client_->GetType() != TYPE_RFCOMM) {
-        bufferSize = client->client_->GetMaxReceivePacketSize();
-        if (bufferSize == 0 || bufferSize > L2CAP_SOCKET_BUFFER_SIZE) {
-            bufferSize = L2CAP_SOCKET_BUFFER_SIZE;
-        }
-    }
-    std::vector<uint8_t> buf(bufferSize);
+    std::vector<uint8_t> buf(GetSocketBufferSize(client));
     int ret = inputStream->Read(buf.data(), buf.size());
     client->sppReadFlag = false;
     if (ret <= 0) {
@@ -190,16 +256,8 @@ uint8_t* SppClientImpl::SppReadOnce(int32_t clientSocket, int64_t* size, int32_t
         *errCode = BT_ERR_SPP_IO;
         return nullptr;
     }
-    uint8_t* out = static_cast<uint8_t*>(malloc(static_cast<size_t>(ret)));
+    uint8_t* out = CopyReadData(buf.data(), ret, errCode);
     if (out == nullptr) {
-        HILOGE("malloc failed!");
-        *errCode = BT_ERR_INTERNAL_ERROR;
-        return nullptr;
-    }
-    if (memcpy_s(out, static_cast<size_t>(ret), buf.data(), static_cast<size_t>(ret)) != EOK) {
-        HILOGE("memcpy_s failed!");
-        free(out);
-        *errCode = BT_ERR_INTERNAL_ERROR;
         return nullptr;
     }
     *size = static_cast<int64_t>(ret);
@@ -225,42 +283,12 @@ void SppClientImpl::SppRead(int id)
             HILOGE("inputStream.Read failed, ret = %{public}d", ret);
             client->sppReadFlag = false;
             return;
-        } else {
-            if (!client->sppReadFlag || !client->callbackInfos_[REGISTER_SPP_READ_TYPE]) {
-                HILOGE("failed");
-                client->sppReadFlag = false;
-                return;
-            }
-            std::shared_ptr<BufferCallbackInfo> callbackInfo =
-                std::static_pointer_cast<BufferCallbackInfo>(client->callbackInfos_[REGISTER_SPP_READ_TYPE]);
-            if (callbackInfo == nullptr) {
-                HILOGE("callbackInfo nullptr");
-                client->sppReadFlag = false;
-                return;
-            }
-
-            CArrUI8 buffer {};
-            buffer.head = static_cast<uint8_t*>(malloc(sizeof(uint8_t) * ret));
-            if (buffer.head == nullptr) {
-                HILOGE("malloc failed!");
-                client->sppReadFlag = false;
-                return;
-            }
-            buffer.size = ret;
-            if (memcpy_s(buffer.head, ret, buf, ret) != EOK) {
-                HILOGE("memcpy_s failed!");
-                free(buffer.head);
-                client->sppReadFlag = false;
-                return;
-            }
-
-            auto cFunc = reinterpret_cast<void (*)(CArrUI8)>(callbackInfo->callback_);
-            std::function<void(CArrUI8)> func = CJLambda::Create(cFunc);
-            func(buffer);
-            free(buffer.head);
+        }
+        if (!DispatchReadCallback(client, buf, ret)) {
+            client->sppReadFlag = false;
+            return;
         }
     }
-    return;
 }
 
 std::string SppClientImpl::GetDeviceId(int32_t clientSocket, int32_t* errCode)
