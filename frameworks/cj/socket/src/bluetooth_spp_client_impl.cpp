@@ -199,6 +199,10 @@ uint8_t *CopyReadData(const uint8_t *data, int ret, int32_t *errCode)
 
 bool DispatchReadCallback(const std::shared_ptr<SppClientImpl> &client, const uint8_t *buf, int ret)
 {
+    if (ret <= 0 || ret > SOCKET_BUFFER_SIZE) {
+        HILOGE("invalid read size, ret = %{public}d", ret);
+        return false;
+    }
     if (!client->sppReadFlag || !client->callbackInfos_[REGISTER_SPP_READ_TYPE]) {
         HILOGE("failed");
         return false;
