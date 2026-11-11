@@ -1,0 +1,10 @@
+{
+  global:
+    ANI_Constructor;
+    __cfi_check;
+    _fini;
+    _init;
+    ohos_bluetooth_baseProfile_BaseProfile_i;
+  local:
+    *;
+};

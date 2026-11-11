@@ -34,6 +34,8 @@ config("btcommon_public_config") {
 }
 
 ohos_shared_library("bt_napi_common") {
+  # Used to control the export of dynamic library symbols.
+  version_script = "libbt_napi_common.versionscript"
   cflags_cc = [
     "-Os",
     "-fno-rtti",
@@ -106,6 +108,8 @@ ohos_shared_library("bt_napi_common") {
 }
 
 ohos_shared_library("common") {
+  # Used to control the export of dynamic library symbols.
+  version_script = "libcommon.versionscript"
   cflags_cc = [
     "-Os",
     "-fno-rtti",

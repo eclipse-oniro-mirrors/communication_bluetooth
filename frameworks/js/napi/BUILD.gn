@@ -17,6 +17,8 @@ import("//foundation/communication/bluetooth/bluetooth.gni")
 SUBSYSTEM_DIR = "//foundation/communication"
 
 ohos_shared_library("bluetooth") {
+  # Used to control the export of dynamic library symbols.
+  version_script = "libbluetooth.versionscript"
   cflags_cc = [
     "-Os",
     "-fno-rtti",
@@ -147,6 +149,8 @@ ohos_shared_library("bluetooth") {
 }
 
 ohos_shared_library("bluetoothmanager") {
+  # Used to control the export of dynamic library symbols.
+  version_script = "libbluetoothmanager.versionscript"
   cflags_cc = [
     "-Os",
     "-fno-rtti",

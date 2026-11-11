@@ -41,6 +41,8 @@ ohos_taihe("run_taihe") {
 }
 
 taihe_shared_library("bluetoothMap_taihe_native") {
+  # Used to control the export of dynamic library symbols.
+  version_script = "libbluetoothMap_taihe_native.versionscript"
   cflags_cc = [
     "-Os",
     "-fno-rtti",

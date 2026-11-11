@@ -1,0 +1,9 @@
+{
+  global:
+    ANI_Constructor;
+    __cfi_check;
+    _fini;
+    _init;
+  local:
+    *;
+};

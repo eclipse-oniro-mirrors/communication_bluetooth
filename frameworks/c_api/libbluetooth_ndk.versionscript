@@ -1,0 +1,9 @@
+{
+  global:
+    OH_Bluetooth_GetBluetoothSwitchState;
+    __cfi_check;
+    _fini;
+    _init;
+  local:
+    *;
+};

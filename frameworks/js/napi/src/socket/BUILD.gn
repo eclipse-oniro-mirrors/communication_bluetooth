@@ -18,6 +18,8 @@ BT_PART_DIR = "../../../../.."
 BT_NAPI_DIR = "$BT_PART_DIR/frameworks/js/napi"
 
 ohos_shared_library("socket") {
+  # Used to control the export of dynamic library symbols.
+  version_script = "libsocket.versionscript"
   cflags_cc = [
     "-Os",
     "-fno-rtti",
