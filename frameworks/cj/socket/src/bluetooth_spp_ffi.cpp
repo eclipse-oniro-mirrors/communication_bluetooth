@@ -18,6 +18,8 @@
 
 #include "bluetooth_spp_ffi.h"
 
+#include <cstdlib>
+
 #include "bluetooth_spp_server_impl.h"
 #include "bluetooth_spp_utils.h"
 
@@ -72,6 +74,11 @@ void FfiBluetoothSocketSppWrite(int32_t clientSocket, CArrUI8 data, int32_t* err
 uint8_t* FfiBluetoothSocketSppRead(int32_t clientSocket, int64_t* size, int32_t* errCode)
 {
     return SppClientImpl::SppReadOnce(clientSocket, size, errCode);
+}
+
+void FfiBluetoothSocketSppFreeReadData(uint8_t* data)
+{
+    free(data);
 }
 
 void FfiBluetoothSocketOn(char* type, int32_t clientSocket, int64_t cbId, int32_t* errCode)
