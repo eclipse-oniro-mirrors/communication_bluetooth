@@ -120,11 +120,12 @@ int32_t SppClientImpl::On(std::string type, int32_t clientSocket, int64_t cbId)
         HILOGE("client is nullptr.");
         return BT_ERR_INVALID_PARAM;
     }
-    if (client->sppReadFlag) {
-        HILOGE("client is reading... please off first");
+    SppReadState expected = SppReadState::IDLE;
+    if (!client->readState_.compare_exchange_strong(expected, SppReadState::SUBSCRIBED)) {
+        HILOGE("client read state is %{public}d, please off first or wait for the read to finish.",
+            static_cast<int>(expected));
         return BT_ERR_INVALID_PARAM;
     }
-    client->sppReadFlag = true;
     client->callbackInfos_[type] = callbackInfo;
     client->thread_ = std::make_shared<std::thread>(SppClientImpl::SppRead, clientSocket);
     client->thread_->detach();
@@ -140,11 +141,31 @@ int32_t SppClientImpl::Off(std::string type, int32_t clientSocket, int64_t cbId)
         return BT_ERR_INVALID_PARAM;
     }
     client->callbackInfos_[type] = nullptr;
-    client->sppReadFlag = false;
+    // Only a subscribed reader returns to IDLE here; a one-shot read in flight
+    // keeps its critical section until the read finishes.
+    SppReadState expected = SppReadState::SUBSCRIBED;
+    client->readState_.compare_exchange_strong(expected, SppReadState::IDLE);
     return 0;
 }
 
 namespace {
+// Releases the ONESHOT read state on scope exit, so every return path of
+// SppReadOnce (including exceptions such as bad_alloc) leaves the socket
+// readable instead of leaking the state and rejecting further reads.
+class SppReadOnceGuard {
+public:
+    explicit SppReadOnceGuard(std::atomic<SppReadState> &state) : state_(state) {}
+    ~SppReadOnceGuard()
+    {
+        SppReadState expected = SppReadState::ONESHOT;
+        state_.compare_exchange_strong(expected, SppReadState::IDLE);
+    }
+    SppReadOnceGuard(const SppReadOnceGuard&) = delete;
+    SppReadOnceGuard& operator=(const SppReadOnceGuard&) = delete;
+private:
+    std::atomic<SppReadState> &state_;
+};
+
 bool AcquireReadClient(int32_t clientSocket, std::shared_ptr<SppClientImpl> &client, int32_t *errCode)
 {
     auto it = SppClientImpl::clientMap.find(clientSocket);
@@ -158,9 +179,10 @@ bool AcquireReadClient(int32_t clientSocket, std::shared_ptr<SppClientImpl> &cli
         *errCode = BT_ERR_INVALID_PARAM;
         return false;
     }
-    bool expected = false;
-    if (!it->second->sppReadFlag.compare_exchange_strong(expected, true)) {
-        HILOGE("client is reading, wait for the previous read to finish.");
+    SppReadState expected = SppReadState::IDLE;
+    if (!it->second->readState_.compare_exchange_strong(expected, SppReadState::ONESHOT)) {
+        HILOGE("client read state is %{public}d, wait for the previous read to finish.",
+            static_cast<int>(expected));
         *errCode = BT_ERR_INVALID_PARAM;
         return false;
     }
@@ -203,7 +225,8 @@ bool DispatchReadCallback(const std::shared_ptr<SppClientImpl> &client, const ui
         HILOGE("invalid read size, ret = %{public}d", ret);
         return false;
     }
-    if (!client->sppReadFlag || !client->callbackInfos_[REGISTER_SPP_READ_TYPE]) {
+    if (client->readState_.load() != SppReadState::SUBSCRIBED ||
+        !client->callbackInfos_[REGISTER_SPP_READ_TYPE]) {
         HILOGE("failed");
         return false;
     }
@@ -245,16 +268,15 @@ uint8_t* SppClientImpl::SppReadOnce(int32_t clientSocket, int64_t* size, int32_t
     if (!AcquireReadClient(clientSocket, client, errCode)) {
         return nullptr;
     }
+    SppReadOnceGuard guard(client->readState_);
     std::shared_ptr<InputStream> inputStream = client->client_->GetInputStream();
     if (inputStream == nullptr) {
         HILOGE("inputStream is nullptr.");
-        client->sppReadFlag = false;
         *errCode = BT_ERR_SPP_IO;
         return nullptr;
     }
     std::vector<uint8_t> buf(GetSocketBufferSize(client));
     int ret = inputStream->Read(buf.data(), buf.size());
-    client->sppReadFlag = false;
     if (ret <= 0) {
         HILOGE("inputStream.Read failed, ret = %{public}d", ret);
         *errCode = BT_ERR_SPP_IO;
@@ -271,8 +293,10 @@ uint8_t* SppClientImpl::SppReadOnce(int32_t clientSocket, int64_t* size, int32_t
 
 void SppClientImpl::SppRead(int id)
 {
-    auto client = clientMap[id];
-    if (client == nullptr || !client->sppReadFlag || client->callbackInfos_[REGISTER_SPP_READ_TYPE] == nullptr) {
+    auto it = clientMap.find(id);
+    auto client = (it == clientMap.end()) ? nullptr : it->second;
+    if (client == nullptr || client->readState_.load() != SppReadState::SUBSCRIBED ||
+        client->callbackInfos_[REGISTER_SPP_READ_TYPE] == nullptr) {
         HILOGE("thread start failed.");
         return;
     }
@@ -285,14 +309,14 @@ void SppClientImpl::SppRead(int id)
         int ret = inputStream->Read(buf, sizeof(buf));
         if (ret <= 0) {
             HILOGE("inputStream.Read failed, ret = %{public}d", ret);
-            client->sppReadFlag = false;
-            return;
+            break;
         }
         if (!DispatchReadCallback(client, buf, ret)) {
-            client->sppReadFlag = false;
-            return;
+            break;
         }
     }
+    SppReadState expected = SppReadState::SUBSCRIBED;
+    client->readState_.compare_exchange_strong(expected, SppReadState::IDLE);
 }
 
 std::string SppClientImpl::GetDeviceId(int32_t clientSocket, int32_t* errCode)
