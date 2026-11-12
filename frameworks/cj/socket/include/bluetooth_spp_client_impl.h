@@ -18,6 +18,7 @@
 #include <map>
 #include <queue>
 #include <thread>
+#include <atomic>
 
 #include "bluetooth_socket.h"
 #include "bluetooth_spp_utils.h"
@@ -61,10 +62,17 @@ private:
 
 constexpr const char* REGISTER_SPP_READ_TYPE = "sppRead";
 
+// Read state of an SPP client socket:
+// IDLE       - no read in progress, either read mode may be entered;
+// ONESHOT    - a SppReadOnce critical section is in flight (may be blocked in recv);
+// SUBSCRIBED - the read thread started by On(REGISTER_SPP_READ_TYPE) is in flight.
+enum class SppReadState : int { IDLE, ONESHOT, SUBSCRIBED };
+
 struct SppClientImpl {
     static int32_t SppConnect(std::string deviceId, SppOption sppOption, int32_t* errCode);
     static int32_t SppCloseClientSocket(int32_t socket);
     static int32_t SppWrite(int32_t clientSocket, CArrUI8 data);
+    static uint8_t* SppReadOnce(int32_t clientSocket, int64_t* size, int32_t* errCode);
     static int32_t On(std::string type, int32_t clientSocket, int64_t cbId);
     static int32_t Off(std::string type, int32_t clientSocket, int64_t cbId);
     static void SppRead(int id);
@@ -74,9 +82,8 @@ struct SppClientImpl {
     static std::map<int, std::shared_ptr<SppClientImpl>> clientMap;
 
     int id_ = -1;
-    bool sppReadFlag = false;
+    std::atomic<SppReadState> readState_ = SppReadState::IDLE;
     std::map<std::string, std::shared_ptr<CjBluetoothCallbackInfo>> callbackInfos_ = {};
-
     std::shared_ptr<ClientSocket> client_ = nullptr;
     std::shared_ptr<BluetoothRemoteDevice> device_ = nullptr;
     std::shared_ptr<std::thread> thread_;

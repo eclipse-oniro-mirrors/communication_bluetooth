@@ -32,6 +32,8 @@ FFI_EXPORT char* FfiBluetoothSocketGetDeviceId(int32_t clientSocket, int32_t* er
 FFI_EXPORT void FfiBluetoothSocketSppCloseServerSocket(int32_t socket, int32_t* errCode);
 FFI_EXPORT void FfiBluetoothSocketSppCloseClientSocket(int32_t socket, int32_t* errCode);
 FFI_EXPORT void FfiBluetoothSocketSppWrite(int32_t clientSocket, CArrUI8 data, int32_t* errCode);
+FFI_EXPORT uint8_t* FfiBluetoothSocketSppRead(int32_t clientSocket, int64_t* size, int32_t* errCode);
+FFI_EXPORT void FfiBluetoothSocketSppFreeReadData(uint8_t* data);
 FFI_EXPORT void FfiBluetoothSocketOn(char* type, int32_t clientSocket, int64_t cbId, int32_t* errCode);
 FFI_EXPORT void FfiBluetoothSocketOff(char* type, int32_t clientSocket, int64_t cbId, int32_t* errCode);
 }
