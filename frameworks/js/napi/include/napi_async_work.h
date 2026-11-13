@@ -83,7 +83,6 @@ public:
     void CallFunction(int errorCode, std::shared_ptr<NapiNativeObject> object);
     napi_value GetRet(void);
     std::shared_ptr<NapiHaEventUtils> GetHaUtilsPtr(void) const;
-
     struct Info {
         void Execute(void);
         void Complete(void);

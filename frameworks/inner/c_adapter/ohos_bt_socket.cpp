@@ -447,6 +447,7 @@ int SocketRead(int clientId, uint8_t *buf, uint32_t bufLen)
         HILOGE("client is null, clientId: %{public}d", clientId);
         return BT_SOCKET_READ_FAILED;
     }
+
     if (client->GetInputStream() == nullptr) {
         HILOGE("inputStream is null, clientId: %{public}d", clientId);
         return BT_SOCKET_READ_FAILED;

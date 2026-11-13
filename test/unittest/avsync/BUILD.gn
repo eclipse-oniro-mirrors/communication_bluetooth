@@ -1,0 +1,172 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("//foundation/communication/bluetooth/bluetooth.gni")
+import("//foundation/communication/bluetooth/test/unittest/unittest.gni")
+
+module_output_path = "bluetooth/bluetooth"
+FRAMWORK_DIR = "//foundation/communication"
+SUBSYSTEM_DIR = "//foundation/communication/bluetooth"
+
+###############################################################################
+#1. intent(c++) get/set test without transport
+
+config("module_private_config") {
+  visibility = [ ":*" ]
+  cflags = [
+    "-fPIC",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-unreachable-code-return",
+    "-Wno-defaulted-function-deleted",
+    "-Wno-gnu-variable-sized-type-not-at-end",
+    "-Wno-format-nonliteral",
+    "-Wno-inconsistent-missing-override",
+    "-Wno-unreachable-code",
+    "-Wno-range-loop-construct",
+    "-Wno-reorder-init-list",
+    "-Wno-unused-function",
+    "-Wno-unused-result",
+    "-Wno-unused-variable",
+    "-Wno-unused-const-variable",
+    "-Wno-format",
+    "-Wno-pessimizing-move",
+    "-Wno-unknown-warning-option",
+    "-Wno-final-dtor-non-final-class",
+    "-Wno-header-hygiene",
+    "-Wno-unused-private-field",
+    "-Wno-error=unused-function",
+    "-Wno-error=unused-variable",
+    "-Wno-deprecated-builtins",
+    "-Wno-unused-but-set-variable",
+  ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+  cflags_cc = cflags
+
+  include_dirs = [
+    "mock/include",
+    "$FRAMWORK_DIR/bluetooth/interfaces/inner_api/include",
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/include",
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/ipc/common",
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/ipc/parcel",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/avsync",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/base",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/common",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/dialog",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/util",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/classic",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/include",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/permission",
+  ]
+  defines = [
+    "BTFW_LOG_TAG = \"bluetooth_test\"",
+    "BTFW_LOG_DOMAIN = 0xD000103",
+    "private = public",
+    "protected = public",
+  ]
+}
+
+ohos_unittest("btfw_av_sync_config_info_test") {
+  module_out_path = module_output_path
+
+  sources = [ "av_sync_config_info_test.cpp"]
+
+  configs = [
+    ":module_private_config",
+    "${bluetooth_config_path}:feature_flags",
+    "${bluetooth_unittest_utils_path}:unittest_utils_config",
+  ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "$SUBSYSTEM_DIR/services/bluetooth/service:btservice_static",
+    "$SUBSYSTEM_DIR/services/bluetooth/server:bluetooth_server_static",
+    "//foundation/communication/bluetooth/services/bluetooth/stack_interface:stack_interface",
+  ]
+
+  external_deps = [
+    "ability_runtime:abilitykit_native",
+    "ability_runtime:extension_manager",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_av_sync_manager_test") {
+  module_out_path = module_output_path
+  sanitize = {
+    cfi = true                            # Enable/disable control flow integrity detection
+    cfi_cross_dso = true                  # Cross-SO CFI Checks
+    debug = false
+  }
+  sources = [ "av_sync_manager_test.cpp"]
+
+  configs = [
+    ":module_private_config",
+    "${bluetooth_config_path}:feature_flags",
+    "${bluetooth_unittest_utils_path}:unittest_utils_config",
+  ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "$SUBSYSTEM_DIR/services/bluetooth/service:btservice_static",
+    "$SUBSYSTEM_DIR/services/bluetooth/server:bluetooth_server_static",
+    "//foundation/communication/bluetooth/services/bluetooth/stack_interface:stack_interface",
+  ]
+
+  external_deps = [
+    "ability_runtime:abilitykit_native",
+    "ability_runtime:extension_manager",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "cJSON:cjson",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+################################################################################
+group("unittest") {
+  testonly = true
+
+  deps = []
+
+  if (is_phone_product) {
+    deps += [
+      ":btfw_av_sync_config_info_test",
+      ":btfw_av_sync_manager_test",
+    ]
+  }
+}

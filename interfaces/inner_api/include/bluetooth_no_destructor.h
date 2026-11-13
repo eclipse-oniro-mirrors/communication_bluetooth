@@ -33,7 +33,6 @@ public:
 
     explicit BluetoothNoDestructor(const T& x) { new (buff_) T(x); }
     explicit BluetoothNoDestructor(T&& x) { new (buff_) T(std::move(x)); }
-
     ~BluetoothNoDestructor() = default;
 
     BluetoothNoDestructor(const BluetoothNoDestructor&) = delete;

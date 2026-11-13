@@ -1,0 +1,309 @@
+# Copyright (C) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("//foundation/communication/bluetooth/bluetooth.gni")
+
+module_output_path = "bluetooth/bluetooth"
+PART_DIR = "//foundation/communication/bluetooth/services/bluetooth"
+BT_SERVICE_DIR = "$PART_DIR/service"
+
+config("module_private_config") {
+  visibility = [ ":*" ]
+  cflags = [
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-unused-const-variable",
+    "-Wno-deprecated-builtins",
+  ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  cflags_cc = [
+    "-fPIC",
+    "-Wno-format",
+    "-Wno-pessimizing-move",
+    "-Wno-unused-parameter",
+    "-Wunused-variable",
+    "-Wreorder",
+    "-Wmissing-braces",
+    "-Wimplicit-fallthrough",
+    "-Wunused-private-field",
+    "-Wlogical-op-parentheses",
+    "-Wmissing-field-initializers",
+    "-Wparentheses-equality",
+    "-Wparentheses",
+    "-Wdelete-non-abstract-non-virtual-dtor",
+    "-Wignored-qualifiers",
+    "-Wdelete-abstract-non-virtual-dtor",
+    "-Wuninitialized",
+    "-Woverloaded-virtual",
+    "-Wdangling-else",
+    "-Woverloaded-virtual",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-unused-but-set-variable",
+    "-Wno-array-parameter",
+  ]
+
+  include_dirs = [
+    "mock/include",
+    "$PART_DIR/common",
+    "$PART_DIR/common/include",
+    "$PART_DIR/server/include",
+    "$PART_DIR/server/src",
+    "$PART_DIR/common/include",
+    "$PART_DIR/service/src/base",
+    "$PART_DIR/ipc/include",
+    "$BT_SERVICE_DIR/src",
+    "$BT_SERVICE_DIR/src/util",
+    "$BT_SERVICE_DIR/include",
+    "$BT_SERVICE_DIR/src/base",
+    "$BT_SERVICE_DIR/src/avrcp_ct",
+    "$BT_SERVICE_DIR/src/avrcp_tg",
+    "$BT_SERVICE_DIR/src/classic",
+    "$BT_SERVICE_DIR/src/common",
+    "$BT_SERVICE_DIR/src/util",
+    "$BT_SERVICE_DIR/src/gavdp",
+    "$BT_SERVICE_DIR/src/hfp_ag",
+    "$BT_SERVICE_DIR/src/obex",
+    "$BT_SERVICE_DIR/src/sock",
+  ]
+  defines = [
+    "BTFW_LOG_TAG = \"bluetooth_test\"",
+    "BTFW_LOG_DOMAIN = 0xD000103",
+    "private = public",
+  ]
+}
+
+ohos_unittest("btfw_avrcp_tg_serv_avsession_media_test") {
+  module_out_path = module_output_path
+
+  sanitize = {
+      cfi = true                            # Enable/disable control flow integrity detection
+      cfi_cross_dso = true                   # Cross-SO CFI Checks
+      debug = false
+  }
+  sources = [
+    "avrcp_tg_avsession_media_test.cpp",
+    "avrcp_tg_bip_statemachine_test.cpp",
+    "avrcp_tg_bip_obex_server_test.cpp",
+    "avrcp_bip_service_test.cpp",
+    "cover_art_test.cpp",
+    "avrcp_cover_art_storage_test.cpp",
+    "bip_image_properties_test.cpp",
+  ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "$PART_DIR/btchr:btchr",
+    "$PART_DIR/service:btservice_static",
+    "$PART_DIR/server:bluetooth_server_static",
+    "$PART_DIR/service:btavrcp_media",
+    "$PART_DIR/ipc:bt_service_ipc",
+    "$PART_DIR/external:btdummy",
+    "$PART_DIR/stack_interface:stack_interface",
+  ]
+
+  external_deps = [
+    "bundle_framework:appexecfwk_base",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "samgr:samgr_proxy",
+    "hitrace:hitrace_meter",
+    "openssl:libcrypto_shared",
+  ]
+
+  external_deps += [
+    "ability_base:configuration",
+    "ability_runtime:wantagent_innerkits",
+    "audio_framework:audio_policy_manager",
+    "av_session:avsession_client",
+    "av_session:avsession_common",
+    "input:libmmi-client",
+    "image_framework:image_native",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+
+  if (bluetooth_audio_framwwork) {
+    external_deps += [ "audio_framework:audio_renderer" ]
+  }
+}
+
+ohos_unittest("btfw_avrcp_tg_serv_avsession_media_loader_test") {
+  module_out_path = module_output_path
+
+ sources = [
+    "avrcp_tg_avsession_media_loader_test.cpp",
+  ]
+
+  configs = [ ":module_private_config" ]
+
+  defines = [
+    "BTFW_LOG_TAG = \"bluetooth_test\"",
+    "BTFW_LOG_DOMAIN = 0xD000103",
+    "private = public",
+  ]
+
+  if (bluetooth_multi_a2dp_enabled) {
+    defines += [ "MULTI_A2DP_ENABLED" ]
+  }
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "$PART_DIR/service:btservice_static",
+    "$PART_DIR/stack_interface:stack_interface",
+    "$PART_DIR/vendor_interface:vendor_interface",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "call_manager:tel_call_manager_api",
+    "core_service:tel_core_service_api",
+    "state_registry:tel_state_registry_api",
+    "audio_framework:audio_policy_manager",
+    "image_framework:image_native",
+    "openssl:libcrypto_shared",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_avrcp_tg_serv_volume_test") {
+  module_out_path = module_output_path
+  sanitize = {
+    cfi = true                            # Enable/disable control flow integrity detection
+    cfi_cross_dso = true                  # Cross-SO CFI Checks
+    debug = false
+  }
+  sources = [
+    "avrcp_tg_volume_test.cpp",
+  ]
+
+   defines = [
+    "private = public",
+  ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "$PART_DIR/service:btservice_static",
+    "$PART_DIR/stack_interface:stack_interface",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "preferences:native_preferences",
+  ]
+
+  external_deps += [
+    "ability_runtime:wantagent_innerkits",
+    "audio_framework:audio_policy_manager",
+    "av_session:avsession_client",
+    "input:libmmi-client",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_avrcp_tg_play_helper_test") {
+  module_out_path = module_output_path
+
+  sanitize = {
+      cfi = true                            # Enable/disable control flow integrity detection
+      cfi_cross_dso = true                   # Cross-SO CFI Checks
+      debug = false
+  }
+  sources = [
+    "play_helper_test.cpp",
+  ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "$PART_DIR/btchr:btchr",
+    "$PART_DIR/service:btservice_static",
+    "$PART_DIR/server:bluetooth_server_static",
+    "$PART_DIR/service:btavrcp_media",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "hitrace:hitrace_meter",
+  ]
+
+  external_deps += [
+    "ability_runtime:wantagent_innerkits",
+    "audio_framework:audio_policy_manager",
+    "av_session:avsession_client",
+    "input:libmmi-client",
+  ]
+
+  if (bluetooth_audio_framwwork) {
+    external_deps += [ "audio_framework:audio_renderer" ]
+  }
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+################################################################################
+group("unittest") {
+  testonly = true
+
+  deps = []
+
+  if (is_phone_product) {
+    deps += [
+      ":btfw_avrcp_tg_serv_avsession_media_test",
+      ":btfw_avrcp_tg_serv_avsession_media_loader_test",
+      ":btfw_avrcp_tg_serv_volume_test",
+      ":btfw_avrcp_tg_play_helper_test",
+      ]
+  }
+}

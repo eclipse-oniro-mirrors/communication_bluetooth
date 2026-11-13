@@ -1,0 +1,114 @@
+# Copyright (c) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#####################hydra-fuzz###################
+import("//build/config/features.gni")
+import("//build/test.gni")
+import("//foundation/communication/bluetooth/test/fuzztest/fuzztest.gni")
+
+module_output_path = "bluetooth/bluetooth"
+PART_DIR = "//foundation/communication/bluetooth/services/bluetooth"
+BT_SERVICE_DIR = "$PART_DIR/service"
+
+##############################fuzztest##########################################
+ohos_fuzztest("OppObexClientFuzzTest") {
+  module_out_path = module_output_path
+  fuzz_config_file = "//foundation/communication/bluetooth/test/fuzztest/opp/oppobexclient_fuzzer"
+
+  cflags_cc = ["-Wno-return-type-c-linkage",]
+  cflags = [
+    "-g",
+    "-O0",
+    "-Wno-unused-variable",
+    "-fno-omit-frame-pointer",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-pessimizing-move",
+    "-Wno-error=pessimizing-move",
+  ]
+  include_dirs = [
+    "$PART_DIR/ipc/include",
+    "$PART_DIR/common/include",
+    "$PART_DIR/server/include",
+    "$BT_SERVICE_DIR/src/opp",
+    "$BT_SERVICE_DIR/src/obex",
+    "$BT_SERVICE_DIR/src/permission",
+    "$BT_SERVICE_DIR/src/sdp_adapter",
+  ]
+
+  configs = [
+    "${bluetooth_fuzztest_utils_path}:fuzztest_utils_config",
+    "${bluetooth_config_path}:feature_flags",
+  ]
+
+  sources = [
+    "opp_obex_client_fuzzer.cpp",
+    "../../bt_utils/fuzztest_utils.cpp",
+    "$BT_SERVICE_DIR/src/opp/opp_file_utils.cpp",
+    "$BT_SERVICE_DIR/src/opp/opp_transfer.cpp",
+    "$BT_SERVICE_DIR/src/opp/opp_obex_client.cpp",
+    "$BT_SERVICE_DIR/src/opp/opp_obex_server.cpp",
+    "$BT_SERVICE_DIR/src/opp/opp_statemachine.cpp",
+    "$BT_SERVICE_DIR/src/opp/opp_service_impl.cpp",
+    "$BT_SERVICE_DIR/src/obex/obex_server_transport.cpp",
+    "$BT_SERVICE_DIR/src/obex/obex_server_session.cpp",
+    "$BT_SERVICE_DIR/src/obex/obex_header.cpp",
+    "$BT_SERVICE_DIR/src/obex/obex_client_session.cpp",
+    "$BT_SERVICE_DIR/src/obex/obex_server_actions.cpp",
+    "$BT_SERVICE_DIR/src/obex/obex_server_action_interface.cpp",
+    "$BT_SERVICE_DIR/src/obex/obex_reject_server.cpp",
+  ]
+
+  deps = [
+    "$PART_DIR/ipc:bt_service_ipc",
+    "$PART_DIR/common:btservice_common",
+    "$PART_DIR/server:bluetooth_server_static",
+    "$PART_DIR/btchr:btchr",
+    "${bluetooth_fuzztest_utils_path}:fuzztest_utils_static",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/services/bluetooth/stack_interface:stack_interface",
+    "//foundation/communication/bluetooth/services/bluetooth/vendor_interface:vendor_interface",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libprivacy_sdk",
+    "access_token:libtokenid_sdk",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "bounds_checking_function:libsec_shared",
+    "ability_runtime:ability_connect_callback_stub",
+    "ability_runtime:ability_manager",
+    "ability_runtime:extension_manager",
+    "ability_base:want",
+    "ability_base:zuri",
+    "common_event_service:cesfwk_innerkits",
+    "c_utils:utils",
+    "cJSON:cjson",
+    "samgr:samgr_proxy",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+###############################################################################
+group("fuzztest") {
+  testonly = true
+  deps = []
+  deps += [
+    ":OppObexClientFuzzTest",
+  ]
+}
+###############################################################################

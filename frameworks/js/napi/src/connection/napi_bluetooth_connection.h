@@ -136,7 +136,6 @@ napi_value DeviceChargeStateInit(napi_env env);
 napi_value ControlDeviceAction(napi_env env, napi_callback_info info);
 napi_value GetRemoteDeviceConnectionTime(napi_env env, napi_callback_info info);
 napi_value UpdateCloudBluetoothDevice(napi_env env, napi_callback_info info);
-
 void RegisterObserverToHost();
 void DealPairStatus(const int &status, int &bondStatus);
 napi_value GetCarKeyDfxData(napi_env env, napi_callback_info info);

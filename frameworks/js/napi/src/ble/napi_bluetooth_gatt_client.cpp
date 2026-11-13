@@ -151,6 +151,7 @@ void NapiGattClient::DefineGattClientJSClass(napi_env env)
         DECLARE_NAPI_FUNCTION("close", Close),
         DECLARE_NAPI_FUNCTION("getDeviceName", GetDeviceName),
         DECLARE_NAPI_FUNCTION("getServices", GetServices),
+        DECLARE_NAPI_FUNCTION("refreshServices", RefreshServices),
         DECLARE_NAPI_FUNCTION("readCharacteristicValue", ReadCharacteristicValue),
         DECLARE_NAPI_FUNCTION("readDescriptorValue", ReadDescriptorValue),
         DECLARE_NAPI_FUNCTION("getRssiValue", GetRssiValue),
@@ -595,12 +596,13 @@ napi_value NapiGattClient::UpdateConnectionParam(napi_env env, napi_callback_inf
     auto status = ParseGattClientUpdateConnectionState(env, info, connectionParam, &client);
     NAPI_BT_ASSERT_RETURN_FALSE(env, status == napi_ok, BT_ERR_INVALID_PARAM);
 
-    auto func = [client, connectionParam]() {
-        std::shared_ptr<GattClient> gattClient = client->GetClient();
+    auto func = [gattClient = client->GetClient(), connectionParam]() {
+        if (gattClient == nullptr) {
+            return NapiAsyncWorkRet(BT_ERR_INTERNAL_ERROR);
+        }
         int ret = gattClient->RequestConnectionPriority(ConvertToPrior(connectionParam));
         return NapiAsyncWorkRet(ret);
     };
-
     auto asyncWork = NapiAsyncWorkFactory::CreateAsyncWork(env, info, func, ASYNC_WORK_NEED_CALLBACK);
     NAPI_BT_ASSERT_RETURN_UNDEF(env, asyncWork, BT_ERR_INTERNAL_ERROR);
     bool success = client->GetCallback()->asyncWorkMap_.TryPush(
@@ -617,6 +619,20 @@ static napi_status ParseGattClientGetServices(napi_env env, napi_callback_info i
     napi_value thisVar = nullptr;
     NAPI_BT_CALL_RETURN(napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr));
     NAPI_BT_RETURN_IF(argc != ARGS_SIZE_ZERO && argc != ARGS_SIZE_ONE, "Requires 0 or 1 arguments.", napi_invalid_arg);
+    NapiGattClient *gattClient = NapiGetGattClient(env, thisVar);
+    NAPI_BT_RETURN_IF(gattClient == nullptr || outGattClient == nullptr, "gattClient is nullptr.", napi_invalid_arg);
+
+    *outGattClient = gattClient;
+    return napi_ok;
+}
+
+static napi_status ParseGattClientRefreshServices(napi_env env, napi_callback_info info, NapiGattClient **outGattClient)
+{
+    size_t argc = ARGS_SIZE_ONE;
+    napi_value argv[ARGS_SIZE_ONE] = {nullptr};
+    napi_value thisVar = nullptr;
+    NAPI_BT_CALL_RETURN(napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr));
+    NAPI_BT_RETURN_IF(argc != ARGS_SIZE_ZERO, "Requires 0 arguments.", napi_invalid_arg);
     NapiGattClient *gattClient = NapiGetGattClient(env, thisVar);
     NAPI_BT_RETURN_IF(gattClient == nullptr || outGattClient == nullptr, "gattClient is nullptr.", napi_invalid_arg);
 
@@ -649,6 +665,36 @@ napi_value NapiGattClient::GetServices(napi_env env, napi_callback_info info)
             object = std::make_shared<NapiNativeGattServiceArray>(gattClient->GetService());
         }
         return NapiAsyncWorkRet(ret, object);
+    };
+
+    auto asyncWork = CREATE_ASYNC_WORK_WITH_CONTEXT(env, info, func, ASYNC_WORK_NO_NEED_CALLBACK);
+    NAPI_BT_ASSERT_RETURN_UNDEF(env, asyncWork, BT_ERR_INTERNAL_ERROR);
+    asyncWork->Run();
+    return asyncWork->GetRet();
+}
+
+napi_value NapiGattClient::RefreshServices(napi_env env, napi_callback_info info)
+{
+    HILOGI("enter");
+    std::vector<int32_t> validErrCodes = {
+        BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT,
+        BT_ERR_INTERNAL_ERROR, BT_ERR_GATT_CONNECTION_NOT_ESTABILISHED,
+    };
+    NAPI_BT_CONTEXT(env, "ble.GattClientDevice.RefreshServices", validErrCodes);
+    NapiGattClient *client = nullptr;
+    auto status = ParseGattClientRefreshServices(env, info, &client);
+    NAPI_BT_ASSERT_RETURN_UNDEF(env, status == napi_ok && client, BT_ERR_INVALID_PARAM);
+
+    // The promise settles on the delivery result of the refresh request; the rediscovery
+    // proceeds asynchronously and its result is obtained via getServices (finalized design).
+    auto func = [gattClient = client->GetClient()]() {
+        if (gattClient == nullptr) {
+            return NapiAsyncWorkRet(BT_ERR_INTERNAL_ERROR);
+        }
+
+        HILOGI("start refresh services");
+        int ret = gattClient->RefreshServices();
+        return NapiAsyncWorkRet(ret);
     };
 
     auto asyncWork = CREATE_ASYNC_WORK_WITH_CONTEXT(env, info, func, ASYNC_WORK_NO_NEED_CALLBACK);

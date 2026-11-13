@@ -28,10 +28,6 @@
 
 namespace OHOS {
 namespace Bluetooth {
-namespace {
-// The BT stack restricts the local name to 248 bytes at most.
-constexpr size_t MAX_LOCAL_NAME_LENGTH = 248;
-}  // namespace
 
 ani_ref TaiheGetNull(ani_env *env)
 {
@@ -203,7 +199,6 @@ bool CheckPairCredibleDeviceParam(std::string &addr, int &transport)
 bool CheckLocalNameParam(std::string &name)
 {
     TAIHE_BT_RETURN_IF(name.empty(), "Invalid local name", false);
-    TAIHE_BT_RETURN_IF(name.size() > MAX_LOCAL_NAME_LENGTH, "Invalid local name length", false);
     return true;
 }
 

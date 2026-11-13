@@ -49,6 +49,7 @@ public:
 
     static napi_value GetConnectedState(napi_env env, napi_callback_info info);
     static napi_value UpdateConnectionParam(napi_env env, napi_callback_info info);
+    static napi_value RefreshServices(napi_env env, napi_callback_info info);
 
 #ifdef BLUETOOTH_API_SINCE_10
     static napi_value WriteCharacteristicValueEx(napi_env env, napi_callback_info info);

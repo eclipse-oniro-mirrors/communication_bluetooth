@@ -174,6 +174,10 @@ void BluetoothProfileManager::RunFuncWhenBluetoothServiceStarted()
 {
     profileIdFuncMap_.Iterate([this](const int32_t id, ProfileIdProperty &property) {
         auto remote = GetProfileRemote(property.objectName);
+        if (remote == nullptr) {
+            HILOGD("remote is nullptr, objectName: %{public}s", property.objectName.c_str());
+            return;
+        }
         if (property.functions.bluetoothLoadedfunc) {
             property.functions.bluetoothLoadedfunc(remote);
         }
@@ -287,6 +291,7 @@ bool BluetoothProfileManager::IsBluetoothServiceOn()
 {
     return isBluetoothServiceOn_.load();
 }
+
 void BluetoothProfileManager::BluetoothProfileManagerUpdate()
 {
     HILOGI("Clear the Binder cache when an app is loaded from an image.");

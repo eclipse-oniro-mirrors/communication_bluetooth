@@ -56,8 +56,6 @@ public:
     bool WriteToParcel(Parcel &parcel);
     bool ReadFromParcel(Parcel &parcel);
 };
-
 }  // namespace Bluetooth
 }  // namespace OHOS
-
 #endif // BLUETOOTH_PARCEL_A2DP_A2DPCODECSTATUS_H

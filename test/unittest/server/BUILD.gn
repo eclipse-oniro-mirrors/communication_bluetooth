@@ -1,0 +1,118 @@
+# Copyright (C) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("//foundation/communication/bluetooth/test/unittest/unittest.gni")
+
+module_output_path = "bluetooth/bluetooth"
+PART_DIR = "//foundation/communication/bluetooth/services/bluetooth"
+BT_SERVICE_DIR = "$PART_DIR/service"
+
+###############################################################################
+
+config("module_private_config") {
+  visibility = [ ":*" ]
+  cflags = [
+    "-Werror",
+    "-Wno-macro-redefined",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-unused-const-variable",
+    "-Wno-deprecated-builtins",
+    "-Wno-defaulted-function-deleted",
+    "-Woverloaded-virtual",
+  ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+  include_dirs = [
+    "mock/include",
+    "$PART_DIR/server/include",
+    "$PART_DIR/common",
+    "$PART_DIR/ipc/include",
+    "$BT_SERVICE_DIR/src/",
+    "$BT_SERVICE_DIR/include",
+    "$BT_SERVICE_DIR/src/base",
+    "$BT_SERVICE_DIR/src/common",
+    "$BT_SERVICE_DIR/src/util",
+    "$BT_SERVICE_DIR/src/permission",
+    "$BT_SERVICE_DIR/src/hfp_hf",
+  ]
+  defines = [
+    "BTFW_LOG_TAG = \"bluetooth_test\"",
+    "BTFW_LOG_DOMAIN = 0xD005300",
+    "private = public",
+    "protected = public",
+  ]
+}
+
+ohos_unittest("btfw_hfp_hf_server_test") {
+  module_out_path = module_output_path
+  sources = [
+    "hfp_hf_server_test.cpp"
+  ]
+
+  sanitize = {
+    cfi = true  # Enable/disable control flow integrity detection
+    cfi_cross_dso = true  # Cross-SO CFI Checks
+    debug = false
+  }
+  configs = [
+    ":module_private_config",
+    "${bluetooth_unittest_utils_path}:unittest_utils_config"
+  ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+    "$PART_DIR/service:btservice_static",
+    "$PART_DIR/server:bluetooth_server_static",
+    "//foundation/communication/bluetooth/services/bluetooth/stack_interface:stack_interface",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+  ]
+
+  if (bluetooth_hfp_hf_feature_switch) {
+    external_deps += [
+      "call_manager:tel_call_manager_api",
+    ]
+  }
+  if (bluetooth_call_focus_supported) {
+    external_deps += [
+      "audio_framework:audio_foundation",
+      "audio_framework:audio_client",
+    ]
+  }
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+################################################################################
+group("unittest") {
+  testonly = true
+
+  deps = []
+
+  if (bluetooth_hfp_hf_feature_switch) {
+    deps += [
+      ":btfw_hfp_hf_server_test",
+    ]
+  }
+}

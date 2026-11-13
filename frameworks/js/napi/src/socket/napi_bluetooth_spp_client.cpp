@@ -681,7 +681,6 @@ napi_value NapiSppClient::SppReadAsync(napi_env env, napi_callback_info info)
     asyncWork->Run();
     return asyncWork->GetRet();
 }
-
 static napi_status CheckSppFdParams(napi_env env, napi_callback_info info, int &id)
 {
     size_t argc = ARGS_SIZE_ONE;

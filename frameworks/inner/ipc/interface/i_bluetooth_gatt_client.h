@@ -57,6 +57,7 @@ public:
     virtual int GetConnectedState(const std::string &deviceId, int &state) = 0;
     virtual int SetPhy(int32_t appId, int32_t txPhy, int32_t rxPhy, int32_t phyOptions) = 0;
     virtual int ReadPhy(int32_t appId) = 0;
+    virtual int RefreshServices(int32_t appId) = 0;
 };
 }  // namespace Bluetooth
 }  // namespace OHOS

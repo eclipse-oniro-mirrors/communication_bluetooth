@@ -55,6 +55,7 @@ public:
     int GetConnectedState(const std::string &deviceId, int &state) override;
     int SetPhy(int32_t appId, int32_t txPhy, int32_t rxPhy, int32_t phyOptions) override;
     int ReadPhy(int32_t appId) override;
+    int RefreshServices(int32_t appId) override;
 
 private:
     static inline BrokerDelegator<BluetoothGattClientProxy> delegator_;

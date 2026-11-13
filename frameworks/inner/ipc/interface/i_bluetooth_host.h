@@ -117,6 +117,7 @@ public:
         const BluetoothOobData &oobData) = 0;
     virtual int32_t StartCrediblePair(int32_t transport, const std::string &address) = 0;
     virtual bool CancelPairing(int32_t transport, const std::string &address) = 0;
+    virtual int32_t CancelPairingByInitiator(int32_t transport, const std::string &address) = 0;
     virtual bool IsBondedFromLocal(int32_t transport, const std::string &address) = 0;
     virtual bool IsAclConnected(int32_t transport, const std::string &address) = 0;
     virtual bool IsAclEncrypted(int32_t transport, const std::string &address) = 0;

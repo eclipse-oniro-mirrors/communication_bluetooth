@@ -34,7 +34,6 @@ thread_local napi_ref NapiBluetoothPan::consRef_ = nullptr;
 
 napi_value NapiBluetoothPan::CreatePanProfile(napi_env env, napi_callback_info info)
 {
-    NAPI_BT_ASSERT_RETURN_UNDEF(env, IS_PAN_SUPPORTED, BT_ERR_API_NOT_SUPPORT);
     napi_value napiProfile;
     napi_value constructor = nullptr;
     napi_get_reference_value(env, consRef_, &constructor);

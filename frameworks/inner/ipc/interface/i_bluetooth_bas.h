@@ -35,6 +35,7 @@ public:
     virtual int32_t GetBatteryLevel(const std::string &address) = 0;
     virtual int32_t GetConnectedDeviceBatteryInfos(std::map<std::string, int32_t> &batteryInfos) = 0;
 };
-} // namespace Bluetooth
-} // namespace OHOS
-#endif  // OHOS_BLUETOOTH_IBLUETOOTHBAS_H
+} // Bluetooth
+} // OHOS
+
+#endif // OHOS_BLUETOOTH_IBLUETOOTHBAS_H

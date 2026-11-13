@@ -37,6 +37,6 @@ private:
     int32_t InnerTransact(uint32_t code, MessageOption &flags, MessageParcel &data, MessageParcel &reply);
     static inline BrokerDelegator<BluetoothBasProxy> delegator_;
 };
-} // namespace Bluetooth
-} // namespace OHOS
+}  // namespace Bluetooth
+}  // namespace OHOS
 #endif  // OHOS_BLUETOOTH_STANDARD_BAS_PROXY_H

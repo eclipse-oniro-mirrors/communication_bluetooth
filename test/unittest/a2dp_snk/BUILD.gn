@@ -1,0 +1,159 @@
+/*
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import("//build/test.gni")
+import("//foundation/communication/bluetooth/bluetooth.gni")
+import("//foundation/communication/bluetooth/test/unittest/unittest.gni")
+
+module_output_path = "bluetooth/bluetooth"
+SUBSYSTEM_DIR = "//foundation/communication/bluetooth"
+
+config("a2dp_snk_test_config") {
+  visibility = [ ":*" ]
+  cflags = [
+    "-fPIC",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-unreachable-code-return",
+    "-Wno-defaulted-function-deleted",
+    "-Wno-overloaded-virtual",
+  ]
+  cflags_cc = cflags
+
+  include_dirs = [
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/base",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/common",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/util",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/include",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/a2dp_snk",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/avrcp_ct",
+    "$SUBSYSTEM_DIR/services/bluetooth/service/src/gavdp",
+    "mock",
+  ]
+  defines = [
+    "BTFW_LOG_TAG = \"bluetooth_test\"",
+    "BTFW_LOG_DOMAIN = 0xD000103",
+    "private = public",
+    "protected = public",
+  ]
+}
+
+ohos_unittest("btfw_a2dp_snk_statemachine_unit_test") {
+  module_out_path = module_output_path
+  sources = [ "a2dp_snk_state_machine_test.cpp" ]
+  configs = [ ":a2dp_snk_test_config" ]
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "$SUBSYSTEM_DIR/services/bluetooth/service:btservice_static",
+  ]
+  external_deps = [
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "audio_framework:audio_foundation",
+  ]
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_a2dp_snk_stream_sm_unit_test") {
+  module_out_path = module_output_path
+  sources = [ "cdc_stream_state_machine_test.cpp" ]
+  configs = [ ":a2dp_snk_test_config" ]
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "$SUBSYSTEM_DIR/services/bluetooth/service:btservice_static",
+  ]
+  external_deps = [
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "audio_framework:audio_foundation",
+    "ffrt:libffrt",
+  ]
+}
+
+ohos_unittest("btfw_a2dp_snk_service_unit_test") {
+  module_out_path = module_output_path
+  sources = [ "a2dp_snk_service_test.cpp" ]
+  configs = [ ":a2dp_snk_test_config" ]
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "$SUBSYSTEM_DIR/services/bluetooth/service:btservice_static",
+  ]
+  external_deps = [
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "audio_framework:audio_foundation",
+    "ffrt:libffrt",
+  ]
+}
+
+ohos_unittest("btfw_a2dp_snk_render_unit_test") {
+  module_out_path = module_output_path
+  sources = [ "a2dp_snk_audio_render_test.cpp" ]
+  configs = [ ":a2dp_snk_test_config" ]
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "$SUBSYSTEM_DIR/services/bluetooth/service:btservice_static",
+  ]
+  external_deps = [
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "audio_framework:audio_foundation",
+  ]
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_a2dp_native_adapter_unit_test") {
+  module_out_path = module_output_path
+  sources = [ "native_a2dp_adapter_test.cpp" ]
+  configs = [ ":a2dp_snk_test_config" ]
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "$SUBSYSTEM_DIR/services/bluetooth/service:btservice_static",
+  ]
+  external_deps = [
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "audio_framework:audio_foundation",
+  ]
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+group("btfw_a2dp_snk_unittest") {
+  testonly = true
+  deps = [
+    ":btfw_a2dp_snk_statemachine_unit_test",
+    ":btfw_a2dp_snk_stream_sm_unit_test",
+    ":btfw_a2dp_snk_service_unit_test",
+    ":btfw_a2dp_snk_policy_unit_test",
+    ":btfw_a2dp_snk_render_unit_test",
+    ":btfw_a2dp_snk_native_adapter_unit_test",
+  ]
+}

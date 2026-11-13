@@ -1,0 +1,103 @@
+# Copyright (C) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("//foundation/communication/bluetooth/test/unittest/unittest.gni")
+
+module_output_path = "bluetooth/bluetooth"
+FRAMWORK_DIR = "//foundation/communication"
+PART_DIR = "//foundation/communication/bluetooth/services/bluetooth"
+BT_SERVICE_DIR = "$PART_DIR/service"
+
+###############################################################################
+config("module_private_config") {
+  visibility = [ ":*" ]
+  cflags = [
+    "-Werror",
+    "-Wno-macro-redefined",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-unused-const-variable",
+    "-Wno-deprecated-builtins",
+    "-Wno-defaulted-function-deleted",
+    "-Woverloaded-virtual",
+  ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+  include_dirs = [
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/include",
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/src",
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/ipc/common",
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/ipc/include",
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/ipc/interface",
+    "$BT_SERVICE_DIR/include",
+    "$BT_SERVICE_DIR/src",
+    "$BT_SERVICE_DIR/src/base",
+    "$BT_SERVICE_DIR/src/common",
+    "$BT_SERVICE_DIR/src/obex",
+    "$BT_SERVICE_DIR/src/watch",
+    "$PART_DIR/common",
+  ]
+  defines = [
+    "BTFW_LOG_TAG = \"bluetooth_test\"",
+    "BTFW_LOG_DOMAIN = 0xD000103",
+    "private = public",
+    "protected = public",
+  ]
+}
+
+if (bluetooth_watch_feature) {
+  ohos_unittest("btfw_watch_pbap_client_test") {
+    module_out_path = module_output_path
+
+    sources = [ "watch_pbap_client_test.cpp" ]
+
+    configs = [
+      ":module_private_config",
+      "${bluetooth_config_path}:feature_flags",
+      "${bluetooth_unittest_utils_path}:unittest_utils_config",
+    ]
+
+    deps = [
+      "$PART_DIR/service:btservice_static",
+      "$PART_DIR/server:bluetooth_server_static",
+      "$BT_SERVICE_DIR/src/obex:bt_obex",
+      "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+      "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    ]
+
+    external_deps = [
+      "c_utils:utils",
+      "hilog:libhilog",
+      "ipc:ipc_single",
+      "googletest:gmock_main",
+      "googletest:gtest_main",
+      "resource_management:global_resmgr",
+    ]
+
+    if (bluetooth_ffrt_enable) {
+      external_deps += [ "ffrt:libffrt" ]
+    }
+  }
+}
+
+group("unittest") {
+  testonly = true
+
+  deps = []
+  if (bluetooth_watch_feature) {
+    deps += [
+      ":btfw_watch_pbap_client_test",
+    ]
+  }
+}

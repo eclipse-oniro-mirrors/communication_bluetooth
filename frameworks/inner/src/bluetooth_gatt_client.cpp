@@ -766,6 +766,45 @@ int GattClient::DiscoverServices()
     return pimpl->DiscoverStart();
 }
 
+int GattClient::RefreshServices()
+{
+    HILOGI("enter");
+    if (!IS_BLE_ENABLED()) {
+        HILOGE("bluetooth is off.");
+        return BT_ERR_INVALID_STATE;
+    }
+
+    if (pimpl == nullptr || !pimpl->Init(weak_from_this())) {
+        HILOGE("pimpl or gatt client proxy is nullptr");
+        return BT_ERR_INTERNAL_ERROR;
+    }
+
+    std::lock_guard<std::mutex> lck(pimpl->connStateMutex_);
+    if (pimpl->connectionState_ != static_cast<int>(BTConnectState::CONNECTED)) {
+        HILOGE("Request not supported");
+        return BT_ERR_GATT_CONNECTION_NOT_ESTABILISHED;
+    }
+    if (!pimpl->isRegisterSucceeded_) {
+        HILOGE("Request not supported");
+        return BT_ERR_INTERNAL_ERROR;
+    }
+
+    // Reset the local service cache before dispatching, so that GetService refetches
+    // from the service after the rediscovery triggered by the refresh.
+    {
+        std::lock_guard<std::mutex> lock(pimpl->gattServicesMutex_);
+        pimpl->gattServices_.clear();
+    }
+    pimpl->isGetServiceYet_ = false;
+
+    int result = BT_ERR_INTERNAL_ERROR;
+    sptr<IBluetoothGattClient> proxy = GetRemoteProxy<IBluetoothGattClient>(PROFILE_GATT_CLIENT);
+    CHECK_AND_RETURN_LOG_RET(proxy != nullptr, BT_ERR_INTERNAL_ERROR, "failed: no proxy");
+    result = proxy->RefreshServices(pimpl->applicationId_);
+    HILOGI("result: %{public}d", result);
+    return result;
+}
+
 std::optional<std::reference_wrapper<GattService>> GattClient::GetService(const UUID &uuid)
 {
     HILOGD("enter");

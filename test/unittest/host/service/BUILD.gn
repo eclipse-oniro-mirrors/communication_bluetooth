@@ -1,0 +1,126 @@
+# Copyright (C) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("//foundation/communication/bluetooth/bluetooth.gni")
+import("//foundation/communication/bluetooth/test/unittest/unittest.gni")
+
+module_output_path = "bluetooth/bluetooth"
+SUBSYSTEM_DIR = "//foundation/communication"
+PART_DIR = "//foundation/communication/bluetooth/services/bluetooth"
+BT_SERVICE_DIR = "$PART_DIR/service"
+IDL_DIR = "//foundation/communication/bluetooth/idl"
+FWK_DIR = "//foundation/communication/bluetooth/frameworks"
+
+config("module_private_config") {
+  visibility = [ ":*" ]
+  cflags = [
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-unused-const-variable",
+    "-Wno-deprecated-builtins",
+  ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+  include_dirs = [
+    "mock/include",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/inner/ipc/common",
+    "$SUBSYSTEM_DIR/bluetooth/interfaces/inner_api/include",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/inner/ipc/include",
+    "$PART_DIR/server/include",
+    "$PART_DIR/ipc/include",
+    "$BT_SERVICE_DIR/include",
+    "$BT_SERVICE_DIR/src",
+    "$BT_SERVICE_DIR/src/base",
+    "$BT_SERVICE_DIR/src/ble",
+    "$BT_SERVICE_DIR/src/classic",
+    "$BT_SERVICE_DIR/src/common",
+    "$BT_SERVICE_DIR/src/permission",
+    "$BT_SERVICE_DIR/src/util",
+    "$PART_DIR/server/src",
+    "$PART_DIR/btchr/include",
+    "$FWK_DIR/inner/include",
+  ]
+  defines = [
+    "BTFW_LOG_TAG = \"bluetooth_test\"",
+    "BTFW_LOG_DOMAIN = 0xD000103",
+    "private = public",
+    "protected = public",
+  ]
+}
+
+ohos_unittest("btfw_host_server_test") {
+  module_out_path = module_output_path
+  sanitize = {
+    cfi = true  # Enable/disable control flow integrity detection
+    cfi_cross_dso = true  # Cross-SO CFI Checks
+    debug = false
+    blocklist = "./libbt_host_service_blocklist.txt"
+  }
+ sources = [
+    "host_server_test.cpp",
+  ]
+
+  configs = [
+    ":module_private_config",
+    "${bluetooth_config_path}:feature_flags",
+  ]
+  configs += [ "${bluetooth_unittest_utils_path}:unittest_utils_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+    "$PART_DIR/service:btservice_static",
+    "$PART_DIR/server:bluetooth_server_static",
+    "$PART_DIR/ipc:bt_service_ipc",
+    "$IDL_DIR/hearingaid:libbluetooth_hearingaid_interface_stub",
+    "//foundation/communication/bluetooth/services/bluetooth/stack_interface:stack_interface",
+  ]
+
+  external_deps = [
+    "common_event_service:cesfwk_innerkits",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "preferences:native_preferences",
+    "hicollie:libhicollie",
+    "access_token:libaccesstoken_sdk",
+    "hitrace:hitrace_meter",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+
+  if (bluetooth_resourceschedule) {
+    external_deps += [ "resource_schedule_service:ressched_client" ]
+  }
+}
+
+################################################################################
+group("unittest") {
+  testonly = true
+
+  deps = []
+
+  if (is_phone_product) {
+    deps += [
+      ":btfw_host_server_test",
+      ]
+  }
+}

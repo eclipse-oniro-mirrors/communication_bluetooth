@@ -1,0 +1,11 @@
+[
+  {
+    "Name": "bluetooth",
+    "License": "Apache-2.0",
+    "License File": "LICENSE",
+    "Version Number": "3.2.0",
+    "Owner": "",
+    "Upstream URL": "https://gitee.com/openharmony/communication_bluetooth",
+    "Description": "华为设备公司对 OpenHarmony 蓝牙服务进行定制化扩展的组件，提供蓝牙协议增强、特性开关和设备适配等功能。"
+  }
+]

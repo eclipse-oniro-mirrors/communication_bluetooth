@@ -1844,6 +1844,7 @@ enum ProfileConnectionState {
 
 enum DialogBoxType {
     BLUETOOTH_SWITCH = 0,
+    CANCEL_PAIR = 1,
 };
 
 enum BtLinkPriority {

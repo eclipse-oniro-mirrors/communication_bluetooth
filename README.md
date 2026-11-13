@@ -42,11 +42,11 @@ The C API definition as well as the service and protocol stack code are provided
 
 The directories for the standard system are as follows:
 
-[interfaces/](https://gitee.com/openharmony/communication_bluetooth/tree/master/interfaces)
+[interfaces/](https://gitcode.com/openharmony/communication_bluetooth/tree/master/interfaces)
 
-[sa\_profile/](https://gitee.com/openharmony/communication_bluetooth/tree/master/sa_profile)
+[sa\_profile/](https://gitcode.com/openharmony/communication_bluetooth/tree/master/sa_profile)
 
-[services/](https://gitee.com/openharmony/communication_bluetooth/tree/master/services)
+[services/](https://gitcode.com/openharmony/communication_bluetooth/tree/master/services)
 
 ### Mini or Small System<a name="section223312597203"></a>
 

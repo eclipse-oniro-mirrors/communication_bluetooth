@@ -139,7 +139,7 @@ napi_value DefineConnectionFunctions(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getLastConnectionTime", GetRemoteDeviceConnectionTime),
         DECLARE_NAPI_FUNCTION("updateCloudBluetoothDevice", UpdateCloudBluetoothDevice),
     };
-
+ 
     HITRACE_METER_NAME(HITRACE_TAG_OHOS, "connection:napi_define_properties");
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;
@@ -412,14 +412,20 @@ napi_value PairDevice(napi_env env, napi_callback_info info)
 napi_value CancelPairedDevice(napi_env env, napi_callback_info info)
 {
     HILOGD("enter");
+    std::vector<int32_t> validErrCodes = {
+        BT_ERR_PERMISSION_FAILED, BT_ERR_SYSTEM_PERMISSION_FAILED, BT_ERR_INVALID_PARAM,
+        BT_ERR_API_NOT_SUPPORT, BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE,
+        BT_ERR_INTERNAL_ERROR
+    };
+    NAPI_BT_CONTEXT(env, "connection.CancelPairedDevice", validErrCodes);
     std::string remoteAddr{};
     bool checkRet = CheckDeivceIdParam(env, info, remoteAddr);
-    NAPI_BT_ASSERT_RETURN_FALSE(env, checkRet, BT_ERR_INVALID_PARAM);
+    NAPI_BT_ASSERT_RETURN_FALSE_VERIFY(env, checkRet, BT_ERR_INVALID_PARAM);
 
     BluetoothRemoteDevice remoteDevice = BluetoothRemoteDevice(remoteAddr);
     BluetoothHost *host = &BluetoothHost::GetDefaultHost();
     int32_t ret = host->RemovePair(remoteDevice);
-    NAPI_BT_ASSERT_RETURN_FALSE(env, ret == BT_NO_ERROR, ret);
+    NAPI_BT_ASSERT_RETURN_FALSE_VERIFY(env, ret == BT_NO_ERROR, ret);
 
     return NapiGetBooleanTrue(env);
 }
@@ -503,11 +509,10 @@ napi_value SetCarKeyCardData(napi_env env, napi_callback_info info)
     BluetoothHost *host = &BluetoothHost::GetDefaultHost();
     int ret = host->SetCarKeyCardData(remoteAddr, action);
     NAPI_BT_ASSERT_ERR_NUM_RETURN_VERIFY(env, ret == BT_NO_ERROR, ret);
-    return NapiGetBooleanTrue(env);
+    return NapiGetUndefinedRet(env);
 }
 
-napi_value GetRemoteDeviceClass(napi_env env, napi_callback_info info)
-{
+napi_value GetRemoteDeviceClass(napi_env env, napi_callback_info info){
     HILOGD("start");
     std::string remoteAddr = INVALID_MAC_ADDRESS;
     bool checkRet = CheckDeivceIdParam(env, info, remoteAddr);
@@ -735,6 +740,20 @@ napi_status CheckDeviceAsyncParam(napi_env env, napi_callback_info info, std::st
     return napi_ok;
 }
 
+// cancelPairingDevice has both a promise overload and a legacy callback overload (systemapi).
+// The two overloads declare different error code contracts, so the calling form is required.
+napi_status CheckCancelPairingDeviceParam(napi_env env, napi_callback_info info,
+    std::string &addr, bool &isCallbackForm)
+{
+    size_t argc = ARGS_SIZE_TWO;
+    napi_value argv[ARGS_SIZE_TWO] = {nullptr};
+    NAPI_BT_CALL_RETURN(napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
+    NAPI_BT_RETURN_IF(argc != ARGS_SIZE_ONE && argc != ARGS_SIZE_TWO, "Requires 1 or 2 arguments", napi_invalid_arg);
+    NAPI_BT_CALL_RETURN(NapiParseBdAddr(env, argv[PARAM0], addr));
+    isCallbackForm = (argc == ARGS_SIZE_TWO) && (NapiIsFunction(env, argv[PARAM1]) == napi_ok);
+    return napi_ok;
+}
+
 napi_status CheckDeviceAsyncParam(napi_env env, napi_callback_info info, std::string &addr, int32_t &addrType)
 {
     size_t argc = ARGS_SIZE_TWO;
@@ -950,6 +969,12 @@ napi_value GenerateLocalOobData(napi_env env, napi_callback_info info)
 napi_value CancelPairedDeviceAsync(napi_env env, napi_callback_info info)
 {
     HILOGD("enter");
+    std::vector<int32_t> validErrCodes = {
+        BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT,
+        BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE, BT_ERR_DIALOG_FOR_USER_NOT_RESPOND,
+        BT_ERR_DIALOG_FOR_USER_REFUSE, BT_ERR_UNPAIRED_DEVICE, BT_ERR_INTERNAL_ERROR
+    };
+    NAPI_BT_CONTEXT(env, "connection.CancelPairedDeviceAsync", validErrCodes);
     std::string remoteAddr {};
     bool checkRet = CheckDeviceAsyncParam(env, info, remoteAddr);
     NAPI_BT_ASSERT_RETURN_UNDEF(env, checkRet == napi_ok, BT_ERR_INVALID_PARAM);
@@ -961,7 +986,7 @@ napi_value CancelPairedDeviceAsync(napi_env env, napi_callback_info info)
         HILOGI("err: %{public}d", err);
         return NapiAsyncWorkRet(err);
     };
-    auto asyncWork = NapiAsyncWorkFactory::CreateAsyncWork(env, info, func, ASYNC_WORK_NO_NEED_CALLBACK);
+    auto asyncWork = CREATE_ASYNC_WORK_WITH_CONTEXT(env, info, func, ASYNC_WORK_NO_NEED_CALLBACK);
     NAPI_BT_ASSERT_RETURN_UNDEF(env, asyncWork, BT_ERR_INTERNAL_ERROR);
     asyncWork->Run();
     return asyncWork->GetRet();
@@ -970,17 +995,26 @@ napi_value CancelPairedDeviceAsync(napi_env env, napi_callback_info info)
 napi_value CancelPairingDevice(napi_env env, napi_callback_info info)
 {
     HILOGD("enter");
+    std::vector<int32_t> validErrCodes = {
+        BT_ERR_PERMISSION_FAILED, BT_ERR_SYSTEM_PERMISSION_FAILED, BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT,
+        BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE, BT_ERR_PAIRING_INITIATED_BY_OTHER,
+        BT_ERR_DEVICE_NOT_PAIRING, BT_ERR_INTERNAL_ERROR,
+    };
+    NAPI_BT_CONTEXT(env, "connection.CancelPairingDevice", validErrCodes);
     std::string remoteAddr{};
-    bool checkRet = CheckDeviceAsyncParam(env, info, remoteAddr);
+    bool isCallbackForm = false;
+    bool checkRet = CheckCancelPairingDeviceParam(env, info, remoteAddr, isCallbackForm);
     NAPI_BT_ASSERT_RETURN_UNDEF(env, checkRet == napi_ok, BT_ERR_INVALID_PARAM);
 
-    auto func = [remoteAddr]() {
+    auto func = [remoteAddr, isCallbackForm]() {
         BluetoothRemoteDevice remoteDevice = BluetoothRemoteDevice(remoteAddr);
-        int32_t err = remoteDevice.CancelPairing();
-        HILOGI("err: %{public}d", err);
+        // Route by call form: the callback overload keeps the legacy CancelPairing chain
+        // (systemapi, 202-gated, bool contract), while the promise overload takes the new
+        // initiator-aware chain whose error codes follow its d.ts throws contract.
+        int32_t err = isCallbackForm ? remoteDevice.CancelPairing() : remoteDevice.CancelPairingByInitiator();
         return NapiAsyncWorkRet(err);
     };
-    auto asyncWork = NapiAsyncWorkFactory::CreateAsyncWork(env, info, func, ASYNC_WORK_NO_NEED_CALLBACK);
+    auto asyncWork = CREATE_ASYNC_WORK_WITH_CONTEXT(env, info, func, ASYNC_WORK_NO_NEED_CALLBACK);
     NAPI_BT_ASSERT_RETURN_UNDEF(env, asyncWork, BT_ERR_INTERNAL_ERROR);
     asyncWork->Run();
     return asyncWork->GetRet();

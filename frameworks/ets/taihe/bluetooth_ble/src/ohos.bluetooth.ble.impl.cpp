@@ -42,6 +42,10 @@
 namespace OHOS {
 namespace Bluetooth {
 namespace {
+constexpr int32_t TRANSPORT_BR_EDR = 0;
+constexpr int32_t TRANSPORT_LE = 1;
+constexpr int32_t TRANSPORT_DUAL = 2;
+
 std::shared_ptr<BleAdvertiser> BleAdvertiserGetInstance(void)
 {
     static auto instance = BleAdvertiser::CreateInstance();
@@ -89,6 +93,47 @@ ohos::bluetooth::ble::GattClientDevice CreateGattClientDevice(taihe::string_view
     TAIHE_BT_HA_ASSERT_RETURN_VERIFY(checkRet, BT_ERR_INVALID_PARAM,
         (taihe::make_holder<GattClientDeviceImpl, ohos::bluetooth::ble::GattClientDevice>("")));
     return taihe::make_holder<GattClientDeviceImpl, ohos::bluetooth::ble::GattClientDevice>(remoteAddr);
+}
+
+static bool ConvertToGattTransportType(int32_t transport, int32_t &gattTransport)
+{
+    switch (transport) {
+        case TRANSPORT_BR_EDR:
+            gattTransport = GATT_TRANSPORT_TYPE_CLASSIC;
+            return true;
+        case TRANSPORT_LE:
+            gattTransport = GATT_TRANSPORT_TYPE_LE;
+            return true;
+        case TRANSPORT_DUAL:
+            gattTransport = GATT_TRANSPORT_TYPE_AUTO;
+            return true;
+        default:
+            HILOGE("invalid transport value: %{public}d", transport);
+            return false;
+    }
+}
+
+ohos::bluetooth::ble::GattClientDevice CreateGattClientDeviceWithSetting(
+    taihe::string_view deviceId, const ohos::bluetooth::ble::GattSetting &setting)
+{
+    HILOGI("enter");
+    std::vector<int32_t> validErrCodes = { BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT };
+    TAIHE_BT_CONTEXT_HA(taihe::get_env(), "ble.CreateGattClientDevice", validErrCodes);
+    std::string remoteAddr = std::string(deviceId);
+    bool checkRet = CheckDeviceIdParam(remoteAddr);
+    TAIHE_BT_HA_ASSERT_RETURN_VERIFY(checkRet, BT_ERR_INVALID_PARAM,
+        (taihe::make_holder<GattClientDeviceImpl, ohos::bluetooth::ble::GattClientDevice>("")));
+
+    bool autoConnect = setting.autoConnect.has_value() ? setting.autoConnect.value() : false;
+    int32_t gattTransport = GATT_TRANSPORT_TYPE_LE;
+    if (setting.transport.has_value()) {
+        int32_t transportValue = static_cast<int32_t>(setting.transport.value().get_value());
+        checkRet = ConvertToGattTransportType(transportValue, gattTransport);
+        TAIHE_BT_HA_ASSERT_RETURN_VERIFY(checkRet, BT_ERR_INVALID_PARAM,
+            (taihe::make_holder<GattClientDeviceImpl, ohos::bluetooth::ble::GattClientDevice>("")));
+    }
+    return taihe::make_holder<GattClientDeviceImpl, ohos::bluetooth::ble::GattClientDevice>(
+        remoteAddr, autoConnect, gattTransport);
 }
 
 ohos::bluetooth::ble::GattServer CreateGattServer()
@@ -393,6 +438,44 @@ taihe::array<taihe::string> GetConnectedBLEDevices()
     return result;
 }
 
+constexpr int32_t BLE_PROFILE_GATT = 1;
+constexpr int32_t BLE_PROFILE_GATT_CLIENT = 2;
+constexpr int32_t BLE_PROFILE_GATT_SERVER = 3;
+
+static bool ConvertToBleProfile(int32_t profileValue, int32_t &bleProfile)
+{
+    switch (profileValue) {
+        case BLE_PROFILE_GATT:
+            bleProfile = static_cast<int32_t>(BleProfile::GATT);
+            return true;
+        case BLE_PROFILE_GATT_CLIENT:
+            bleProfile = static_cast<int32_t>(BleProfile::GATT_CLIENT);
+            return true;
+        case BLE_PROFILE_GATT_SERVER:
+            bleProfile = static_cast<int32_t>(BleProfile::GATT_SERVER);
+            return true;
+        default:
+            return false;
+    }
+}
+
+taihe::array<taihe::string> GetConnectedBLEDevicesWithProfile(::ohos::bluetooth::ble::BleProfile profile)
+{
+    HILOGD("enter");
+    std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM,
+        BT_ERR_API_NOT_SUPPORT, BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE, BT_ERR_INTERNAL_ERROR };
+    TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
+    // 越界取值与 NAPI 对齐抛 BT_ERR_INTERNAL_ERROR(2900099)，而非 401。
+    int32_t profileValue = static_cast<int32_t>(profile.get_value());
+    int32_t bleProfile = 0;
+    bool checkRet = ConvertToBleProfile(profileValue, bleProfile);
+    TAIHE_BT_ASSERT_RETURN_VERIFY(checkRet, BT_ERR_INTERNAL_ERROR, taihe::array<::taihe::string>{});
+    std::vector<std::string> connectedDevices;
+    int32_t ret = BluetoothHost::GetDefaultHost().GetConnectedBLEDevices(bleProfile, connectedDevices);
+    TAIHE_BT_ASSERT_RETURN_VERIFY(ret == BT_NO_ERROR, ret, taihe::array<::taihe::string>{});
+    return taihe::array<taihe::string>(taihe::copy_data_t{}, connectedDevices.data(), connectedDevices.size());
+}
+
 static TaiheStatus ParseAdvertisingSettingsParameters(const ohos::bluetooth::ble::AdvertiseSetting &inSettings,
                                                       BleAdvertiserSettings &outSettings)
 {
@@ -458,6 +541,14 @@ static TaiheStatus ParseAdvertisDataParameters(const ohos::bluetooth::ble::Adver
     if (advDataIn.includeTxPower.has_value()) {
         HILOGI("includeTxPower: %{public}d", advDataIn.includeTxPower.value());
         advDataOut.SetIncludeTxPower(advDataIn.includeTxPower.value());
+    }
+    if (advDataIn.advertiseName.has_value()) {
+        std::string advertiseName = std::string(advDataIn.advertiseName.value());
+        TAIHE_BT_RETURN_IF(!advertiseName.empty() && advDataIn.includeDeviceName.has_value() &&
+            advDataIn.includeDeviceName.value(),
+            "includeDeviceName should be false if advertiseName is given", TAIHE_INVALID_ARG);
+        HILOGI("advertiseName: %{public}s", advertiseName.c_str());
+        advDataOut.SetAdvertiseName(advertiseName);
     }
     return TAIHE_OK;
 }
@@ -842,11 +933,13 @@ void OffBLEDeviceFind(
 // Since these macros are auto-generate, lint will cause false positive.
 // NOLINTBEGIN
 TH_EXPORT_CPP_API_CreateGattClientDevice(OHOS::Bluetooth::CreateGattClientDevice);
+TH_EXPORT_CPP_API_CreateGattClientDeviceWithSetting(OHOS::Bluetooth::CreateGattClientDeviceWithSetting);
 TH_EXPORT_CPP_API_CreateGattServer(OHOS::Bluetooth::CreateGattServer);
 TH_EXPORT_CPP_API_CreateBleScanner(OHOS::Bluetooth::CreateBleScanner);
 TH_EXPORT_CPP_API_StopAdvertising(OHOS::Bluetooth::StopAdvertising);
 TH_EXPORT_CPP_API_StopBLEScan(OHOS::Bluetooth::StopBLEScan);
 TH_EXPORT_CPP_API_GetConnectedBLEDevices(OHOS::Bluetooth::GetConnectedBLEDevices);
+TH_EXPORT_CPP_API_GetConnectedBLEDevicesWithProfile(OHOS::Bluetooth::GetConnectedBLEDevicesWithProfile);
 TH_EXPORT_CPP_API_StartBLEScan(OHOS::Bluetooth::StartBLEScan);
 TH_EXPORT_CPP_API_StartAdvertising(OHOS::Bluetooth::StartAdvertising);
 TH_EXPORT_CPP_API_StartAdvertisingPromise(OHOS::Bluetooth::StartAdvertisingPromise);

@@ -32,6 +32,7 @@
 #include "bluetooth_log.h"
 #include "bluetooth_errorcode.h"
 #include "bluetooth_oob_data.h"
+#include "bluetooth_utils.h"
 #include "taihe_bluetooth_connection_callback.h"
 #include "taihe_bluetooth_utils.h"
 #include "taihe_event_module.h"
@@ -904,7 +905,7 @@ void CancelPairingDeviceSync(taihe::string_view deviceId)
     TAIHE_BT_ASSERT_RETURN_VOID(checkRet, BT_ERR_INVALID_PARAM);
 
     BluetoothRemoteDevice remoteDevice = BluetoothRemoteDevice(remoteAddr);
-    int32_t err = remoteDevice.CancelPairing();
+    int32_t err = remoteDevice.CancelPairingByInitiator();
     HILOGI("err: %{public}d", err);
     TAIHE_BT_ASSERT_RETURN_VOID(err == BT_NO_ERROR, err);
 }

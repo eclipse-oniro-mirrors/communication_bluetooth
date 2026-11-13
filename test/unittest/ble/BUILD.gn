@@ -1,0 +1,363 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("//foundation/communication/bluetooth/test/unittest/unittest.gni")
+
+module_output_path = "bluetooth/bluetooth"
+FRAMWORK_DIR = "//foundation/communication"
+PART_DIR = "//foundation/communication/bluetooth/services/bluetooth"
+
+###############################################################################
+#1. intent(c++) get/set test without transport
+
+config("module_private_config") {
+  visibility = [ ":*" ]
+  cflags = [
+    "-Wno-non-c-typedef-for-linkage",
+  ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+  include_dirs = [
+    "mock/include",
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/include",
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/ipc/common",
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/ipc/parcel",
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/ipc/include",
+    "$FRAMWORK_DIR/bluetooth/frameworks/inner/ipc/interface",
+    "$FRAMWORK_DIR/bluetooth/interfaces/inner_api/include",
+    "$PART_DIR/ipc/include",
+    "$PART_DIR/server/include",
+    "$PART_DIR/server/src",
+    "$PART_DIR/service/src",
+    "$PART_DIR/service/src/base",
+    "$PART_DIR/service/src/ble",
+    "$PART_DIR/service/src/permission",
+    "$PART_DIR/service/src/common",
+    "$PART_DIR/service/src/classic",
+    "$PART_DIR/service/src/util",
+  ]
+  defines = [
+    "BTFW_LOG_TAG = \"bluetooth_test\"",
+    "BTFW_LOG_DOMAIN = 0xD000103",
+    "CONTEXTHUB_BLE_V3 = 1",
+    "private = public",
+  ]
+}
+
+ohos_unittest("btfw_ble_scanner_sm_unit_test") {
+  module_out_path = module_output_path
+  sources = [
+    "ble_scanner_state_machine_test.cpp",
+  ]
+  sanitize = {
+    cfi = true                            # Enable/disable control flow integrity detection
+    cfi_cross_dso = true                  # Cross-SO CFI Checks
+    debug = false
+    blocklist = "./libbt_ble_blocklist.txt"
+  }
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "$PART_DIR/server:bluetooth_server_static",
+    "$PART_DIR/common:btservice_common",
+    "$PART_DIR/stack_interface:stack_interface",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "eventhandler:libeventhandler",
+    "hisysevent:libhisysevent",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "bounds_checking_function:libsec_shared",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_ble_unit_test") {
+  module_out_path = module_output_path
+  sanitize = {
+    cfi = true  # Enable/disable control flow integrity detection
+    cfi_cross_dso = true  # Cross-SO CFI Checks
+    debug = false
+  }
+  sources = [ "ble_test.cpp", ]
+
+  configs = [ ":module_private_config" ]
+  configs += [ "${bluetooth_unittest_utils_path}:unittest_utils_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "bounds_checking_function:libsec_shared",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_ble_disable_ble_unit_test") {
+  module_out_path = module_output_path
+  sources = [ "ble_disable_ble_test.cpp", ]
+
+  configs = [ ":module_private_config" ]
+  configs += [ "${bluetooth_unittest_utils_path}:unittest_utils_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_bluetooth_applications_container_unit_test") {
+  module_out_path = module_output_path
+  sources = [
+    "bluetooth_applications_container_test.cpp",
+  ]
+  sanitize = {
+    cfi = true                             # Enable/disable control flow integrity detection
+    cfi_cross_dso = true                   # Cross-SO CFI Checks
+    debug = false
+    blocklist = "./libbt_ble_blocklist.txt"
+  }
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "$PART_DIR/ipc:bt_service_ipc",
+    "$PART_DIR/server:bluetooth_server_static",
+    "$PART_DIR/service:btservice_static",
+    "//foundation/communication/bluetooth/services/bluetooth/stack_interface:stack_interface",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "eventhandler:libeventhandler",
+    "hisysevent:libhisysevent",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_ble_scanfilter_unit_test") {
+  module_out_path = module_output_path
+  sources = [
+    "bluetooth_ble_scanfilter_test.cpp",
+  ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "$PART_DIR/ipc:bt_service_ipc",
+    "$PART_DIR/server:bluetooth_server_static",
+    "$PART_DIR/service:btservice_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "eventhandler:libeventhandler",
+    "hisysevent:libhisysevent",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_bleservice_unit_test") {
+  module_out_path = module_output_path
+  sources = [ "ble_servicedata_test.cpp",]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_ble_parcel_unit_test") {
+  module_out_path = module_output_path
+  sources = [ "bluetooth_ble_parcel_test.cpp",]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_ble_parcel_data_unit_test") {
+  module_out_path = module_output_path
+  sources = [ "ble_parcel_data_test.cpp"]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_ble_peripheral_observer_stub_test") {
+  module_out_path = module_output_path
+  sources = [ "bluetooth_ble_peripheral_observer_stub_test.cpp",]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+################################################################################
+group("unittest") {
+  testonly = true
+
+  deps = []
+
+  if (is_phone_product) {
+    deps += [
+      ":btfw_ble_unit_test",
+      ":btfw_ble_scanner_sm_unit_test",
+      ":btfw_bleservice_unit_test",
+      ":btfw_bluetooth_applications_container_unit_test",
+      ":btfw_ble_scanfilter_unit_test",
+      ":btfw_ble_disable_ble_unit_test",
+      ":btfw_ble_parcel_unit_test",
+      ":btfw_ble_parcel_data_unit_test",
+      ":btfw_ble_peripheral_observer_stub_test",
+      "service:btfw_ble_service_advertiser_impl_unit_test",
+      "service:btfw_ble_service_central_manager_impl_unit_test",
+      "service:btfw_ble_service_adapter_unit_test",
+      "service:btfw_ble_service_scan_filter_unit_test",
+    ]
+  }
+}

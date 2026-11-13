@@ -22,6 +22,7 @@
 #include "bluetooth_connection_ffi.h"
 #include "bluetooth_errorcode.h"
 #include "bluetooth_host.h"
+#include "bluetooth_utils.h"
 #include "napi_bluetooth_utils.h"
 #include "xcollie/xcollie.h"
 #include "xcollie/xcollie_define.h"

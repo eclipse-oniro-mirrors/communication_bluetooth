@@ -184,6 +184,8 @@ static std::map<int32_t, std::string> BtErrCodeMap {
     { BtErrCode::BT_ERR_HID_APP_HAS_BEEN_REGISTERED, "Any HID application has been registered."},
     { BtErrCode::BT_ERR_HID_APP_NOT_REGISTER, "HID application does not register."},
     { BtErrCode::BT_ERR_HID_DEVICE_NOT_CONNECTED, "HID device not connected."},
+    { BtErrCode::BT_ERR_PAIRING_INITIATED_BY_OTHER, "BT_ERR_PAIRING_INITIATED_BY_OTHER" },
+    { BtErrCode::BT_ERR_DEVICE_NOT_PAIRING, "BT_ERR_DEVICE_NOT_PAIRING" },
 };
 
 std::string GetErrorCode(int32_t errCode)
