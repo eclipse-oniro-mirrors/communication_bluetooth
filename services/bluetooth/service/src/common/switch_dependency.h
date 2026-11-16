@@ -80,11 +80,7 @@ private:
         bool isSatisfied = false;  // 该系统参数是否满足诉求
     };
     mutable std::mutex dependedSystemParamsVecMutex_ {};
-    std::vector<DependedSystemParam> dependedSystemParamsVec_ {
-#if !(defined(BT_MCU_PROXY_ENABLE) || defined(BLUETOOTH_WATCH_ENABLE)) // 眼镜驱动节点不在AP侧挂载
-        {"vendor.setup_mpxx_dir_mode", "success", "false", false},
-#endif // BT_MCU_PROXY_ENABLE and BLUETOOTH_WATCH_ENABLE
-    };
+    std::vector<DependedSystemParam> dependedSystemParamsVec_ {};
 
     std::atomic_bool isDataShareReady_ { false };
     std::shared_ptr<BluetoothCommonEventSubscriberEx> dataShareReadySubscribe_ { nullptr };

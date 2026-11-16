@@ -16,6 +16,8 @@
 #define LOG_TAG "bt_service_adapter_manager"
 #endif
 
+#include <cinttypes>
+
 #include "adapter_manager.h"
 
 #include <atomic>
@@ -1968,7 +1970,7 @@ void AdapterManager::SaveConnectionTime(const RawAddress &device)
     auto classicAdapter = AdapterManager::GetInstance()->GetClassicAdapter();
     if (classicAdapter) {
         classicAdapter->SetConnectionTime(device, currentTime);
-        HILOGI("AclStateChangedCb connectTime %{public}ld", currentTime);
+        HILOGI("AclStateChangedCb connectTime %{public}" PRId64, currentTime);
     }
 }
 

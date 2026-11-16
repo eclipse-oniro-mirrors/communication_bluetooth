@@ -57,6 +57,15 @@ bool PermissionManager::VerifyPermission(const std::string &permissionName, cons
         return true;
     } else if (tokenType == ATokenTypeEnum::TOKEN_HAP) {
         bool ret = (AccessTokenKit::VerifyAccessToken(tokenId, permissionName) == PermissionState::PERMISSION_GRANTED);
+#ifdef BT_COMPAT_RK3568_LEGACY_BT_PERMISSION
+        HapTokenInfo hapTokenInfo;
+        if (Security::AccessToken::AccessTokenKit::GetHapTokenInfo(tokenId, hapTokenInfo) == RET_SUCCESS) {
+            if (IsSystemHap() && (hapTokenInfo.bundleName == "com.ohos.settings" ||
+                hapTokenInfo.bundleName == "com.ohos.systemui")) {
+                return true;
+            }
+        }
+#endif
         if (permissionName == ACCESS_BLUETOOTH && isNeedRecord) {
             int successCount = ret ? 1 : 0; // 1,0分別是成功次数
             int failCount = ret ? 0 : 1; // 0,1分別是失败次数

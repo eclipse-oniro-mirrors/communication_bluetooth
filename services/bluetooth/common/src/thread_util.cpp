@@ -19,6 +19,8 @@
 
 #include "thread_util.h"
 
+#include <cinttypes>
+
 #include "datetime_ex.h"
 #include "log.h"
 #include "ffrt_inner.h"
@@ -244,7 +246,8 @@ ThreadUtil::~ThreadUtil()
 void ThreadUtil::impl::TaskQueue::PostDelayTask(const ThreadUtilFunc &func, uint64_t delayTime, const std::string &name)
 {
     CHECK_AND_RETURN_LOG(
-        delayTime < DELAY_TIME_MS_MAX, "Invalid delaytime(%{public}lu), taskName(%{public}s)", delayTime, name.c_str());
+        delayTime < DELAY_TIME_MS_MAX, "Invalid delaytime(%{public}" PRIu64 "), taskName(%{public}s)",
+        delayTime, name.c_str());
 
     {
         std::lock_guard<ffrt::mutex> lock(delayTaskVecMutex_);

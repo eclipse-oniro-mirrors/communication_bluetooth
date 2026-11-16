@@ -264,6 +264,13 @@ config("btservice_config") {
     defines += [ "BLUETOOTH_CAR_POLICY_FEATURE" ]
   }
 
+  if (product_name == "rk3568") {
+    defines += [
+      "BT_COMPAT_RK3568_LEGACY_BT_PERMISSION",
+      "BT_COMPAT_RK3568_PAIR_DIALOG_FALLBACK",
+    ]
+  }
+
   cflags_cc = [
     "-Os",
     "-fno-rtti",

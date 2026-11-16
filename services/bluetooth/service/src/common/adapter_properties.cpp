@@ -16,6 +16,8 @@
 #define LOG_TAG "bt_service_adapter_properties"
 #endif
 
+#include <cinttypes>
+
 #include "adapter_properties.h"
 
 #include "bluetooth_common_event_helper.h"
@@ -713,7 +715,7 @@ int64_t AdapterProperties::ParseDeviceConnectionTime(bt_property_t* property)
         return 0;
     }
     int64_t connectionTime = *reinterpret_cast<const int64_t*>(property->val);
-    HILOGI("connectionTime is %{public}ld", connectionTime);
+    HILOGI("connectionTime is %{public}" PRId64, connectionTime);
     return connectionTime;
 }
 

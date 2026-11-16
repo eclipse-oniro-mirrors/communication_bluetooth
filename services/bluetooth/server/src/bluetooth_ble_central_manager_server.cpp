@@ -16,6 +16,8 @@
 #define LOG_TAG "bt_server_ble_central_manager"
 #endif
 
+#include <cinttypes>
+
 #include "bluetooth_ble_central_manager_server.h"
 
 #include "bt_chr_transaction_manager.h"
@@ -1589,7 +1591,7 @@ void BluetoothBleScannerApplicationContainer::AddTokenId(const wptr<IRemoteObjec
         HILOGE("Unknown remote");
         return;
     }
-    HILOGD("pid: %{public}d, uid: %{public}d, tokenId: %{public}lu", it->pid, it->uid, tokenId);
+    HILOGD("pid: %{public}d, uid: %{public}d, tokenId: %{public}" PRIu64, it->pid, it->uid, tokenId);
     it->tokenId = tokenId;
 }
 

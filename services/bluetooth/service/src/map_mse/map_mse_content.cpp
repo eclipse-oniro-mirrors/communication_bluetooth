@@ -16,6 +16,8 @@
 #define LOG_TAG "bt_service_map_mse_content"
 #endif
 
+#include <cinttypes>
+
 #include "map_mse_content.h"
 #include <type_traits>
 #include <cctype>
@@ -402,7 +404,7 @@ void MapMseContent::SetSmsMessageQueryParam(
 {
     HITRACE_METER(BT_TRACE_TAG);
     int64_t parsedHandle = MseMessageElement::GetParsedMessageHandle(handle);
-    HILOGI("handle is %{public}ld!", parsedHandle);
+    HILOGI("handle is %{public}" PRId64 "!", parsedHandle);
     uri = SMS_MMS_INFO_URI;
     columns = SMS_MESSAGE_COLUMNS;
     predicates.EqualTo("msg_id", parsedHandle);

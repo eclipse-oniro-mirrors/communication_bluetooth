@@ -39,8 +39,7 @@
     "subsystem": "communication",
     "syscap": [
       "SystemCapability.Communication.Bluetooth.Core",
-      "SystemCapability.Communication.Bluetooth.Lite",
-      "SystemCapability.Communication.Bluetooth.HearingAid"
+      "SystemCapability.Communication.Bluetooth.Lite"
     ],
     "features": [
       "bluetooth_kia_enable",
@@ -393,16 +392,14 @@
               "bt_config.h"
             ]
           },
-          "name": "//foundation/communication/bluetooth/config:feature_flags_static",
-          "visibility": [""]
+          "name": "//foundation/communication/bluetooth/config:feature_flags_static"
         },
         {
           "header": {
             "header_base": "//foundation/communication/bluetooth/services/bluetooth/btchr/include",
             "header_files": []
           },
-          "name": "//foundation/communication/bluetooth/services/bluetooth/btchr:btchr",
-          "visibility": [""]
+          "name": "//foundation/communication/bluetooth/services/bluetooth/btchr:btchr"
         },
         {
           "header": {
@@ -453,8 +450,7 @@
               "types/raw_address.h"
             ]
           },
-          "name": "//foundation/communication/bluetooth/services/bluetooth/stack_interface:stack_interface",
-          "visibility": [""]
+          "name": "//foundation/communication/bluetooth/services/bluetooth/stack_interface:stack_interface"
         },
         {
           "header": {
@@ -463,25 +459,20 @@
               "vendor_interface.h"
             ]
           },
-          "name": "//foundation/communication/bluetooth/services/bluetooth/vendor_interface:vendor_interface",
-          "visibility": [""]
+          "name": "//foundation/communication/bluetooth/services/bluetooth/vendor_interface:vendor_interface"
         },
         {
-          "name": "//foundation/communication/bluetooth/services/bluetooth/hardware:bluetooth_hdi_adapter",
-          "visibility": [""]
+          "name": "//foundation/communication/bluetooth/services/bluetooth/hardware:bluetooth_hdi_adapter"
         },
         {
           "header": {
             "header_base": "//foundation/communication/bluetooth/services/bluetooth/common",
             "header_files": []
           },
-          "name": "//foundation/communication/bluetooth/services/bluetooth/common:btservice_common",
-          "visibility": [""]
+          "name": "//foundation/communication/bluetooth/services/bluetooth/common:btservice_common"
         }
       ],
       "test": [
-        "//foundation/communication/bluetooth/test:unit_test",
-        "//foundation/communication/bluetooth/test:fuzz_test"
       ]
     }
   }

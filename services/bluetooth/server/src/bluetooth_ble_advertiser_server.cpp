@@ -16,6 +16,8 @@
 #define LOG_TAG "bt_server_ble_advertiser"
 #endif
 
+#include <cinttypes>
+
 #include "bluetooth_ble_advertiser_server.h"
 
 #include <sstream>
@@ -646,7 +648,7 @@ void BluetoothBleAdvertiserApplicationContainer::AddTokenId(const wptr<IRemoteOb
         HILOGE("Unknown remote");
         return;
     }
-    HILOGD("pid: %{public}d, uid: %{public}d, tokenId: %{public}lu", it->pid, it->uid, tokenId);
+    HILOGD("pid: %{public}d, uid: %{public}d, tokenId: %{public}" PRIu64, it->pid, it->uid, tokenId);
     it->tokenId = tokenId;
 }
 

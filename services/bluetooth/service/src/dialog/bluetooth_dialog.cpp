@@ -170,6 +170,13 @@ bool BluetoothDialog::DialogConnectExtension(const std::string commandStr,
     std::string abilityNames = "com.ohos.sceneboard.systemdialog";
     want.SetElementName(sceneboardName, abilityNames);
     bool ret = DialogConnectExtensionAbility(want, commandStr, bundleName, abilityName, userId);
+#ifdef BT_COMPAT_RK3568_PAIR_DIALOG_FALLBACK
+    if (!ret) {
+        HILOGW("[rk3568 compat] sceneboard unavailable, fallback to com.ohos.systemui.dialog");
+        want.SetElementName("com.ohos.systemui", "com.ohos.systemui.dialog");
+        ret = DialogConnectExtensionAbility(want, commandStr, bundleName, abilityName, userId);
+    }
+#endif
     if (!ret) {
         HILOGE("ConnectExtensionAbility failed.");
         return false;

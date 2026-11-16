@@ -15,6 +15,8 @@
 #define LOG_TAG "bt_service_satellite"
 #endif
 
+#include <cinttypes>
+
 #include "satellite_manager.h"
 
 #include "bluetooth_def.h"
@@ -49,9 +51,9 @@ void SatelliteManager::Init(void)
         int64_t enableTimes =
             PreferencesManager::Get<int64_t>(BT_SWITCH_TIME_KEY, 0, PreferencesManagerType::SATELLITE_CONTROL);
         int64_t curTimes = GetSecondsSince1970ToNow();
-        HILOGI("curTime: %{public}ld, enableTime: %{public}ld", curTimes, enableTimes);
+        HILOGI("curTime: %{public}" PRId64 ", enableTime: %{public}" PRId64, curTimes, enableTimes);
         if (curTimes <= enableTimes) {
-            HILOGW("BtSwitchTime value is invalid: %{public}d", enableTimes);
+            HILOGW("BtSwitchTime value is invalid: %{public}" PRId64, enableTimes);
             DeleteSatelliteControlConfig();
             return;
         }

@@ -16,6 +16,8 @@
 #define LOG_TAG "bt_service_remote_device"
 #endif
 
+#include <cinttypes>
+
 #include "remote_device_properties.h"
 
 #include "adapter_manager.h"
@@ -1269,7 +1271,7 @@ void RemoteDeviceProperties::HandlePropertyRemoteDeviceConnectionTime(bt_propert
 {
     int64_t connectionTime = adapterProperties_->ParseDeviceConnectionTime(property);
     remoteDevice->SetConnectionTime(connectionTime);
-    HILOGI("RemoteDeviceProperties HandlePropertyRemoteDeviceConnectionTime %{public}ld",  connectionTime);
+    HILOGI("RemoteDeviceProperties HandlePropertyRemoteDeviceConnectionTime %{public}" PRId64,  connectionTime);
 }
  
 int64_t RemoteDeviceProperties::GetLastConnectionTime(const RawAddress &device) const
@@ -1300,7 +1302,7 @@ int32_t RemoteDeviceProperties::SetConnectionTime(const RawAddress &device, int6
     prop.val = type;
 	STACK::RawAddress addr = ServiceUtil::AddrToStack(device);
     SetRemoteDeviceProperty(addr, prop);
-    HILOGI("RemoteDeviceProperties SetConnectionTime: addr: %{public}s connectionTime:%{public}ld",
+    HILOGI("RemoteDeviceProperties SetConnectionTime: addr: %{public}s connectionTime:%{public}" PRId64,
         GET_ENCRYPT_ADDR(device), connectionTime);
     return BT_NO_ERROR;
 }

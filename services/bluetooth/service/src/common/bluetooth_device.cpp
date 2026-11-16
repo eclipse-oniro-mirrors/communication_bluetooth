@@ -16,6 +16,8 @@
 #define LOG_TAG "bt_service_device"
 #endif
 
+#include <cinttypes>
+
 #include "bluetooth_device.h"
 
 #include <cstring>
@@ -662,7 +664,7 @@ int64_t BluetoothDevice::GetLastConnectionTime() const
 
 void BluetoothDevice::SetConnectionTime(int64_t connectionTime)
 {
-    HILOGD("[BluetoothDevice] SetConnectionTime = %{public}ld", connectionTime);
+    HILOGD("[BluetoothDevice] SetConnectionTime = %{public}" PRId64, connectionTime);
     connectionTime_ = connectionTime;
 }
 

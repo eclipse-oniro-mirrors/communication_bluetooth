@@ -16,6 +16,8 @@
 #define LOG_TAG "bt_service_refuse_policy"
 #endif
 
+#include <cinttypes>
+
 #include "bluetooth_kia_refuse_policy_manager.h"
 #include "log.h"
 #include "syspara/parameters.h"
@@ -44,7 +46,7 @@ static int64_t GetBootTime()
         return INT64_MAX;
     }
     int64_t bootTime = ((times.tv_sec * msPerSecond) + (times.tv_nsec / nsPerMs));
-    HILOGI("bootTime:%{public}lu", bootTime);
+    HILOGI("bootTime:%{public}" PRId64, bootTime);
     return bootTime;
 }
 
@@ -56,14 +58,14 @@ int32_t BluetoothRefusePolicyManager::UpdateRefusePolicy(const int32_t protocolT
         HILOGE("hasNotCheckedDevice, check hwit devices=%{public}s", devicesCheck.c_str());
         return Bluetooth::BT_ERR_SYSTEM_PERMISSION_FAILED;
     }
-    HILOGI("add policy-protocolType:%{public}d, pid:%{public}d, prohibitedSecondsTime:%{public}lu",
+    HILOGI("add policy-protocolType:%{public}d, pid:%{public}d, prohibitedSecondsTime:%{public}" PRId64 ",
         protocolType, pid, prohibitedSecondsTime);
     std::lock_guard<std::mutex> lock(refusePolicyMapMutex_);
     refusePolicyMap_[std::make_pair(protocolType, pid)] = prohibitedSecondsTime;
     HILOGI("start update,refusePolicyMap_ size:%{public}d", refusePolicyMap_.size());
     for (auto iter = refusePolicyMap_.begin(); iter != refusePolicyMap_.end();) {
         if (GetBootTime() > iter->second) {
-            HILOGI("delete policy-protocolType:%{public}d, pid:%{public}d, prohibitedSecondsTime:%{public}lu",
+            HILOGI("delete policy-protocolType:%{public}d, pid:%{public}d, prohibitedSecondsTime:%{public}" PRId64 ",
                 iter->first.first, iter->first.second, iter->second);
             iter = refusePolicyMap_.erase(iter);
         } else {

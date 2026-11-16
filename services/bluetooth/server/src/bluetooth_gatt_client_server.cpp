@@ -16,6 +16,8 @@
 #define LOG_TAG "bt_server_gatt_client"
 #endif
 
+#include <cinttypes>
+
 #include "bluetooth_gatt_client_server.h"
 #include "freeze_utils.h"
 #include "bt_chr_app_behavior_reporter.h"
@@ -98,10 +100,10 @@ bool CheckGattClientPermission(uint64_t tokenId, int sdkVersion)
 {
     if (PermissionManager::IsNativeCaller(tokenId) || sdkVersion >= API_VERSION_10) {
         CHECK_AND_RETURN_LOG_RET(PermissionManager::VerifyPermission(ACCESS_BLUETOOTH, tokenId),
-            false, "[PERMISSION] Check ACCESS_BLUETOOTH permission failed, tokenId:%{public}lu", tokenId);
+            false, "[PERMISSION] Check ACCESS_BLUETOOTH permission failed, tokenId:%{public}" PRIu64, tokenId);
     } else {
         CHECK_AND_RETURN_LOG_RET(PermissionManager::VerifyPermission(USE_BLUETOOTH, tokenId),
-            false, "[PERMISSION] Check USE_BLUETOOTH permission failed, tokenId:%{public}lu", tokenId);
+            false, "[PERMISSION] Check USE_BLUETOOTH permission failed, tokenId:%{public}" PRIu64, tokenId);
     }
     return true;
 }

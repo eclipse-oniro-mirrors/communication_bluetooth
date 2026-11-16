@@ -20,6 +20,7 @@
 #include "hearing_aid_service.h"
 
 #include <arpa/inet.h>
+#include <list>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <sys/ioctl.h>
@@ -373,7 +374,8 @@ void HearingAidServiceImpl::NotifyActiveDeviceChanged(const RawAddress &device, 
         AudioStandard::SAMPLE_S16LE, AudioStandard::AudioChannel::STEREO
     };
     int32_t channelMask = 1;
-    deviceDesc->SetDeviceCapability(audioStreamInfo, channelMask);
+    std::list<AudioStandard::DeviceStreamInfo> audioStreamInfos = { audioStreamInfo };
+    deviceDesc->SetDeviceCapability(audioStreamInfos, channelMask);
     AudioStandard::AudioGeneralManager::GetInstance()->SetDeviceConnectionStatus(deviceDesc,
         device.GetAddress() != INVALID_MAC_ADDRESS);
 #endif

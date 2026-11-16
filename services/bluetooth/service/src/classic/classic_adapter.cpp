@@ -17,6 +17,8 @@
 #define LOG_TAG "bt_service_classic_adapter"
 #endif
 
+#include <cinttypes>
+
 #include "classic_adapter.h"
 
 #include <algorithm>
@@ -2349,14 +2351,14 @@ int32_t ClassicAdapter::GetLastConnectionTime(const RawAddress &device, int64_t 
     std::shared_ptr<BluetoothDevice> remoteDevice = remoteDeviceProperties_->FindRemoteDevice(device);
     CHECK_AND_RETURN_LOG_RET(remoteDevice != nullptr, BT_ERR_INVALID_PARAM, "device not exist");
     connectionTime = remoteDevice->GetLastConnectionTime();
-    HILOGI("remoteDevice: %{public}s %{public}ld", GET_ENCRYPT_ADDR(device), connectionTime);
+    HILOGI("remoteDevice: %{public}s %{public}" PRId64, GET_ENCRYPT_ADDR(device), connectionTime);
     return BT_NO_ERROR;
 }
 
 void ClassicAdapter::SetConnectionTime(const RawAddress &device, int64_t connectionTime)
 {
     remoteDeviceProperties_->SetConnectionTime(device, connectionTime);
-    HILOGI("remoteDevice: %{public}s %{public}ld", GET_ENCRYPT_ADDR(device), connectionTime);
+    HILOGI("remoteDevice: %{public}s %{public}" PRId64, GET_ENCRYPT_ADDR(device), connectionTime);
 }
 
 int32_t ClassicAdapter::GetCloudBondState(const RawAddress &device, int32_t &cloudBondState)

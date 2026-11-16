@@ -16,6 +16,8 @@
 #define LOG_TAG "bt_napi_socket_spp_client"
 #endif
 
+#include <cinttypes>
+
 #include "bluetooth_errorcode.h"
 #include "bluetooth_host.h"
 #include "datetime_ex.h"
@@ -311,7 +313,7 @@ static bool ShouldRefuseConnect(int32_t pid)
         return false;
     }
     int64_t bootTime = ((times.tv_sec * msPerSecond) + (times.tv_nsec / nsPerMs));
-    HILOGI("bootTime:%{public}lu", bootTime);
+    HILOGI("bootTime:%{public}" PRId64, bootTime);
     BluetoothHost *host = &BluetoothHost::GetDefaultHost();
     auto prohibitedTime = host->GetRefusePolicyProhibitedTime();
     if (bootTime < prohibitedTime) {
