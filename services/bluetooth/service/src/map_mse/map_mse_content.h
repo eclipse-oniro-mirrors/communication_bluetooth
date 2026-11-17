@@ -88,7 +88,6 @@ private:
 
 private:
     std::shared_ptr<DataShare::DataShareHelper> smsDataShareHelper_ = nullptr;
-    std::shared_ptr<DataShare::DataShareHelper> contactDataShareHelper_ = nullptr;
     uint32_t messageListingVersion_ = MAP_MESSAGE_LISTING_FORMAT_V10;
     std::string messageVersion_ = MAP_V10_STR;
     bool threadIdSupport_ = false;

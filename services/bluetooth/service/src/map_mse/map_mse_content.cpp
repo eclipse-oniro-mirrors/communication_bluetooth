@@ -37,7 +37,6 @@ using namespace Telephony;
 const std::string SMS_MMS_DATASHARE_URI = "datashare:///com.ohos.smsmmsability";
 const std::string SMS_MMS_INFO_URI_STR = "datashare:///com.ohos.smsmmsability/sms_mms/sms_mms_info";
 const std::string SMS_MMS_SESSION_URI_STR = "datashare:///com.ohos.smsmmsability/sms_mms/session";
-const std::string CONTACT_DATASHARE_URI = "datashare:///com.ohos.contactsdataability";
 const std::string VIEW_CONTACT_DATA_URI_STR = "datashare:///com.ohos.contactsdataability/contacts/view_contact_data";
 const int HEX_PREFIX_SIZE = 2;
 const int SUB_LEN = 10;
@@ -75,6 +74,11 @@ MapMseContent::MapMseContent()
 
 MapMseContent::~MapMseContent()
 {
+    if (smsDataShareHelper_ != nullptr) {
+        bool result = smsDataShareHelper_->Release();
+        smsDataShareHelper_ = nullptr;
+        HILOGI("release sms data share helper result is %{public}d", result);
+    }
 }
 
 std::string MapMseContent::GetMessageListing(const std::string &folderName,
@@ -159,7 +163,6 @@ void MapMseContent::CreateSmsDataShareHelper()
         return;
     }
     smsDataShareHelper_ = DataShare::DataShareHelper::Creator(remoteObj, SMS_MMS_DATASHARE_URI);
-    contactDataShareHelper_ = DataShare::DataShareHelper::Creator(remoteObj, CONTACT_DATASHARE_URI);
 }
 
 int32_t MapMseContent::GetSmsMessageListingSize(
@@ -179,6 +182,7 @@ int32_t MapMseContent::GetSmsMessageListingSize(
     }
 
     ParseSmsMessageListingSizeResult(resultSet, folderName, count, hasUnRead);
+    resultSet->Close();
     return count;
 }
 
@@ -206,6 +210,7 @@ std::vector<std::unique_ptr<MseMessageElement>> MapMseContent::GetSmsMessageList
     }
 
     ParseSmsMessageListingResult(resultSet, folderName, appParams, messageList, hasUnRead);
+    resultSet->Close();
     return messageList;
 }
 
@@ -225,6 +230,7 @@ std::string MapMseContent::GetSmsMessage(int64_t handle)
         return "";
     }
     std::shared_ptr<MapMseBMessageSms> message = ParseSmsMessageResult(handle, resultSet);
+    resultSet->Close();
     return message->Encode();
 }
 
@@ -502,15 +508,21 @@ int64_t MapMseContent::QueryContactIdByNumber(const std::string &number)
     int32_t opRet = resultSet->GoToFirstRow();
     if (opRet != DataShare::E_OK) {
         HILOGE("GoToFirstRow error. error code is %{public}d", opRet);
+        resultSet->Close();
         return contactId;
     }
     contactId = GetLongFromResultSet(resultSet, "raw_contact_id");
+    resultSet->Close();
     return contactId;
 }
 
 std::string MapMseContent::QueryContactNameByContactId(int64_t contactId)
 {
     HITRACE_METER(BT_TRACE_TAG);
+    if (!smsDataShareHelper_) {
+        HILOGE("smsDataShareHelper_ nullptr.");
+        return "";
+    }
     DataShare::DataSharePredicates predicates;
     predicates.EqualTo("raw_contact_id", contactId)->And()->EqualTo("type_id", 1);
     std::vector<std::string> columns = {"detail_info"};
@@ -524,10 +536,12 @@ std::string MapMseContent::QueryContactNameByContactId(int64_t contactId)
     int32_t opRet = resultSet->GoToFirstRow();
     if (opRet != DataShare::E_OK) {
         HILOGE("GoToFirstRow error. error code is %{public}d", opRet);
+        resultSet->Close();
         return "";
     }
 
     std::string name = GetStringFromResultSet(resultSet, "detail_info");
+    resultSet->Close();
     return std::move(name);
 }
 
@@ -535,6 +549,10 @@ std::vector<std::string> MapMseContent::QueryContactEmailsByContactId(int64_t co
 {
     HITRACE_METER(BT_TRACE_TAG);
     std::vector<std::string> emails;
+    if (!smsDataShareHelper_) {
+        HILOGE("smsDataShareHelper_ nullptr.");
+        return std::move(emails);
+    }
     DataShare::DataSharePredicates predicates;
     predicates.EqualTo("raw_contact_id", contactId)->And()->EqualTo("type_id", 6);  // 6 means contact email type
     std::vector<std::string> columns = {"detail_info"};
@@ -548,12 +566,14 @@ std::vector<std::string> MapMseContent::QueryContactEmailsByContactId(int64_t co
     int32_t opRet = resultSet->GoToFirstRow();
     if (opRet != DataShare::E_OK) {
         HILOGE("GoToFirstRow error. error code is %{public}d", opRet);
+        resultSet->Close();
         return std::move(emails);
     }
     while (opRet == DataShare::E_OK) {
         emails.push_back(GetStringFromResultSet(resultSet, "detail_info"));
         opRet = resultSet->GoToNextRow();
     }
+    resultSet->Close();
     return std::move(emails);
 }
 
