@@ -21,6 +21,7 @@
 
 #include "bluetooth_host.h"
 #include "bluetooth_utils.h"
+#include "taihe_async_callback.h"
 #include "taihe_bluetooth_ble_utils.h"
 #include "taihe_bluetooth_error.h"
 #include "taihe_bluetooth_utils.h"
@@ -59,7 +60,7 @@ void GattClientDeviceImpl::Connect()
     TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(client_ != nullptr, BT_ERR_INTERNAL_ERROR);
     TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(callback_ != nullptr, BT_ERR_INTERNAL_ERROR);
 
-    int ret = client_->Connect(callback_, false, GATT_TRANSPORT_TYPE_LE);
+    int ret = client_->Connect(callback_, autoConnect_, transport_);
     HILOGI("ret: %{public}d", ret);
     TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(ret == BT_NO_ERROR, ret);
 }
@@ -102,6 +103,31 @@ taihe::string GattClientDeviceImpl::GetDeviceNameSync()
     TAIHE_BT_ASSERT_RETURN(err == BT_NO_ERROR, err, deviceName);
 
     return deviceName;
+}
+
+uintptr_t GattClientDeviceImpl::RefreshServicesPromise()
+{
+    HILOGI("enter");
+    TAIHE_BT_ASSERT_RETURN(client_ != nullptr, BT_ERR_INTERNAL_ERROR, reinterpret_cast<uintptr_t>(nullptr));
+
+    // The promise settles on the delivery result of the refresh request; the rediscovery proceeds
+    // asynchronously and its result is obtained via getServices (finalized design).
+    int ret = BT_ERR_INTERNAL_ERROR;
+    if (client_) {
+        ret = client_->RefreshServices();
+    }
+
+    ani_env *env = taihe::get_env();
+    TAIHE_BT_ASSERT_RETURN(env != nullptr, BT_ERR_INTERNAL_ERROR, reinterpret_cast<uintptr_t>(nullptr));
+    ani_vm *vm = nullptr;
+    TAIHE_BT_ASSERT_RETURN(env->GetVM(&vm) == ANI_OK && vm != nullptr, BT_ERR_INTERNAL_ERROR,
+        reinterpret_cast<uintptr_t>(nullptr));
+    auto promise = std::make_shared<TaihePromise>(vm);
+    ani_object promiseObj = promise->GetPromise();
+    TAIHE_BT_ASSERT_RETURN(promiseObj != nullptr, BT_ERR_INTERNAL_ERROR, reinterpret_cast<uintptr_t>(nullptr));
+
+    promise->ResolveOrReject(ret, std::make_shared<TaiheNativeUndefined>());
+    return reinterpret_cast<uintptr_t>(promiseObj);
 }
 
 static GattCharacteristic *GetCharacteristic(const std::shared_ptr<GattClient> &client,

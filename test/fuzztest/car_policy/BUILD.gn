@@ -1,0 +1,31 @@
+# Copyright (C) 2026 Huawei Device Co., Ltd. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+group("fuzztest") {
+  testonly = true
+  deps = [
+    "car_connection_guard_fuzzer:CarConnectionGuardFuzzTest",
+    "device_priority_manager_fuzzer:DevicePriorityManagerFuzzTest",
+    "car_metrics_reporter_fuzzer:CarMetricsReporterFuzzTest",
+    "car_policy_config_fuzzer:CarPolicyConfigFuzzTest",
+    "car_device_type_resolver_fuzzer:CarDeviceTypeResolverFuzzTest",
+    "smart_call_transfer_controller_fuzzer:SmartCallTransferControllerFuzzTest",
+    "reconnect_predicates_fuzzer:ReconnectPredicatesFuzzTest",
+    "pairable_adv_controller_fuzzer:PairableAdvControllerFuzzTest",
+    "profile_coordinator_fuzzer:ProfileCoordinatorFuzzTest",
+    "car_policy_dispatcher_fuzzer:CarPolicyDispatcherFuzzTest",
+    "reconnect_engine_fuzzer:ReconnectEngineFuzzTest",
+    "car_policy_manager_fuzzer:CarPolicyManagerFuzzTest",
+    "sub_profile_switch_handler_fuzzer:SubProfileSwitchHandlerFuzzTest",
+  ]
+}

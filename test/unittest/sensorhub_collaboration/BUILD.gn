@@ -1,0 +1,105 @@
+# Copyright (C) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("//foundation/communication/bluetooth/test/unittest/unittest.gni")
+
+module_output_path = "bluetooth/bluetooth"
+PART_DIR = "//foundation/communication/bluetooth/services/bluetooth"
+
+###############################################################################
+#1. intent(c++) get/set test without transport
+
+#FRAMWORK_DIR = "//foundation/communication"
+
+config("module_private_config") {
+  visibility = [ ":*" ]
+  cflags = [
+    "-Werror",
+    "-Wno-macro-redefined",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-unused-const-variable",
+    "-Wno-deprecated-builtins",
+    "-Wno-defaulted-function-deleted",
+    "-Woverloaded-virtual",
+  ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+  cflags += [ "-DCONTEXTHUB_BLE_V3 -DCONTEXTHUB_BLE" ]
+
+  include_dirs = [
+    "adapter",
+    "$PART_DIR/service/src/base",
+    "$PART_DIR/server/src",
+    "$PART_DIR/service/src/ble",
+    "$PART_DIR/common/include",
+    "$PART_DIR/common",
+    "$PART_DIR/service/src/common",
+    "$PART_DIR/service/src/sensorhub_collaboration",
+    "$PART_DIR/service/include",
+  ]
+
+
+  defines = [
+    "BTFW_LOG_TAG = \"bluetooth_test\"",
+    "BTFW_LOG_DOMAIN = 0xD000103",
+    "private = public",
+    "protected = public",
+  ]
+}
+
+ohos_unittest("btfw_sensorhub_collaboration_test") {
+  module_out_path = module_output_path
+  sources = [
+    "sensorhub_collaboration_test.cpp",
+    "adapter/sensorhub_collaboration_mock.cpp",
+    "$PART_DIR/service/src/sensorhub_collaboration/sensorhub_collaboration_service.cpp",
+    "$PART_DIR/server/src/bluetooth_sensorhub_collaboration.cpp",
+  ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "$PART_DIR/service:btservice_static",
+    "$PART_DIR/common:btservice_common_static",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "resource_management:global_resmgr",
+    "bounds_checking_function:libsec_shared",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+################################################################################
+group("unittest") {
+  testonly = true
+
+  deps = []
+
+  if (is_phone_product) {
+    deps += [ ":btfw_sensorhub_collaboration_test" ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  global:
+    "*MultiA2dpManager*";
+  local:
+    *;
+};

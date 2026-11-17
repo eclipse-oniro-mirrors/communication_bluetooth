@@ -1,0 +1,11 @@
+{
+  global:
+    "*VendorInterface*";
+    "*AppgalleryInterface*";
+    "*DhcpClientInterface*";
+    "*PowerInterface*";
+    "*SpaceMgrInterface*";
+    "*ZoneAudioInterface*";
+  local:
+    *;
+};

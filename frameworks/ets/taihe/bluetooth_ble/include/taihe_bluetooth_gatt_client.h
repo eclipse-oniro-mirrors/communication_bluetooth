@@ -45,6 +45,7 @@ public:
 
     void SetBLEMtuSize(int mtu);
     taihe::string GetDeviceNameSync();
+    uintptr_t RefreshServicesPromise();
     static int GattStatusFromService(int status);
 
     uintptr_t ReadPhyPromise();
@@ -117,6 +118,11 @@ public:
     }
 
     explicit GattClientDeviceImpl(taihe::string_view deviceId)
+        : GattClientDeviceImpl(deviceId, false, GATT_TRANSPORT_TYPE_LE)
+    {
+    }
+
+    GattClientDeviceImpl(taihe::string_view deviceId, bool autoConnect, int transport)
     {
         HILOGI("enter");
         std::string remoteAddr = std::string(deviceId);
@@ -125,6 +131,8 @@ public:
         client_->Init();
         callback_ = std::make_shared<TaiheGattClientCallback>();
         callback_->SetDeviceAddr(remoteAddr);
+        autoConnect_ = autoConnect;
+        transport_ = transport;
     }
     ~GattClientDeviceImpl() = default;
 
@@ -133,6 +141,8 @@ private:
     std::shared_ptr<GattClient> client_ = nullptr;
     std::shared_ptr<TaiheGattClientCallback> callback_;
     std::shared_ptr<BluetoothRemoteDevice> device_ = nullptr;
+    bool autoConnect_ = false;
+    int transport_ = GATT_TRANSPORT_TYPE_LE;
 };
 }  // namespace Bluetooth
 }  // namespace OHOS

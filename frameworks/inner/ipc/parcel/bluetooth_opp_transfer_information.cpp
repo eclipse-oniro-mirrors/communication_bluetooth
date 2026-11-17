@@ -130,7 +130,6 @@ bool BluetoothIOppTransferInformation::ReadFromParcel(Parcel &parcel)
         return false;
     }
     SetCurrentBytes(val64);
-
     if (!parcel.ReadInt64(val64)) {
         return false;
     }

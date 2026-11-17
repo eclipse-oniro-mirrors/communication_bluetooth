@@ -15,9 +15,118 @@ import("//foundation/communication/bluetooth/bluetooth.gni")
 group("unit_test") {
     testonly = true
     deps = [
-        "unittest/cj:unittest",
-        "unittest/inner:unittest",
-        "unittest/napi:unittest",
-        "unittest/taihe:unittest",
+    "unittest/cj:unittest",
+    "unittest/inner:unittest",
+    "unittest/napi:unittest",
+    "unittest/taihe:unittest",
+    "unittest/00_enable_bluetooth:unittest",
+    "unittest/a2dp:unittest",
+    "unittest/avrcp:unittest",
+    "unittest/avsync:unittest",
+    "unittest/ble:unittest",
+    "unittest/bluetooth_adapter:unittest",
+    "unittest/btchr:unittest",
+    "unittest/bt_common:unittest",
+    "unittest/common:unittest",
+    "unittest/dialog:unittest",
+    "unittest/gatt:unittest",
+    "unittest/gatt_c:unittest",
+    "unittest/gatt_utils:unittest",
+    "unittest/hfp:unittest",
+    "unittest/hid:unittest",
+    "unittest/host:unittest",
+    "unittest/pan:unittest",
+    "unittest/spp:unittest",
+    "unittest/timer:unittest",
+    "unittest/utils:unittest",
+    "unittest/classic:unittest",
+    "unittest/audio_manager:unittest",
+    "unittest/obex:unittest",
+    "unittest/map:unittest",
+    "unittest/pbap_pse:unittest",
+    "unittest/map_mse:unittest",
+    "unittest/server:unittest",
+    "unittest/socket:unittest",
+    "unittest/sdp:unittest",
+    "unittest/napi:unittest",
+    "unittest/bluetooth_resource_manager:unittest",
+    "unittest/external_deps:unittest",
+    "unittest/opp:unittest",
+    "unittest/hearingaid:unittest",
+    "unittest/recover:unittest",
+    "unittest/features:unittest",
+    "unittest/car_policy:unittest",
+  ]
+
+  if (bluetooth_contexthub_ble) {
+    deps += [
+      "unittest/sensorhub_collaboration:unittest",
     ]
+  }
+
+  if (bluetooth_bas_feature) {
+    deps += [
+      "unittest/bas:unittest",
+    ]
+  }
+
+  if (bluetooth_pbap_pce_feature) {
+    deps += [
+      "unittest/pbap_pce:unittest",
+    ]
+  }
+}
+
+group("fuzz_test") {
+  testonly = true
+  deps = [
+    "fuzztest/a2dp_src:fuzztest",
+    "fuzztest/audio_manager:fuzztest",
+    "fuzztest/avsync:fuzztest",
+    "fuzztest/ble:fuzztest",
+    "fuzztest/common:fuzztest",
+    "fuzztest/gatt:fuzztest",
+    "fuzztest/hfp_ag:fuzztest",
+    "fuzztest/hid_host:fuzztest",
+    "fuzztest/host:fuzztest",
+    "fuzztest/map_mse:fuzztest",
+    "fuzztest/obex:fuzztest",
+    "fuzztest/opp:fuzztest",
+    "fuzztest/pbap_pse:fuzztest",
+    "fuzztest/pbap_pce:fuzztest",
+    "fuzztest/socket:fuzztest",
+    "fuzztest/hearingaid:fuzztest",
+    "fuzztest/sensorhub_collaboration:fuzztest",
+    "fuzztest/sdp:fuzztest",
+  ]
+
+  if (bluetooth_hfp_hf_feature_switch) {
+    deps += [
+      "fuzztest/hfp_hf:fuzztest",
+    ]
+  }
+
+  if (bluetooth_bas_feature) {
+    deps += [
+      "fuzztest/bas:fuzztest",
+    ]
+  }
+
+  if (bluetooth_a2dp_sink_feature_switch) {
+    deps += [
+      "fuzztest/a2dp_snk:fuzztest",
+    ]
+  }
+
+  if (bluetooth_avrcp_ct_feature_switch) {
+    deps += [
+      "fuzztest/avrcp_ct:fuzztest",
+    ]
+  }
+
+  if (bluetooth_car_policy_feature_switch) {
+    deps += [
+      "fuzztest/car_policy:fuzztest",
+    ]
+  }
 }

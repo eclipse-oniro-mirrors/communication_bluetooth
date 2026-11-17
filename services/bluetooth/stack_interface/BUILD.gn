@@ -1,0 +1,107 @@
+# Copyright (C) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//build/ohos_var.gni")
+import("//foundation/communication/bluetooth/bluetooth.gni")
+
+config("stack_interface_config") {
+    cflags_cc = [
+        "-Os",
+        "-fno-rtti",
+        "-fno-exceptions",
+        "-fdata-sections",
+        "-ffunction-sections",
+        "-fno-unwind-tables",
+        "-fno-asynchronous-unwind-tables",
+        "-fno-merge-all-constants",
+        "-flto",
+        "-Wno-non-c-typedef-for-linkage",
+    ]
+}
+
+config("stack_interface_public_config") {
+    include_dirs = [
+        ".",
+        "include",
+        "include/hardware",
+        "include/hardware/avrcp",
+        "include/stack/include",
+        "include/types",
+        "//foundation/communication/bluetooth/services/bluetooth/service/src/a2dp_snk",
+        "//foundation/communication/bluetooth/services/bluetooth/common",
+    ]
+}
+stack_interface_sources = [
+    "src/hal_util.cpp",
+    "src/raw_address.cpp",
+    "src/stack_stub.cpp",
+    "src/uuid.cpp",
+]
+
+stack_interface_external_deps = [
+    "hilog:libhilog",
+    "bounds_checking_function:libsec_shared",
+    "audio_framework:audio_renderer",
+    "audio_framework:audio_client",
+]
+
+# Dynamic library exported to other components via bundle.json innerApis.
+ohos_shared_library("stack_interface") {
+    branch_protector_ret = "pac_ret"  # Enable PAC CFI
+    sanitize = {
+        cfi = true
+        boundary_sanitize = true
+        integer_overflow = true
+        cfi_cross_dso = true
+        ubsan = true
+        debug = false
+    }
+    configs = [
+        ":stack_interface_config",
+    ]
+    public_configs = [ ":stack_interface_public_config" ]
+
+    sources = stack_interface_sources
+
+    external_deps = stack_interface_external_deps
+
+    part_name = "bluetooth"
+    subsystem_name = "communication"
+}
+
+# Static twin for in-part targets that link the sources directly.
+ohos_static_library("stack_interface_static") {
+    branch_protector_ret = "pac_ret"  # Enable PAC CFI
+    sanitize = {
+        cfi = true
+        boundary_sanitize = true
+        integer_overflow = true
+        cfi_cross_dso = true
+        ubsan = true
+        debug = false
+    }
+
+    configs = [
+        ":stack_interface_config",
+        "${bluetooth_config_path}:feature_flags",
+    ]
+    public_configs = [ ":stack_interface_public_config" ]
+
+    sources = stack_interface_sources
+
+    external_deps = stack_interface_external_deps
+
+    part_name = "bluetooth"
+    subsystem_name = "communication"
+}

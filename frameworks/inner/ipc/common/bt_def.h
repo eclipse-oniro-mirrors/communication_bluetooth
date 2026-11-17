@@ -371,12 +371,11 @@ constexpr uint8_t GATT_TRANSPORT_TYPE_AUTO = 0x0;
 constexpr uint8_t GATT_TRANSPORT_TYPE_LE = 0x1;
 constexpr uint8_t GATT_TRANSPORT_TYPE_CLASSIC = 0x2;
 constexpr uint8_t GATT_TRANSPORT_TYPE_INVALID = 0x3;
-constexpr uint8_t GATT_ROLE_MASTER = 0x00;
-constexpr uint8_t GATT_ROLE_SLAVE = 0x01;
+constexpr uint8_t GATT_ROLE_PRIMARY = 0x00;
+constexpr uint8_t GATT_ROLE_SECONDARY = 0x01;
 constexpr uint8_t GATT_ROLE_INVALID = 0xFF;
 
-/**
- * @brief user confirm type during paring process.
+/** * @brief user confirm type during paring process.
  * use to
  * OnPairConfirmed()
  */
@@ -407,7 +406,7 @@ enum class GattPermission : uint16_t {
 };
 
 enum class GattConnectionPriority : int {
-    BALANCED,
+	BALANCED,
     HIGH,
     LOW_POWER,
     LOW_POWER_WEAK,
@@ -2013,6 +2012,7 @@ enum class HfpFeatureType {
 
 enum DialogBoxType {
     BLUETOOTH_SWITCH = 0,
+    CANCEL_PAIR = 1,
 };
 
 enum SetAdvDataType : int32_t {

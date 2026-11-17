@@ -1,0 +1,453 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("//foundation/communication/bluetooth/test/unittest/unittest.gni")
+
+module_output_path = "bluetooth/bluetooth"
+SUBSYSTEM_DIR = "//foundation/communication"
+PART_DIR = "//foundation/communication/bluetooth/services/bluetooth"
+INNER_IPC = "$SUBSYSTEM_DIR/bluetooth/frameworks/inner/ipc"
+
+###############################################################################
+#1. intent(c++) get/set test without transport
+
+config("module_private_config") {
+  visibility = [ ":*" ]
+  cflags = [
+    "-Werror",
+    "-Wno-macro-redefined",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-unused-const-variable",
+    "-Wno-deprecated-builtins",
+  ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+  include_dirs = [
+    "$INNER_IPC/include",
+    "mock/include",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/inner/include",
+    "$SUBSYSTEM_DIR/bluetooth/interfaces/inner_api/include",
+    "//foundation/communication/bluetooth/frameworks/inner/ipc/common",
+    "$PART_DIR/service/src",
+    "$PART_DIR/service/src/base",
+    "$PART_DIR/service/src/permission",
+    "$PART_DIR/common",
+    "$PART_DIR/ipc/include",
+    "$SUBSYSTEM_DIR/bluetooth/frameworks/inner/ipc/interface",
+    "$INNER_IPC/parcel",
+    "$PART_DIR/server/include",
+    "$PART_DIR/service/src/common",
+    "$PART_DIR/service/src/classic",
+    "$PART_DIR/service/src/util",
+    "$PART_DIR/common/include",
+  ]
+  defines = [
+    "BTFW_LOG_TAG = \"bluetooth_test\"",
+    "BTFW_LOG_DOMAIN = 0xD000103",
+    "private = public",
+    "protected = public",
+  ]
+}
+
+ohos_unittest("btfw_host_unit_test") {
+  module_out_path = module_output_path
+
+  sanitize = {
+    cfi = true  # Enable/disable control flow integrity detection
+    cfi_cross_dso = true  # Cross-SO CFI Checks
+    debug = false
+  }
+
+  sources = [ "host_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+  configs += [ "${bluetooth_unittest_utils_path}:unittest_utils_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_host_stub_unit_test") {
+  module_out_path = module_output_path
+  sanitize = {
+    cfi = true  # Enable/disable control flow integrity detection
+    cfi_cross_dso = true  # Cross-SO CFI Checks
+    debug = false
+    blocklist = "./libbt_host_blocklist.txt"
+  }
+  sources = [ "host_stub_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "$PART_DIR/server:bluetooth_server_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_remote_device_observer_stub_unit_test") {
+  module_out_path = module_output_path
+
+  sources = [ "bluetooth_remote_device_observer_stub_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_host_observer_proxy_unit_test") {
+  module_out_path = module_output_path
+
+  sources = [ "bluetooth_host_observer_proxy_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "$PART_DIR/server:bluetooth_server_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_ble_peripheral_observer_proxy_unit_test") {
+  module_out_path = module_output_path
+
+  sources = [ "bluetooth_ble_peripheral_observer_proxy_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "$PART_DIR/server:bluetooth_server_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_remote_device_observer_proxy_unit_test") {
+  module_out_path = module_output_path
+
+  sources = [ "bluetooth_remote_device_observer_proxy_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "$PART_DIR/ipc:bt_service_ipc",
+    "$PART_DIR/service:btservice_static",
+    "$PART_DIR/server:bluetooth_server_static",
+    "//foundation/communication/bluetooth/services/bluetooth/stack_interface:stack_interface",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_bluetooth_profile_manager_unit_test") {
+  module_out_path = module_output_path
+
+  sources = [
+    "bluetooth_remote_device_test.cpp",
+    "bluetooth_profile_manager_test.cpp"
+  ]
+
+  configs = [ ":module_private_config" ]
+  configs += [ "${bluetooth_unittest_utils_path}:unittest_utils_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "eventhandler:libeventhandler",
+    "ffrt:libffrt",
+    "samgr:samgr_proxy",
+    "libxml2:libxml2",
+  ]
+}
+
+ohos_unittest("btfw_resource_manager_observer_proxy_unit_test") {
+  module_out_path = module_output_path
+
+  sources = [ "bluetooth_resource_manager_observer_proxy_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+  configs += [ "${bluetooth_unittest_utils_path}:unittest_utils_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+    "$PART_DIR/server:bluetooth_server_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_resource_manager_observer_stub_unit_test") {
+  module_out_path = module_output_path
+
+  sources = [ "bluetooth_resource_manager_observer_stub_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+  configs += [ "${bluetooth_unittest_utils_path}:unittest_utils_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btfw_bluetooth_host_observer_stub_test") {
+  module_out_path = module_output_path
+
+  sources = [ "bluetooth_host_observer_stub_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+  configs += [ "${bluetooth_unittest_utils_path}:unittest_utils_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "libxml2:libxml2",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+config("oob_private_config") {
+  visibility = [ ":*" ]
+  cflags = [
+    "-Werror",
+    "-Wno-macro-redefined",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-unused-const-variable",
+    "-Wno-deprecated-builtins",
+  ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+  include_dirs = [
+    "mock/include",
+    "$PART_DIR/service/src",
+    "$PART_DIR/service/src/base",
+    "$PART_DIR/service/src/permission",
+    "$PART_DIR/common",
+    "$PART_DIR/ipc/include",
+    "$PART_DIR/server/include",
+    "$PART_DIR/service/src/common",
+    "$PART_DIR/service/src/classic",
+    "$PART_DIR/service/src/util",
+    "$PART_DIR/common/include",
+  ]
+  defines = [
+    "BTFW_LOG_TAG = \"bluetooth_test\"",
+    "BTFW_LOG_DOMAIN = 0xD000103",
+    "private = public",
+    "protected = public",
+  ]
+}
+
+ohos_unittest("btfw_oob_observer_unit_test") {
+  module_out_path = module_output_path
+
+  sources = [
+    "bluetooth_oob_observer_proxy_test.cpp",
+  ]
+
+  configs = [ ":oob_private_config" ]
+  configs += [ "${bluetooth_unittest_utils_path}:unittest_utils_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+    "$PART_DIR/common:btservice_common",
+    "$PART_DIR/ipc:bt_service_ipc",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "resource_management:global_resmgr",
+    "eventhandler:libeventhandler",
+    "ffrt:libffrt",
+    "samgr:samgr_proxy",
+    "libxml2:libxml2",
+  ]
+}
+################################################################################
+group("unittest") {
+  testonly = true
+
+  deps = []
+
+  if (is_phone_product) {
+    deps += [
+      ":btfw_host_unit_test",
+      "service:btfw_host_server_test",
+      ":btfw_host_stub_unit_test",
+      ":btfw_remote_device_observer_stub_unit_test",
+      ":btfw_host_observer_proxy_unit_test",
+      ":btfw_ble_peripheral_observer_proxy_unit_test",
+      ":btfw_remote_device_observer_proxy_unit_test",
+      ":btfw_bluetooth_profile_manager_unit_test",
+      ":btfw_resource_manager_observer_proxy_unit_test",
+      ":btfw_resource_manager_observer_stub_unit_test",
+      ":btfw_bluetooth_host_observer_stub_test",
+      ":btfw_oob_observer_unit_test",
+      ]
+  }
+
+  if (bluetooth_watch_feature) {
+    deps += [
+      "service:btfw_host_server_test",
+    ]
+  }
+}

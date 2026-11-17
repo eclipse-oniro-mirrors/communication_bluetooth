@@ -68,7 +68,7 @@ typedef void (*ConnectionStateChangedCallback)(int clientId, int connectionState
  *
  * @param clientId Indicates the ID of the GATT client.
  * @param interval The connection interval used on this connection. If N is returned, it indicates N*1.25ms.
- * @param latency The slave latency for the connection in number of connection events.
+ * @param latency The secondary latency for the connection in number of connection events.
  * @param timeout The supervision timeout for this connection. If N is returned, it indicates N*10ms.
  * @param status Indicate the operation result status {@link BtStatus}.
  */

@@ -27,12 +27,15 @@ void NapiGetCbInfoMockSetArgc(size_t argc)
 {
     g_napiGetCbInfoArgc = argc;
 }
-napi_status napi_get_cb_info(napi_env env, napi_callback_info cbinfo, size_t* argc, napi_value* argv,
-    napi_value* this_arg, void** data)
+napi_status napi_get_cb_info(napi_env env,
+                             napi_callback_info cbinfo,
+                             size_t* argc,
+                             napi_value* argv,
+                             napi_value* this_arg,
+                             void** data)
 {
     *argc = g_napiGetCbInfoArgc;
-    return napi_ok;
-}
+    return napi_ok;}
 napi_status napi_close_handle_scope(napi_env env, napi_handle_scope scope)
 {
     return napi_ok;
@@ -428,11 +431,10 @@ HWTEST_F(NapiEventSubscribeModuleTest, NapiEventSubscribeModuleTest_009, TestSiz
     napi_value callback = nullptr;
     NapiEventSubscribeModule subscribe(TEST_CALLBACK_NAME, "testModule");
 
-    subscribe.eventSubscribeMap_.ChangeValueByLambda(TEST_CALLBACK_NAME, [env, callback](auto & callbackVec) {
+    subscribe.eventSubscribeMap_.ChangeValueByLambda(TEST_CALLBACK_NAME, [env, callback](auto &callbackVec) {
         auto napiCallback = std::make_shared<NapiCallback>(env, callback);
         callbackVec.push_back(napiCallback);
-        napiCallback = std::make_shared<NapiCallback>(env, callback);
-        callbackVec.push_back(napiCallback);
+        napiCallback = std::make_shared<NapiCallback>(env, callback);        callbackVec.push_back(napiCallback);
     });
 
     subscribe.PublishEvent(TEST_CALLBACK_NAME, nullptr);

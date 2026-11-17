@@ -33,6 +33,12 @@
 namespace OHOS {
 namespace Bluetooth {
 
+#ifdef BLUETOOTH_PAN_FEATURE_ENABLE
+static const bool IS_PAN_SUPPORTED = true;
+#else
+static const bool IS_PAN_SUPPORTED = false;
+#endif
+
 class PanProfileImpl {
 public:
     PanProfileImpl()
@@ -49,6 +55,7 @@ public:
                                                BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT, BT_ERR_INVALID_STATE,
                                                BT_ERR_PROFILE_DISABLED, BT_ERR_INTERNAL_ERROR };
         TAIHE_BT_CONTEXT_HA(taihe::get_env(), "pan.Connect", validErrCodes);
+        TAIHE_BT_HA_ASSERT_RETURN_VOID_VERIFY(IS_PAN_SUPPORTED, BT_ERR_API_NOT_SUPPORT);
         std::string remoteAddr = std::string(deviceId);
         bool checkRet = CheckDeviceIdParam(remoteAddr);
         TAIHE_BT_HA_ASSERT_RETURN_VOID_VERIFY(checkRet, BT_ERR_INVALID_PARAM);
@@ -68,6 +75,7 @@ public:
                                                BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE,
                                                BT_ERR_PROFILE_DISABLED, BT_ERR_INTERNAL_ERROR };
         TAIHE_BT_CONTEXT_HA(taihe::get_env(), "pan.Disconnect", validErrCodes);
+        TAIHE_BT_HA_ASSERT_RETURN_VOID_VERIFY(IS_PAN_SUPPORTED, BT_ERR_API_NOT_SUPPORT);
         std::string remoteAddr = std::string(deviceId);
         bool checkRet = CheckDeviceIdParam(remoteAddr);
         TAIHE_BT_HA_ASSERT_RETURN_VOID_VERIFY(checkRet, BT_ERR_INVALID_PARAM);
@@ -85,6 +93,7 @@ public:
         std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_SYSTEM_PERMISSION_FAILED,
                                                BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT };
         TAIHE_BT_CONTEXT_HA(taihe::get_env(), "pan.IsTetheringOn", validErrCodes);
+        TAIHE_BT_HA_ASSERT_RETURN_VERIFY(IS_PAN_SUPPORTED, BT_ERR_API_NOT_SUPPORT, false);
         Pan *profile = Pan::GetProfile();
         bool result = false;
         int32_t errorCode = profile->IsTetheringOn(result);
@@ -100,9 +109,11 @@ public:
     {
         HILOGD("enter, enable: %{public}d", enable);
         std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM,
-                                               BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE,
-                                               BT_ERR_PROFILE_DISABLED, BT_ERR_INTERNAL_ERROR };
+                                               BT_ERR_API_NOT_SUPPORT, BT_ERR_SERVICE_DISCONNECTED,
+                                               BT_ERR_INVALID_STATE, BT_ERR_PROFILE_DISABLED,
+                                               BT_ERR_INTERNAL_ERROR };
         TAIHE_BT_CONTEXT_HA(taihe::get_env(), "pan.SetTethering", validErrCodes);
+        TAIHE_BT_HA_ASSERT_RETURN_VOID_VERIFY(IS_PAN_SUPPORTED, BT_ERR_API_NOT_SUPPORT);
         Pan *profile = Pan::GetProfile();
         int32_t errorCode = profile->SetTethering(enable);
         HILOGI("errorCode: %{public}d", errorCode);
@@ -126,9 +137,12 @@ public:
     {
         HILOGD("enter");
         std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM,
-                                               BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE,
-                                               BT_ERR_PROFILE_DISABLED, BT_ERR_INTERNAL_ERROR };
+                                               BT_ERR_API_NOT_SUPPORT, BT_ERR_SERVICE_DISCONNECTED,
+                                               BT_ERR_INVALID_STATE, BT_ERR_PROFILE_DISABLED,
+                                               BT_ERR_INTERNAL_ERROR };
         TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
+        TAIHE_BT_ASSERT_RETURN_VERIFY(IS_PAN_SUPPORTED, BT_ERR_API_NOT_SUPPORT,
+            ::ohos::bluetooth::constant::ProfileConnectionState::from_value(0));
         std::string remoteAddr = std::string(deviceId);
         bool checkRet = CheckDeviceIdParam(remoteAddr);
         TAIHE_BT_ASSERT_RETURN_VERIFY(checkRet, BT_ERR_INVALID_PARAM,
@@ -149,9 +163,12 @@ public:
     {
         HILOGI("enter");
         std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM,
-                                               BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE,
-                                               BT_ERR_PROFILE_DISABLED, BT_ERR_INTERNAL_ERROR };
+                                               BT_ERR_API_NOT_SUPPORT, BT_ERR_SERVICE_DISCONNECTED,
+                                               BT_ERR_INVALID_STATE, BT_ERR_PROFILE_DISABLED,
+                                               BT_ERR_INTERNAL_ERROR };
         TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
+        TAIHE_BT_ASSERT_RETURN_VERIFY(IS_PAN_SUPPORTED, BT_ERR_API_NOT_SUPPORT,
+            taihe::array<::taihe::string>{});
         Pan *profile = Pan::GetProfile();
         std::vector<int32_t> states = {static_cast<int32_t>(BTConnectState::CONNECTED)};
         std::vector<BluetoothRemoteDevice> devices;
@@ -171,9 +188,12 @@ public:
     {
         HILOGD("enter");
         std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM,
-                                               BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE,
-                                               BT_ERR_PROFILE_DISABLED, BT_ERR_INTERNAL_ERROR };
+                                               BT_ERR_API_NOT_SUPPORT, BT_ERR_SERVICE_DISCONNECTED,
+                                               BT_ERR_INVALID_STATE, BT_ERR_PROFILE_DISABLED,
+                                               BT_ERR_INTERNAL_ERROR };
         TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
+        TAIHE_BT_ASSERT_RETURN_VERIFY(IS_PAN_SUPPORTED, BT_ERR_API_NOT_SUPPORT,
+            ::ohos::bluetooth::baseProfile::ConnectionStrategy::from_value(0));
         std::string remoteAddr = std::string(deviceId);
         bool checkRet = CheckDeviceIdParam(remoteAddr);
         TAIHE_BT_ASSERT_RETURN_VERIFY(checkRet, BT_ERR_INVALID_PARAM,
@@ -194,9 +214,11 @@ public:
     {
         HILOGD("enter");
         std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM,
-                                               BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE,
-                                               BT_ERR_PROFILE_DISABLED, BT_ERR_INTERNAL_ERROR };
+                                               BT_ERR_API_NOT_SUPPORT, BT_ERR_SERVICE_DISCONNECTED,
+                                               BT_ERR_INVALID_STATE, BT_ERR_PROFILE_DISABLED,
+                                               BT_ERR_INTERNAL_ERROR };
         TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
+        TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(IS_PAN_SUPPORTED, BT_ERR_API_NOT_SUPPORT);
         std::string remoteAddr = std::string(deviceId);
         int32_t connStrategy = strategy.get_value();
         bool checkRet = CheckSetConnectStrategyParam(remoteAddr, connStrategy);
@@ -212,6 +234,9 @@ public:
     void OnConnectionStateChange(::taihe::callback_view<void(
         ::ohos::bluetooth::baseProfile::StateChangeParam const& data)> callback)
     {
+        std::vector<int32_t> validErrCodes = { BT_ERR_API_NOT_SUPPORT };
+        TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
+        TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(IS_PAN_SUPPORTED, BT_ERR_API_NOT_SUPPORT);
         if (observer_) {
             observer_->connectionStateChange_.RegisterEvent(callback);
         }
@@ -220,6 +245,9 @@ public:
     void OffConnectionStateChange(::taihe::optional_view<::taihe::callback<void(
         ::ohos::bluetooth::baseProfile::StateChangeParam const& data)>> callback)
     {
+        std::vector<int32_t> validErrCodes = { BT_ERR_API_NOT_SUPPORT };
+        TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
+        TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(IS_PAN_SUPPORTED, BT_ERR_API_NOT_SUPPORT);
         if (observer_) {
             observer_->connectionStateChange_.DeregisterEvent(callback);
         }
@@ -231,6 +259,10 @@ private:
 
 ::ohos::bluetooth::pan::PanProfile CreatePanProfile()
 {
+    std::vector<int32_t> validErrCodes = { BT_ERR_API_NOT_SUPPORT };
+    TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
+    TAIHE_BT_ASSERT_RETURN_VERIFY(IS_PAN_SUPPORTED, BT_ERR_API_NOT_SUPPORT,
+        (taihe::make_holder<PanProfileImpl, ::ohos::bluetooth::pan::PanProfile>()));
     return taihe::make_holder<PanProfileImpl, ::ohos::bluetooth::pan::PanProfile>();
 }
 

@@ -805,6 +805,7 @@ int BluetoothHost::SatelliteControl(int type, int state)
     CHECK_AND_RETURN_LOG_RET(proxy != nullptr, BT_ERR_INTERNAL_ERROR, "proxy is nullptr");
     return proxy->SatelliteControl(type, state);
 }
+
 void BluetoothHost::UpdateVirtualDevice(int32_t action, const std::string &address)
 {
     HILOGD("enter");
@@ -1256,10 +1257,9 @@ int BluetoothHost::GetBleMaxAdvertisingDataLength() const
 
 int32_t BluetoothHost::GetConnectedBLEDevices(int32_t bleProfile, std::vector<std::string> &connectedDevices)
 {
-    CHECK_AND_RETURN_LOG_RET(IS_BT_ENABLED(), BT_ERR_INVALID_STATE, "bluetooth is off.");
+    CHECK_AND_RETURN_LOG_RET(IS_BLE_ENABLED(), BT_ERR_INVALID_STATE, "bluetooth is off.");
     sptr<IBluetoothHost> proxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
     CHECK_AND_RETURN_LOG_RET(proxy != nullptr, BT_ERR_INTERNAL_ERROR, "proxy is nullptr");
-
     return proxy->GetConnectedBLEDevices(bleProfile, connectedDevices);
 }
 
@@ -1479,8 +1479,7 @@ int BluetoothHost::GetCarKeyDfxData(std::string &dfxData) const
     CHECK_AND_RETURN_LOG_RET(IS_BT_ENABLED(), BT_ERR_INVALID_STATE, "bluetooth is off.");
     sptr<IBluetoothHost> proxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
     CHECK_AND_RETURN_LOG_RET(proxy != nullptr, BT_ERR_PROXY_NULL, "proxy is nullptr");
-    return proxy->GetCarKeyDfxData(dfxData);
-}
+    return proxy->GetCarKeyDfxData(dfxData);}
 
 int BluetoothHost::SetCarKeyCardData(const std::string &address, int32_t action)
 {
@@ -1488,8 +1487,7 @@ int BluetoothHost::SetCarKeyCardData(const std::string &address, int32_t action)
     CHECK_AND_RETURN_LOG_RET(IS_BT_ENABLED(), BT_ERR_INVALID_STATE, "bluetooth is off.");
     sptr<IBluetoothHost> proxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
     CHECK_AND_RETURN_LOG_RET(proxy != nullptr, BT_ERR_PROXY_NULL, "proxy is nullptr");
-    return proxy->SetCarKeyCardData(address, action);
-}
+    return proxy->SetCarKeyCardData(address, action);}
 
 int BluetoothHost::NotifyDialogResult(uint32_t dialogType, bool dialogResult)
 {

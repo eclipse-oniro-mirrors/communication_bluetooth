@@ -1,0 +1,49 @@
+/*
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef TEST_COMMON_EVENT_H
+#define TEST_COMMON_EVENT_H
+
+#include "common_event_subscriber.h"
+#include "common_event_support.h"
+
+namespace OHOS {
+namespace EventFwk {
+
+struct CommonEventData {
+    std::string action;
+};
+
+
+class CommonEventSubscriber {
+public:
+    CommonEventSubscriber(const CommonEventSubscribeInfo &subscriberInfo) : subscriberInfo_(subscriberInfo) {}
+    virtual ~CommonEventSubscriber() {}
+    virtual void OnReceiveEvent(const OHOS::EventFwk::CommonEventData &data) {}
+
+private:
+    CommonEventSubscribeInfo subscriberInfo_;
+};
+
+class CommonEventManager {
+public:
+    static int SubscribeCommonEvent(std::shared_ptr<CommonEventSubscriber> s);
+    static void UnSubscribeCommonEvent(std::shared_ptr<CommonEventSubscriber> s);
+};
+
+}
+}
+
+#endif

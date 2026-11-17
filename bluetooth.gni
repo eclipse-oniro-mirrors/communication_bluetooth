@@ -11,7 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+bluetooth_path = "//foundation/communication/bluetooth"
+bluetooth_config_path = "${bluetooth_path}/config"
+
 declare_args() {
+  bluetooth_avrcp_tg_feature_switch = true
+  bluetooth_a2dp_src_feature_switch = true
   bluetooth_kia_enable = false
   bluetooth_pluggable_supported = false
   bluetooth_bas_feature = false
@@ -19,5 +24,112 @@ declare_args() {
   bluetooth_hap_opp_switch_feature = true
   bluetooth_hfp_hf_feature_switch = false
   bluetooth_a2dp_sink_feature_switch = false
+  bluetooth_hfp_ag_feature_switch = true
+  bluetooth_avrcp_ct_feature_switch = false
+  bluetooth_avrcp_avsession = true
+  bluetooth_audio_framwwork = true
+  bluetooth_bt_chr_switch = true
+  bluetooth_contexthub_ble = true
+  bluetooth_pbap_pse_feature_switch = true
+  bluetooth_pbap_pce_feature = false
+  bluetooth_map_mse_feature_switch = true
+  bluetooth_sco_normalized_feature_switch = true
+  bluetooth_os_account = true
+  bluetooth_pc_ability_enhance = false
+  bluetooth_ble_mouse_fast = false
+  bluetooth_opp_feature_switch = true
+  bluetooth_highpowerv1_feature_switch = false
+  bluetooth_fastscan_feature_switch = false
+  bluetooth_edm_service_enable = false
+  bluetooth_ffrt_enable = true
+  bluetooth_watch_feature = false
+  bluetooth_comm_protocol_resource_manager = false
+  bluetooth_resourceschedule = true
+  bluetooth_qos_manager_enable = true
+  bluetooth_ddm_voice_combine_feature = false
+  bluetooth_hid_host_feature = true
+  bluetooth_bas_feature = false
+  bluetooth_audio_deadline = false
+  bluetooth_device_manager = true
+  bluetooth_kia_enable = false
+  bluetooth_hearingaid_feature_switch = false
+  bluetooth_audio_codec_aac_support = true
+  bluetooth_bt_mcu_proxy_enable = false
+  bluetooth_fusion_connectivity_support = false
+  bluetooth_disable_bt_supported = true
+  bluetooth_hid_device_feature_switch = false
+  bluetooth_audio_collaboration_enable = false
+  bluetooth_mmi_not_discover_ble = false
+  bluetooth_oobe_dialog_feature = false
+  bluetooth_io_cap_none_feature = false
+  bluetooth_intercept_peripheral_first_pair_dialog = false
+  bluetooth_local_ble_conn_public_address_enable = false
+  bluetooth_build_mode = "full"
+  bluetooth_power_on_reconnect_feature = false
+  bluetooth_pluggable_supported = false
+  bluetooth_set_hfp_call_feature = false
+  bluetooth_car_policy_feature_switch = false
+  bluetooth_connect_profiles_supported = 0
+  bluetooth_call_focus_supported = false
+  bluetooth_multi_a2dp_enabled = false
+
+  if (defined(global_parts_info) &&
+      !defined(global_parts_info.telephony_call_manager) ||
+      !defined(global_parts_info.telephony_core_service) ||
+      !defined(global_parts_info.telephony_state_registry)) {
+    bluetooth_hfp_ag_feature_switch = false
+  }
+
+  if (defined(global_parts_info) &&
+      !defined(global_parts_info.multimedia_audio_framework)) {
+    bluetooth_audio_framwwork = false
+  }
+
+  if (defined(global_parts_info) &&
+      !defined(global_parts_info.distributedhardware_device_manager)) {
+    bluetooth_device_manager = false
+  }
+
+  if (defined(global_parts_info) &&
+      !defined(global_parts_info.account_os_account)) {
+    bluetooth_os_account = false
+  }
+
+    if (defined(global_parts_info) &&
+        (!defined(global_parts_info.window_window_manager) ||
+         !defined(global_parts_info.carservice_automotive_audio))) {
+        bluetooth_multi_a2dp_enabled = false
+    }
+
+    if (defined(global_parts_info) &&
+        defined(global_parts_info.communication_wifi)) {
+        bluetooth_highpowerv1_feature_switch = true
+    }
+
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.communication_wifi)) {
+    bluetooth_fastscan_feature_switch = true
+  }
+
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.communication_comm_protocol_resource_manager)) {
+    bluetooth_comm_protocol_resource_manager = true
+  }
+
+  if (defined(global_parts_info) &&
+      !defined(global_parts_info.resourceschedule_resource_schedule_service)) {
+    bluetooth_resourceschedule = false
+  }
+
+  if (defined(global_parts_info) &&
+      !defined(global_parts_info.hdf_drivers_interface_audiocodec)) {
+    bluetooth_audio_codec_aac_support = false
+  }
+
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.communication_fusion_connectivity_manager_ext)) {
+    bluetooth_fusion_connectivity_support = true
+  }
+
   bluetooth_pbap_pce_feature = false
 }

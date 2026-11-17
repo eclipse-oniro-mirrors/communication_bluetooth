@@ -23,10 +23,10 @@
 namespace OHOS {
 namespace Bluetooth {
 const int32_t PBAP_PSE_READ_DEVICE_MAX_SIZE = 0x100;
+
 int32_t BluetoothPbapPseProxy::GetDeviceState(const BluetoothRawAddress &device, int32_t &state)
 {
-    MessageParcel data;
-    CHECK_AND_RETURN_LOG_RET(data.WriteInterfaceToken(BluetoothPbapPseProxy::GetDescriptor()),
+    MessageParcel data;    CHECK_AND_RETURN_LOG_RET(data.WriteInterfaceToken(BluetoothPbapPseProxy::GetDescriptor()),
         BT_ERR_IPC_TRANS_FAILED, "WriteInterfaceToken error");
     CHECK_AND_RETURN_LOG_RET(data.WriteParcelable(&device), BT_ERR_IPC_TRANS_FAILED, "write device error");
 

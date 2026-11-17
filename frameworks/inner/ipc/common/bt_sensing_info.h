@@ -117,4 +117,4 @@ struct SensingInfo {
 }
 }
 
-#endif //BT_SENSING_INFO_H
+#endif // BT_SENSING_INFO_H

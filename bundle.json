@@ -44,12 +44,48 @@
     "features": [
       "bluetooth_kia_enable",
       "bluetooth_pluggable_supported",
-      "bluetooth_bas_feature",
       "bluetooth_pan_feature",
       "bluetooth_hap_opp_switch_feature",
-      "bluetooth_hfp_hf_feature_switch",
+      "bluetooth_avrcp_avsession",
       "bluetooth_a2dp_sink_feature_switch",
-      "bluetooth_pbap_pce_feature"
+      "bluetooth_hfp_hf_feature_switch",
+      "bluetooth_hfp_ag_feature_switch",
+      "bluetooth_avrcp_ct_feature_switch",
+      "bluetooth_bt_chr_switch",
+      "bluetooth_contexthub_ble",
+      "bluetooth_pbap_pse_feature_switch",
+      "bluetooth_pbap_pce_feature",
+      "bluetooth_map_mse_feature_switch",
+      "bluetooth_pc_ability_enhance",
+      "bluetooth_ble_mouse_fast",
+      "bluetooth_highpowerv1_feature_switch",
+      "bluetooth_watch_feature",
+      "bluetooth_ddm_voice_combine_feature",
+      "bluetooth_edm_service_enable",
+      "bluetooth_kia_enable",
+      "bluetooth_hid_host_feature",
+      "bluetooth_bas_feature",
+      "bluetooth_fastscan_feature_switch",
+      "bluetooth_opp_feature_switch",
+      "bluetooth_hearingaid_feature_switch",
+      "bluetooth_bt_mcu_proxy_enable",
+      "bluetooth_disable_bt_supported",
+      "bluetooth_hid_device_feature_switch",
+      "bluetooth_audio_collaboration_enable",
+      "bluetooth_mmi_not_discover_ble",
+      "bluetooth_oobe_dialog_feature",
+      "bluetooth_io_cap_none_feature",
+      "bluetooth_intercept_peripheral_first_pair_dialog",
+      "bluetooth_local_ble_conn_public_address_enable",
+      "bluetooth_build_mode",
+      "bluetooth_power_on_reconnect_feature",
+      "bluetooth_set_hfp_call_feature",
+      "bluetooth_car_policy_feature_switch",
+      "bluetooth_connect_profiles_supported",
+      "bluetooth_call_focus_supported",
+      "bluetooth_avrcp_tg_feature_switch",
+      "bluetooth_a2dp_src_feature_switch",
+      "bluetooth_multi_a2dp_enabled"
     ],
     "adapted_system_type": [
       "standard"
@@ -57,34 +93,64 @@
     "rom": "",
     "ram": "",
     "hisysevent_config": [
-      "//foundation/communication/bluetooth/hisysevent.yaml"
+      "//foundation/communication/bluetooth/hisysevent_ue.yaml"
     ],
     "deps": {
       "components": [
         "ability_base",
         "ability_runtime",
+        "access_token",
+        "audio_framework",
+        "av_session",
+        "battery_manager",
+        "bluetooth_service",
+        "bounds_checking_function",
         "bundle_framework",
-        "c_utils",
         "cJSON",
+        "c_utils",
+        "call_manager",
         "common_event_service",
-        "eventhandler",
+        "core_service",
+        "data_share",
+        "device_manager",
+        "drivers_interface_bluetooth",
+        "enterprise_device_management",
         "ets_frontend",
+        "eventhandler",
         "ffrt",
+        "hdf_core",
+        "hiappevent",
         "hicollie",
         "hilog",
         "hisysevent",
-        "hiappevent",
         "hitrace",
+        "huks",
+        "icu",
+        "image_framework",
         "init",
+        "input",
         "ipc",
         "libuv",
+        "libxml2",
         "napi",
+        "netmanager_base",
         "node",
+        "window_manager",
+        "openssl",
+        "os_account",
+        "preferences",
+        "qos_manager",
+        "resource_schedule_service",
+        "runtime_core",
+        "safwk",
         "samgr",
         "security_guard",
-        "runtime_core",
-        "bounds_checking_function",
-        "taihe_ffi_gen"
+        "sms_mms",
+        "spatial_awareness",
+        "state_registry",
+        "taihe_ffi_gen",
+        "wifi",
+        "resource_management"
       ],
       "third_party": []
     },
@@ -92,8 +158,7 @@
       "group_type": {
         "base_group": [],
         "fwk_group": [
-          "//foundation/communication/bluetooth/frameworks/inner:btframework",
-          "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+          "//foundation/communication/bluetooth:bluetooth_group",
           "//foundation/communication/bluetooth/frameworks/js/napi:bluetooth_napi",
           "//foundation/communication/bluetooth/frameworks/c_api:bluetooth_ndk",
           "//foundation/communication/bluetooth/frameworks/cj:bluetooth_ffi",
@@ -237,6 +302,16 @@
           },
           "name": "//foundation/communication/bluetooth/frameworks/inner:btcommon"
         },
+        
+        {
+          "header": {
+            "header_base": "//foundation/communication/bluetooth/frameworks/inner",
+            "header_files": [
+              "include/bluetooth_hearingaid.h"
+            ]
+          },
+          "name": "//foundation/communication/bluetooth/frameworks/inner/hearingaid:hearingaid_framework"
+        },
         {
           "header": {
             "header_base": "//foundation/communication/bluetooth/frameworks/cj/a2dp/include",
@@ -309,10 +384,95 @@
             "header_files": []
           },
           "name": "//foundation/communication/bluetooth/frameworks/js/napi/src/common:common"
+        },
+        {
+          "header": {
+            "header_base": "//foundation/communication/bluetooth/config",
+            "header_files": [
+              "bt_config.h"
+            ]
+          },
+          "name": "//foundation/communication/bluetooth/config:feature_flags_static"
+        },
+        {
+          "header": {
+            "header_base": "//foundation/communication/bluetooth/services/bluetooth/btchr/include",
+            "header_files": []
+          },
+          "name": "//foundation/communication/bluetooth/services/bluetooth/btchr:btchr"
+        },
+        {
+          "header": {
+            "header_base": "//foundation/communication/bluetooth/services/bluetooth/stack_interface/include",
+            "header_files": [
+              "bt_dm_interface.h",
+              "bt_hwif.h",
+              "bt_macros.h",
+              "btif_dm.h",
+              "btif_gatt.h",
+              "btif_sock.h",
+              "btif_storage.h",
+              "hal_util.h",
+              "a2dp_audio_render_interface.h",
+              "hardware/avrcp/avrcp.h",
+              "hardware/avrcp/avrcp_common.h",
+              "hardware/ble_advertiser.h",
+              "hardware/ble_scanner.h",
+              "hardware/bluetooth.h",
+              "hardware/bt_av.h",
+              "hardware/bt_common_types.h",
+              "hardware/bt_gatt.h",
+              "hardware/bt_gatt_client.h",
+              "hardware/bt_gatt_server.h",
+              "hardware/bt_gatt_types.h",
+              "hardware/bt_hd.h",
+              "hardware/bt_hearing_aid.h",
+              "hardware/bt_hf.h",
+              "hardware/bt_hf_client.h",
+              "hardware/bt_hh.h",
+              "hardware/bt_pan.h",
+              "hardware/bt_rc.h",
+              "hardware/bt_sdp.h",
+              "hardware/bt_sock.h",
+              "hci/octets.h",
+              "hiecho.h",
+              "hw_bt_hwif.h",
+              "hw_bt_utils.h",
+              "ihw_interop.h",
+              "stack/include/bt_device_type.h",
+              "stack/include/btm_status.h",
+              "stack/include/igatt_api.h",
+              "stack/include/hci_error_code.h",
+              "stack/include/hw_hcidefs.h",
+              "types/ble_address_with_type.h",
+              "types/bluetooth/uuid.h",
+              "types/bt_transport.h",
+              "types/raw_address.h"
+            ]
+          },
+          "name": "//foundation/communication/bluetooth/services/bluetooth/stack_interface:stack_interface"
+        },
+        {
+          "header": {
+            "header_base": "//foundation/communication/bluetooth/services/bluetooth/vendor_interface/include",
+            "header_files": [
+              "vendor_interface.h"
+            ]
+          },
+          "name": "//foundation/communication/bluetooth/services/bluetooth/vendor_interface:vendor_interface"
+        },
+        {
+          "name": "//foundation/communication/bluetooth/services/bluetooth/hardware:bluetooth_hdi_adapter"
+        },
+        {
+          "header": {
+            "header_base": "//foundation/communication/bluetooth/services/bluetooth/common",
+            "header_files": []
+          },
+          "name": "//foundation/communication/bluetooth/services/bluetooth/common:btservice_common"
         }
       ],
       "test": [
-        "//foundation/communication/bluetooth/test:unit_test"
       ]
     }
   }

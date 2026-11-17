@@ -1,0 +1,91 @@
+# Copyright (C) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("//build/test.gni")
+import("//foundation/communication/bluetooth/test/unittest/unittest.gni")
+
+BT_FWK_DIR = "//foundation/communication/bluetooth"
+PART_DIR = "//foundation/communication/bluetooth/services/bluetooth"
+BT_SERVICE_DIR = "$PART_DIR/service"
+
+config("unitest_common_config") {
+  include_dirs = [
+    "$BT_FWK_DIR/interfaces/inner_api/include",
+    "$BT_FWK_DIR/interfaces/inner_api/include/c_header",
+    "$BT_FWK_DIR/frameworks/inner/ipc/common",
+    "$BT_FWK_DIR/frameworks/inner/ipc/parcel",
+    "$BT_FWK_DIR/frameworks/inner/ipc/include",
+    "$BT_FWK_DIR/frameworks/inner/ipc/interface",
+    "$BT_FWK_DIR/frameworks/inner/include",
+    "$BT_FWK_DIR/frameworks/inner/src",
+    "$BT_FWK_DIR/frameworks/js/napi/include",
+    "$BT_SERVICE_DIR/include",
+    "$BT_SERVICE_DIR/src/base",
+    "$BT_SERVICE_DIR/src/gatt",
+    "$BT_SERVICE_DIR/src/common",
+    "$BT_SERVICE_DIR/src/util",
+    "$BT_SERVICE_DIR/src/pbap_pse",
+    "$BT_SERVICE_DIR/src/permission",
+    "$BT_SERVICE_DIR/src/obex",
+    "$BT_SERVICE_DIR/src/classic",
+    "$BT_SERVICE_DIR/src/sock",
+    "$BT_SERVICE_DIR/src/",
+    "$PART_DIR/server/include",
+    "$PART_DIR/common",
+    "$PART_DIR/ipc/include",
+  ]
+
+  cflags = [
+    "-Werror",
+    "-Wno-macro-redefined",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-unused-const-variable",
+    "-Wno-deprecated-builtins",
+    "-Wno-defaulted-function-deleted",
+    "-Woverloaded-virtual",
+  ]
+
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  defines = [
+    "private = public",
+  ]
+}
+
+config("unittest_utils_config") {
+  include_dirs = [
+    "${bluetooth_unittest_utils_path}"
+  ]
+}
+
+# Only used for unitest
+ohos_static_library("unittest_utils_static") {
+  sanitize = {
+    cfi = true                            # Enable/disable control flow integrity detection
+    cfi_cross_dso = true                   # Cross-SO CFI Checks
+    debug = false
+  }
+  sources = [
+    "bluetooth_access_token_mock.cpp"
+  ]
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libtoken_setproc",
+    "c_utils:utils",
+  ]
+
+  subsystem_name = "communication"
+  part_name = "bluetooth"
+}

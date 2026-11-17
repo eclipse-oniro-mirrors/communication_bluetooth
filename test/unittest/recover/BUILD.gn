@@ -1,0 +1,131 @@
+# Copyright (C) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("//foundation/communication/bluetooth/bluetooth.gni")
+import("//foundation/communication/bluetooth/test/unittest/unittest.gni")
+
+module_output_path = "bluetooth/bluetooth"
+SUBSYSTEM_DIR = "//foundation/communication/bluetooth"
+PART_DIR = "$SUBSYSTEM_DIR/services/bluetooth"
+BT_SERVICE_DIR = "$PART_DIR/service"
+
+test_config_dir = "$SUBSYSTEM_DIR/test/unittest/config"
+
+###############################################################################
+#1. intent(c++) get/set test without transport
+
+config("module_private_config") {
+  visibility = [ ":*" ]
+  cflags = [
+    "-Werror",
+    "-Wno-macro-redefined",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Wno-unused-const-variable",
+    "-Wno-deprecated-builtins",
+    "-Wno-defaulted-function-deleted",
+    "-Woverloaded-virtual",
+  ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+  include_dirs = [
+    "mock/include",
+    "$BT_SERVICE_DIR/src",
+    "$BT_SERVICE_DIR/src/base",
+    "$BT_SERVICE_DIR/src/common",
+    "$BT_SERVICE_DIR/src/permission",
+    "$BT_SERVICE_DIR/src/util",
+    "$BT_SERVICE_DIR/src/hfp_ag",
+    "$BT_SERVICE_DIR/src/hfp_hf",
+    "$BT_SERVICE_DIR/src/gavdp",
+    "$BT_SERVICE_DIR/src/watch",
+    "$BT_SERVICE_DIR/src/classic",
+    "$BT_SERVICE_DIR/src/recover",
+    "$BT_SERVICE_DIR/src/avsync",
+    "$BT_SERVICE_DIR/src/a2dp_src",
+    "$BT_SERVICE_DIR/include",
+    "$PART_DIR/server/include",
+    "$PART_DIR/ipc/include",
+    "$PART_DIR/common",
+    "$PART_DIR/common/include",
+    "$SUBSYSTEM_DIR/config",
+    "$SUBSYSTEM_DIR/test/mock",
+    "$test_config_dir",
+  ]
+  defines = [
+    "HAS_NO_BDROID_BUILDCFG",
+    "BTFW_LOG_TAG = \"bluetooth_test\"",
+    "BTFW_LOG_DOMAIN = 0xD000103",
+    "private = public",
+    "protected = public",
+  ]
+}
+
+ohos_unittest("btfw_recover_test") {
+  module_out_path = module_output_path
+  sources = [ "recover_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+  configs += [ "${test_config_dir}:unitest_common_config" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+    "$SUBSYSTEM_DIR/services/bluetooth/service:btservice_static",
+    "$SUBSYSTEM_DIR/services/bluetooth/server:bluetooth_server_static",
+    "//foundation/communication/bluetooth/services/bluetooth/stack_interface:stack_interface",
+  ]
+
+  external_deps = [
+    "googletest:gmock",
+    "googletest:gtest_main",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "resource_management:global_resmgr",
+    "access_token:libaccesstoken_sdk",
+  ]
+
+  if (bluetooth_audio_framwwork) {
+    external_deps += [
+      "audio_framework:audio_policy_manager",
+      "audio_framework:audio_engine_manager",
+      "audio_framework:audio_manager_client",
+    ]
+  }
+
+  if (bluetooth_hfp_ag_feature_switch) {
+    external_deps += [
+      "call_manager:tel_call_manager_api",
+      "core_service:tel_core_service_api",
+      "state_registry:tel_state_registry_api",
+    ]
+  }
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+################################################################################
+group("unittest") {
+  testonly = true
+  deps = []
+  if (is_phone_product) {
+    deps += [
+      ":btfw_recover_test",
+    ]
+  }
+}

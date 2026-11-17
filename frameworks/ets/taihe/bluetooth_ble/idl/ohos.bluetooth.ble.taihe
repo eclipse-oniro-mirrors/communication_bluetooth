@@ -298,6 +298,9 @@ interface GattClientDevice {
     @rename("setCharacteristicChangeIndication")
     SetCharacteristicChangeIndicationAsync(characteristic: BLECharacteristic, enable: bool, callback: @sts_type("AsyncCallback<void>") Opaque): void;
 
+    @rename("refreshServices")
+    RefreshServicesPromise():  @sts_type("Promise<void>") Opaque;
+
     @rename("readPhy")
     ReadPhyPromise(): @sts_type("Promise<PhyValue>") Opaque;
 
@@ -373,6 +376,9 @@ enum ConnectionParam : i32 {
 
 function CreateGattClientDevice(deviceId: String): GattClientDevice;
 
+@rename("createGattClientDevice")
+function CreateGattClientDeviceWithSetting(deviceId: String, setting: GattSetting): GattClientDevice;
+
 interface GattServer {
     Close(): void;
     AddService(service: GattService): void;
@@ -431,6 +437,7 @@ struct AdvertiseData {
     serviceData: Array<ServiceData>;
     includeDeviceName: Optional<bool>;
     includeTxPower: Optional<bool>;
+    advertiseName: Optional<String>;
 }
 
 struct AdvertisingParams {
@@ -515,6 +522,10 @@ interface BleScanner {
 
 function CreateBleScanner(): BleScanner;
 function GetConnectedBLEDevices(): Array<String>;
+
+@rename("getConnectedBLEDevices")
+function GetConnectedBLEDevicesWithProfile(profile: BleProfile): Array<String>;
+
 function StartBLEScan(filters: ScanFilterNullValue, options: Optional<ScanOptions>): void;
 function StartAdvertising(setting: AdvertiseSetting, advData: AdvertiseData, advResponse: Optional<AdvertiseData>): void;
 

@@ -318,6 +318,19 @@ public:
     int DiscoverServices();
 
     /**
+     * @brief The function to refresh the cached services of the connected device.
+     *
+     * Clears the local service cache and triggers a rediscovery on the remote device.
+     * The rediscovery proceeds asynchronously; call GetService to obtain the refreshed
+     * service list afterwards.
+     *
+     * @return int    api accept status.
+     * @since 27
+     *
+     */
+    int RefreshServices();
+
+    /**
      * @brief The function to get service.
      *
      * @param uuid uuid of GattClient.

@@ -14,6 +14,7 @@
 import("//build/config/components/ets_frontend/ets2abc_config.gni")
 import("//build/ohos.gni")
 import("//build/ohos/taihe_idl/taihe.gni")
+import("//foundation/communication/bluetooth/bluetooth.gni")
 
 SUBSYSTEM_DIR = "//foundation/communication"
 
@@ -55,6 +56,9 @@ taihe_shared_library("bluetoothPan_taihe_native") {
     "-Wl,--as-needed",
     "-Wl,--gc-sections",
   ]
+  if (bluetooth_pan_feature) {
+    defines = [ "BLUETOOTH_PAN_FEATURE_ENABLE" ]
+  }
   shlib_type = "ani"
   taihe_generated_file_path = "${taihe_generated_file_path_pan}"
   part_name = "$part_name"

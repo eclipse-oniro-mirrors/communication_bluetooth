@@ -293,6 +293,20 @@ int BluetoothRemoteDevice::CancelPairing()
     return  BT_ERR_INTERNAL_ERROR;
 }
 
+int BluetoothRemoteDevice::CancelPairingByInitiator()
+{
+    HILOGI("enter");
+    CHECK_AND_RETURN_LOG_RET(IsValidBluetoothRemoteDevice(), BT_ERR_INTERNAL_ERROR, "Invalid remote device");
+    CHECK_AND_RETURN_LOG_RET(IS_BT_ENABLED(), BT_ERR_INVALID_STATE, "bluetooth is off.");
+    sptr<IBluetoothHost> hostProxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
+    CHECK_AND_RETURN_LOG_RET(hostProxy != nullptr, BT_ERR_INTERNAL_ERROR, "proxy is nullptr.");
+    // Both the pairing-state check (BT_ERR_DEVICE_NOT_PAIRING) and the pairing-initiator check
+    // (BT_ERR_PAIRING_INITIATED_BY_OTHER) are enforced by the remote service; the framework only
+    // passes the returned error code through to the application.
+    int32_t ret = hostProxy->CancelPairingByInitiator(transport_, address_);
+    return ret;
+}
+
 bool BluetoothRemoteDevice::IsBondedFromLocal() const
 {
     HILOGI("enter");
@@ -455,6 +469,20 @@ int32_t BluetoothRemoteDevice::GetDeviceCustomType(int32_t &deviceType) const
     return exception;
 }
 
+int32_t BluetoothRemoteDevice::GetDeviceDeviceOfType(uint8_t &deviceOfType) const
+{
+    CHECK_AND_RETURN_LOG_RET(IsValidBluetoothRemoteDevice(), BT_ERR_INTERNAL_ERROR, "Invalid remote Device");
+    CHECK_AND_RETURN_LOG_RET(IS_BT_ENABLED(), BT_ERR_INVALID_STATE, "bluetooth is off");
+    sptr<IBluetoothHost> hostProxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
+    CHECK_AND_RETURN_LOG_RET(hostProxy != nullptr, BT_ERR_INTERNAL_ERROR, "proxy is nullptr");
+    std::shared_ptr<BluetoothRemoteDeviceInfo> info;
+    int32_t exception = hostProxy->GetRemoteDeviceInfo(address_, info, DeviceInfoType::DEVICE_DEVICE_OF_TYPE);
+    if (exception == BT_NO_ERROR && info != nullptr) {
+        deviceOfType = info->deviceOfType_;
+    }
+    return exception;
+}
+
 int32_t BluetoothRemoteDevice::GetDeviceVendorId(uint16_t &vendorId) const
 {
     HILOGD("enter");
@@ -469,22 +497,6 @@ int32_t BluetoothRemoteDevice::GetDeviceVendorId(uint16_t &vendorId) const
     }
     return exception;
 }
-
-int32_t BluetoothRemoteDevice::GetDeviceDeviceOfType(uint8_t &deviceOfType) const
-{
-    HILOGD("enter");
-    CHECK_AND_RETURN_LOG_RET(IsValidBluetoothRemoteDevice(), BT_ERR_INTERNAL_ERROR, "Invalid remote Device");
-    CHECK_AND_RETURN_LOG_RET(IS_BT_ENABLED(), BT_ERR_INVALID_STATE, "bluetooth is off");
-    sptr<IBluetoothHost> hostProxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
-    CHECK_AND_RETURN_LOG_RET(hostProxy != nullptr, BT_ERR_INTERNAL_ERROR, "proxy is nullptr");
-    std::shared_ptr<BluetoothRemoteDeviceInfo> info;
-    int32_t exception = hostProxy->GetRemoteDeviceInfo(address_, info, DeviceInfoType::DEVICE_DEVICE_OF_TYPE);
-    if (exception == BT_NO_ERROR && info != nullptr) {
-        deviceOfType = info->deviceOfType_;
-    }
-    return exception;
-}
-
 int32_t BluetoothRemoteDevice::GetDeviceProductId(uint16_t &productId) const
 {
     HILOGD("enter");
