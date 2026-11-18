@@ -44,6 +44,7 @@ public:
     static CArrString GetPairedDevices(int32_t* errCode);
     static int32_t GetPairState(std::string deviceId, int32_t* errCode);
     static int32_t GetProfileConnectionState(int32_t profileId, int32_t* errCode);
+    static int32_t GetBtConnectionState(int32_t* errCode);
     static void SetDevicePairingConfirmation(std::string deviceId, bool accept, int32_t* errCode);
     static void SetDevicePinCode(std::string deviceId, std::string code, int32_t* errCode);
     static void SetLocalName(std::string localName, int32_t* errCode);

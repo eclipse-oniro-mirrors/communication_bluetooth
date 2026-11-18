@@ -62,6 +62,7 @@ FFI_EXPORT char* FfiBluetoothConGetLocalName(int32_t* errCode);
 FFI_EXPORT CArrString FfiBluetoothConGetPairedDevices(int32_t* errCode);
 FFI_EXPORT int32_t FfiBluetoothConGetPairState(const char* deviceId, int32_t* errCode);
 FFI_EXPORT int32_t FfiBluetoothConGetProfileConnectionState(int32_t profileId, int32_t* errCode);
+FFI_EXPORT int32_t FfiBluetoothConGetBtConnectionState(int32_t* errCode);
 FFI_EXPORT void FfiBluetoothConSetDevicePairingConfirmation(const char* deviceId, bool accept, int32_t* errCode);
 FFI_EXPORT void FfiBluetoothConSetDevicePinCode(const char* deviceId, const char* code, int32_t* errCode);
 FFI_EXPORT void FfiBluetoothConSetLocalName(const char* localName, int32_t* errCode);

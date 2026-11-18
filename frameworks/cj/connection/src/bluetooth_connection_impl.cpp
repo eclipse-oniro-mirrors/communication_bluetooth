@@ -159,6 +159,15 @@ int32_t ConnectionImpl::GetProfileConnectionState(int32_t profileId, int32_t* er
     return status;
 }
 
+int32_t ConnectionImpl::GetBtConnectionState(int32_t* errCode)
+{
+    BluetoothHost* host = &BluetoothHost::GetDefaultHost();
+    int state = static_cast<int>(BTConnectState::DISCONNECTED);
+    *errCode = host->GetBtConnectionState(state);
+    int status = Bluetooth::GetProfileConnectionState(state);
+    return status;
+}
+
 void ConnectionImpl::SetDevicePairingConfirmation(std::string deviceId, bool accept, int32_t* errCode)
 {
     if (!IsValidAddress(deviceId)) {
