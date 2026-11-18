@@ -676,7 +676,7 @@ HWTEST_F(BluetoothRemoteDeviceTest, Remote_Device_ModuleTest_CancelPairing_00100
 
     BluetoothRemoteDevice device_("00:00:00:00:00:00", BT_TRANSPORT_BREDR);
     std::this_thread::sleep_for(std::chrono::seconds(6));
-    EXPECT_EQ(device_.CancelPairing(), BT_NO_ERROR);
+    EXPECT_EQ(device_.CancelPairing(), BT_ERR_DEVICE_NOT_PAIRING);
 
     HILOGI("Remote_Device_ModuleTest_CancelPairing_00100 end");
 }

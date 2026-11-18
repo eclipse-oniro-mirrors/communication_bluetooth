@@ -85,7 +85,6 @@ private:
     int32_t StartPairInner(MessageParcel &data, MessageParcel &reply);
     int32_t StartCrediblePairInner(MessageParcel &data, MessageParcel &reply);
     int32_t CancelPairingInner(MessageParcel &data, MessageParcel &reply);
-    int32_t CancelPairingByInitiatorInner(MessageParcel &data, MessageParcel &reply);
     int32_t IsBondedFromLocalInner(MessageParcel &data, MessageParcel &reply);
     int32_t IsAclConnectedInner(MessageParcel &data, MessageParcel &reply);
     int32_t IsAclEncryptedInner(MessageParcel &data, MessageParcel &reply);

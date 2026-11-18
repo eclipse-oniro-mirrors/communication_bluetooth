@@ -905,7 +905,7 @@ void CancelPairingDeviceSync(taihe::string_view deviceId)
     TAIHE_BT_ASSERT_RETURN_VOID(checkRet, BT_ERR_INVALID_PARAM);
 
     BluetoothRemoteDevice remoteDevice = BluetoothRemoteDevice(remoteAddr);
-    int32_t err = remoteDevice.CancelPairingByInitiator();
+    int32_t err = remoteDevice.CancelPairing();
     HILOGI("err: %{public}d", err);
     TAIHE_BT_ASSERT_RETURN_VOID(err == BT_NO_ERROR, err);
 }

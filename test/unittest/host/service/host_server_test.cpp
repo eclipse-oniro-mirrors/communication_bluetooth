@@ -549,7 +549,7 @@ HWTEST_F(HostServerTest, host_server_pair_001, TestSize.Level1)
 
 /**
  * @tc.name: host_server_cancel_pairing_001
- * @tc.desc: Cancel a device which is not in the pairing state via CancelPairingByInitiator,
+ * @tc.desc: Cancel a device which is not in the pairing state via CancelPairing,
  *           expect BT_ERR_DEVICE_NOT_PAIRING (2900019)
  * @tc.type: FUNC
  */
@@ -559,9 +559,9 @@ HWTEST_F(HostServerTest, host_server_cancel_pairing_001, TestSize.Level1)
     EXPECT_EQ(BT_ERR_PAIRING_INITIATED_BY_OTHER, 2900018);
     EXPECT_EQ(BT_ERR_DEVICE_NOT_PAIRING, 2900019);
     std::string addr = "11:22:33:44:55:66";
-    EXPECT_EQ(hostServer_->CancelPairingByInitiator(0, addr), BT_ERR_DEVICE_NOT_PAIRING);
-    EXPECT_EQ(hostServer_->CancelPairingByInitiator(1, addr), BT_ERR_DEVICE_NOT_PAIRING);
-    EXPECT_EQ(hostServer_->CancelPairingByInitiator(2, addr), BT_ERR_DEVICE_NOT_PAIRING);
+    EXPECT_EQ(hostServer_->CancelPairing(0, addr), BT_ERR_DEVICE_NOT_PAIRING);
+    EXPECT_EQ(hostServer_->CancelPairing(1, addr), BT_ERR_DEVICE_NOT_PAIRING);
+    EXPECT_EQ(hostServer_->CancelPairing(2, addr), BT_ERR_DEVICE_NOT_PAIRING);
     HILOGI("host_server_cancel_pairing_001 end");
 }
 
@@ -624,6 +624,24 @@ HWTEST_F(HostServerTest, host_server_cancel_pairing_005, TestSize.Level1)
         PairRecord {GetNowTimestamp(), "appIdentifierA", "pkgA", true});
     EXPECT_EQ(hostServer_->CheckPairingInitiator(addr, false, "appIdentifierA", "pkgA"), BT_NO_ERROR);
     HILOGI("host_server_cancel_pairing_005 end");
+}
+
+/**
+ * @tc.name: host_server_cancel_pairing_006
+ * @tc.desc: A stale initiator record left by an interrupted pairing cannot authorize cancellation,
+ *           expect BT_ERR_PAIRING_INITIATED_BY_OTHER (2900018)
+ * @tc.type: FUNC
+ */
+HWTEST_F(HostServerTest, host_server_cancel_pairing_006, TestSize.Level1)
+{
+    HILOGI("host_server_cancel_pairing_006 enter");
+    std::string addr = "11:22:33:44:55:66";
+    // The record is 10 minutes old, far beyond the 120s validity period.
+    hostServer_->pimpl->pairingInitiatorMap_.EnsureInsert(addr,
+        PairRecord {GetNowTimestamp() - 10 * 60 * 1000, "appIdentifierA", "pkgA", true});
+    EXPECT_EQ(hostServer_->CheckPairingInitiator(addr, false, "appIdentifierA", "pkgA"),
+        BT_ERR_PAIRING_INITIATED_BY_OTHER);
+    HILOGI("host_server_cancel_pairing_006 end");
 }
 
 /**

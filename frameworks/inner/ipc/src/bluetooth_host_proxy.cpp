@@ -1163,51 +1163,26 @@ int32_t BluetoothHostProxy::StartCrediblePair(int32_t transport, const std::stri
     return reply.ReadInt32();
 }
 
-bool BluetoothHostProxy::CancelPairing(int32_t transport, const std::string &address)
+int32_t BluetoothHostProxy::CancelPairing(int32_t transport, const std::string &address)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(BluetoothHostProxy::GetDescriptor())) {
         HILOGE("BluetoothHostProxy::CancelPairing WriteInterfaceToken error");
-        return false;
+        return BT_ERR_IPC_TRANS_FAILED;
     }
     if (!data.WriteInt32(transport)) {
         HILOGE("BluetoothHostProxy::CancelPairing transport error");
-        return false;
+        return BT_ERR_IPC_TRANS_FAILED;
     }
     if (!data.WriteString(address)) {
         HILOGE("BluetoothHostProxy::CancelPairing address error");
-        return false;
+        return BT_ERR_IPC_TRANS_FAILED;
     }
     MessageParcel reply;
     MessageOption option = {MessageOption::TF_SYNC};
     int32_t error = InnerTransact(BluetoothHostInterfaceCode::CANCEL_PAIRING, option, data, reply);
     if (error != NO_ERROR) {
         HILOGE("BluetoothHostProxy::CancelPairing done fail, error: %{public}d", error);
-        return false;
-    }
-    return reply.ReadBool();
-}
-
-int32_t BluetoothHostProxy::CancelPairingByInitiator(int32_t transport, const std::string &address)
-{
-    MessageParcel data;
-    if (!data.WriteInterfaceToken(BluetoothHostProxy::GetDescriptor())) {
-        HILOGE("BluetoothHostProxy::CancelPairingByInitiator WriteInterfaceToken error");
-        return BT_ERR_IPC_TRANS_FAILED;
-    }
-    if (!data.WriteInt32(transport)) {
-        HILOGE("BluetoothHostProxy::CancelPairingByInitiator transport error");
-        return BT_ERR_IPC_TRANS_FAILED;
-    }
-    if (!data.WriteString(address)) {
-        HILOGE("BluetoothHostProxy::CancelPairingByInitiator address error");
-        return BT_ERR_IPC_TRANS_FAILED;
-    }
-    MessageParcel reply;
-    MessageOption option = {MessageOption::TF_SYNC};
-    int32_t error = InnerTransact(BluetoothHostInterfaceCode::CANCEL_PAIRING_BY_INITIATOR, option, data, reply);
-    if (error != BT_NO_ERROR) {
-        HILOGE("BluetoothHostProxy::CancelPairingByInitiator done fail, error: %{public}d", error);
         return BT_ERR_IPC_TRANS_FAILED;
     }
     return reply.ReadInt32();

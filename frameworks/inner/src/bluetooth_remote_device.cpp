@@ -287,24 +287,10 @@ int BluetoothRemoteDevice::CancelPairing()
     CHECK_AND_RETURN_LOG_RET(IS_BT_ENABLED(), BT_ERR_INVALID_STATE, "bluetooth is off.");
     sptr<IBluetoothHost> hostProxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
     CHECK_AND_RETURN_LOG_RET(hostProxy != nullptr, BT_ERR_INTERNAL_ERROR, "proxy is nullptr.");
-    if (hostProxy->CancelPairing(transport_, address_)) {
-        return BT_NO_ERROR;
-    }
-    return  BT_ERR_INTERNAL_ERROR;
-}
-
-int BluetoothRemoteDevice::CancelPairingByInitiator()
-{
-    HILOGI("enter");
-    CHECK_AND_RETURN_LOG_RET(IsValidBluetoothRemoteDevice(), BT_ERR_INTERNAL_ERROR, "Invalid remote device");
-    CHECK_AND_RETURN_LOG_RET(IS_BT_ENABLED(), BT_ERR_INVALID_STATE, "bluetooth is off.");
-    sptr<IBluetoothHost> hostProxy = GetRemoteProxy<IBluetoothHost>(BLUETOOTH_HOST);
-    CHECK_AND_RETURN_LOG_RET(hostProxy != nullptr, BT_ERR_INTERNAL_ERROR, "proxy is nullptr.");
-    // Both the pairing-state check (BT_ERR_DEVICE_NOT_PAIRING) and the pairing-initiator check
+    // The pairing-state check (BT_ERR_DEVICE_NOT_PAIRING) and the pairing-initiator check
     // (BT_ERR_PAIRING_INITIATED_BY_OTHER) are enforced by the remote service; the framework only
-    // passes the returned error code through to the application.
-    int32_t ret = hostProxy->CancelPairingByInitiator(transport_, address_);
-    return ret;
+    // passes the returned error code through to the caller.
+    return hostProxy->CancelPairing(transport_, address_);
 }
 
 bool BluetoothRemoteDevice::IsBondedFromLocal() const

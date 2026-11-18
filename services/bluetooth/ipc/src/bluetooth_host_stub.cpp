@@ -82,9 +82,7 @@ const std::map<uint32_t, BluetoothHostStub::BluetoothHostStubFuncPerm> Bluetooth
     {STUB_FUNC(BT_REMOVE_PAIR, RemovePairInner, CHECK_PERM(false, {DISCOVER_BLUETOOTH}, {ACCESS_BLUETOOTH}))},
     {STUB_FUNC(BT_REMOVE_ALL_PAIRS, RemoveAllPairsInner,
         CHECK_PERM(true, {DISCOVER_BLUETOOTH}, MULTI_PERM(ACCESS_BLUETOOTH, MANAGE_BLUETOOTH)))},
-    {STUB_FUNC(CANCEL_PAIRING, CancelPairingInner, CHECK_PERM(true, {}, {ACCESS_BLUETOOTH}))},
-    {STUB_FUNC(CANCEL_PAIRING_BY_INITIATOR, CancelPairingByInitiatorInner,
-        CHECK_PERM(false, {}, {ACCESS_BLUETOOTH}))},
+    {STUB_FUNC(CANCEL_PAIRING, CancelPairingInner, CHECK_PERM(false, {}, {ACCESS_BLUETOOTH}))},
     {STUB_FUNC(BT_REGISTER_REMOTE_DEVICE_OBSERVER, RegisterRemoteDeviceObserverInner, nullptr)},
     {STUB_FUNC(BT_DEREGISTER_REMOTE_DEVICE_OBSERVER, DeregisterRemoteDeviceObserverInner, nullptr)},
     {STUB_FUNC(BT_GET_BLE_MAX_ADVERTISING_DATALENGTH, GetBleMaxAdvertisingDataLengthInner, nullptr)},
@@ -920,28 +918,10 @@ int32_t BluetoothHostStub::CancelPairingInner(MessageParcel &data, MessageParcel
         HILOGE("address failed");
         return TRANSACTION_ERR;
     }
-    bool result = CancelPairing(transport, address);
-    bool ret = reply.WriteBool(result);
-    if (!ret) {
-        HILOGE("result writing failed.");
-        return TRANSACTION_ERR;
-    }
-    return NO_ERROR;
-}
-
-int32_t BluetoothHostStub::CancelPairingByInitiatorInner(MessageParcel &data, MessageParcel &reply)
-{
-    int32_t transport;
-    if (!data.ReadInt32(transport)) {
-        HILOGE("transport failed");
-        return TRANSACTION_ERR;
-    }
-    std::string address;
-    if (!data.ReadString(address)) {
-        HILOGE("address failed");
-        return TRANSACTION_ERR;
-    }
-    int32_t result = CancelPairingByInitiator(transport, address);
+    // The unified CANCEL_PAIRING path carries the full error code (2900018 / 2900019 included)
+    // back to the caller, so that the callback and promise forms of cancelPairingDevice can
+    // report the same result.
+    int32_t result = CancelPairing(transport, address);
     bool ret = reply.WriteInt32(result);
     if (!ret) {
         HILOGE("result writing failed.");
