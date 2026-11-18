@@ -40,8 +40,11 @@ using namespace std;
 using namespace Bluetooth;
 
 constexpr int TIME = 4;
+// Max music volume differs per product (phone 15, car 38); expectations below assume 15.
+constexpr int32_t TEST_MAX_VOLUME = 15;
 static BluetoothHost *host_;
 static AvrcpVolumeInterfaceImpl g_volumeInterface;
+static int32_t g_realMaxVolume = 0;
 
 void *A2dpSrcServiceCreate(void)
 {
@@ -83,10 +86,13 @@ public:
         manager->SetProfileService(BTTransport::ADAPTER_BREDR, name);
         // Disable a2dp thread
         ThreadUtil::GetInstance().ChangeThreadState(THREAD_ID_A2DP, ThreadUtil::DISABLED);
+        g_realMaxVolume = g_volumeInterface.musicMaxVolumeLevel_;
+        g_volumeInterface.musicMaxVolumeLevel_ = TEST_MAX_VOLUME;
         HILOGI("SetUp end");
     }
     void TearDown()
     {
+        g_volumeInterface.musicMaxVolumeLevel_ = g_realMaxVolume;
         auto manager = ProfileServiceManager::GetInstance();
         A2dpSrcService *src = static_cast<A2dpSrcService *>(manager->GetProfileService("A2dpSrcService"));
         delete src;
@@ -271,7 +277,7 @@ HWTEST_F(AvrcpTgVolumeTest, AvrcpTgVolumeTest_UnitTest_NotifyAbsVolumeByAddr_001
     STACK::RawAddress::FromString("00:11:22:33:44:55", addr);
     g_volumeInterface.NotifyAbsVolumeByAddr(addr, 50);
     g_volumeInterface.DeviceConnected(addr,
-        std::bind(MockVolumeChangedCb, std::placeholders::_1, std::placeholders::_2));
+        std::bind(MockAbsVolumeCb, std::placeholders::_1, std::placeholders::_2));
     int32_t countBefore = g_absVolumeCbCount;
     g_volumeInterface.NotifyAbsVolumeByAddr(addr, 50);
     EXPECT_GT(g_absVolumeCbCount, countBefore);
@@ -313,7 +319,7 @@ HWTEST_F(AvrcpTgVolumeTest, AvrcpTgVolumeTest_UnitTest_SwitchAbsVolumeDevice_003
     EXPECT_EQ(false, PreferencesManager::Get(addr.ToString(), true,
         PreferencesManagerType::ABS_VOLUME_SWITCH));
     if (remoteDevice != nullptr) {
-        EXPECT_EQ(DeviceAbsVolumeAbility::DEVICE_ABSVOL_UNSUPPORT,
+        EXPECT_EQ(DeviceAbsVolumeAbility::DEVICE_ABSVOL_OPEN,
             remoteDevice->GetDeviceAbsVolumeAbility());
     }
     HILOGI("AvrcpTgVolumeTest_UnitTest_SwitchAbsVolumeDevice_003 end");

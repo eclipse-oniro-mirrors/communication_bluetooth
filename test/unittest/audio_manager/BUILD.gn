@@ -185,5 +185,7 @@ group("unittest") {
       ":btfw_audio_manager_unit_test",
       ":btfw_bluetooth_audio_manager_unit_test",
     ]
+  } else if (defined(target_platform) && target_platform == "car") {
+    deps += [ ":btfw_bluetooth_audio_manager_unit_test" ]
   }
 }
