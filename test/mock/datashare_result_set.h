@@ -49,6 +49,10 @@ public:
         count = 1;
         return 0;
     }
+    int Close()
+    {
+        return 0;
+    }
 };
 
 }
