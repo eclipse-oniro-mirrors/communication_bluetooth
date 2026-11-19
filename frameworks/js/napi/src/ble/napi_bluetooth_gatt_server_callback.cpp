@@ -61,7 +61,8 @@ void NapiGattServerCallback::OnCharacteristicWriteRequest(const BluetoothRemoteD
 void NapiGattServerCallback::OnConnectionStateUpdateWithMessage(
     const BluetoothRemoteDevice &device, int state, GattDisconnectParam disconnectParam)
 {
-    HILOGI("enter, state: %{public}d, remote device address: %{public}s", state, GET_ENCRYPT_ADDR(device));
+    HILOGI("enter, state: %{public}s, remote device address: %{public}s",
+        GetProfileConnStateName(state).c_str(), GET_ENCRYPT_ADDR(device));
     std::lock_guard<std::mutex> lock(NapiGattServer::deviceListMutex_);
     if (state == static_cast<int>(BTConnectState::CONNECTED)) {
         bool hasAddr = false;
