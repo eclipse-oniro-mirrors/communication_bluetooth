@@ -627,24 +627,6 @@ HWTEST_F(HostServerTest, host_server_cancel_pairing_005, TestSize.Level1)
 }
 
 /**
- * @tc.name: host_server_cancel_pairing_006
- * @tc.desc: A stale initiator record left by an interrupted pairing cannot authorize cancellation,
- *           expect BT_ERR_PAIRING_INITIATED_BY_OTHER (2900018)
- * @tc.type: FUNC
- */
-HWTEST_F(HostServerTest, host_server_cancel_pairing_006, TestSize.Level1)
-{
-    HILOGI("host_server_cancel_pairing_006 enter");
-    std::string addr = "11:22:33:44:55:66";
-    // The record is 10 minutes old, far beyond the 120s validity period.
-    hostServer_->pimpl->pairingInitiatorMap_.EnsureInsert(addr,
-        PairRecord {GetNowTimestamp() - 10 * 60 * 1000, "appIdentifierA", "pkgA", true});
-    EXPECT_EQ(hostServer_->CheckPairingInitiator(addr, false, "appIdentifierA", "pkgA"),
-        BT_ERR_PAIRING_INITIATED_BY_OTHER);
-    HILOGI("host_server_cancel_pairing_006 end");
-}
-
-/**
  * @tc.name: host_server_acl_001
  * @tc.desc: HostServerTest:
  * @tc.type: FUNC

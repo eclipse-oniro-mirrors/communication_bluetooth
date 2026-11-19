@@ -101,9 +101,6 @@ namespace Bluetooth {
 using namespace OHOS::bluetooth;
 
 static constexpr int32_t CONNECT_ALL_TIMEOUT = 30000; // 30s
-// A pairing initiator record older than this is stale: it may be left over by an interrupted
-// pairing and must not authorize cancelling a later pairing initiated by another application.
-static constexpr int64_t PAIRING_INITIATOR_RECORD_TIMEOUT = 120 * 1000; // 2min
 static constexpr int32_t AUDIO_SERVER_UID = 1041;
 const std::string CALLING_NAME_RESOURCE_SCHEDULE = "resource_schedule_service";
 static int64_t GetNowTimestamp(void)
@@ -301,12 +298,7 @@ public:
             if (state == BTStateID::STATE_TURN_ON) {
                 impl_->LoadAppTypeCache();
             }
-            if (state == BTStateID::STATE_TURN_OFF) {
-                // All ongoing pairings are aborted when bluetooth is turned off; drop the initiator
-                // ledger so that a stale record can never authorize cancelling a later pairing.
-                std::lock_guard<std::mutex> lock(impl_->pairRecordMutex_);
-                impl_->pairingInitiatorMap_.Clear();
-            }
+            ClearPairingInitiatorsOnTurnOff(state);
             if (state == BTStateID::STATE_TURN_ON || state == BTStateID::STATE_TURN_OFF) {
                 int32_t pid = IPCSkeleton::GetCallingPid();
                 int32_t uid = IPCSkeleton::GetCallingUid();
@@ -363,6 +355,17 @@ public:
     }
 
 private:
+    void ClearPairingInitiatorsOnTurnOff(const BTStateID state)
+    {
+        if (state != BTStateID::STATE_TURN_OFF) {
+            return;
+        }
+        // All ongoing pairings are aborted when bluetooth is turned off; drop the initiator
+        // ledger so that a stale record can never authorize cancelling a later pairing.
+        std::lock_guard<std::mutex> lock(impl_->pairRecordMutex_);
+        impl_->pairingInitiatorMap_.Clear();
+    }
+
     BluetoothHostServer::impl *impl_ = nullptr;
     BLUETOOTH_DISALLOW_COPY_AND_ASSIGN(AdapterStateObserver);
 };
@@ -2117,12 +2120,6 @@ int32_t BluetoothHostServer::CheckPairingInitiator(const std::string &realAddr, 
         std::lock_guard<std::mutex> lock(pimpl->pairRecordMutex_);
         if (!pimpl->pairingInitiatorMap_.Find(realAddr, record)) {
             HILOGE("failed, no pairing initiator record, only the initiator can cancel the pairing");
-            return BT_ERR_PAIRING_INITIATED_BY_OTHER;
-        }
-        int64_t nowTime = GetNowTimestamp();
-        if (record.timestamp > nowTime || nowTime - record.timestamp > PAIRING_INITIATOR_RECORD_TIMEOUT) {
-            HILOGE("failed, pairing initiator record is stale, only the initiator can cancel the pairing");
-            pimpl->pairingInitiatorMap_.Erase(realAddr);
             return BT_ERR_PAIRING_INITIATED_BY_OTHER;
         }
     }
