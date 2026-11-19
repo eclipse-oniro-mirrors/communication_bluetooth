@@ -295,10 +295,7 @@ public:
                     observer->OnStateChanged(transport, state);
                 }
             });
-            if (state == BTStateID::STATE_TURN_ON) {
-                impl_->LoadAppTypeCache();
-            }
-            ClearPairingInitiatorsOnTurnOff(state);
+            HandleAdapterTurnOnOffState(state);
             if (state == BTStateID::STATE_TURN_ON || state == BTStateID::STATE_TURN_OFF) {
                 int32_t pid = IPCSkeleton::GetCallingPid();
                 int32_t uid = IPCSkeleton::GetCallingUid();
@@ -355,15 +352,17 @@ public:
     }
 
 private:
-    void ClearPairingInitiatorsOnTurnOff(const BTStateID state)
+    void HandleAdapterTurnOnOffState(const BTStateID state)
     {
-        if (state != BTStateID::STATE_TURN_OFF) {
-            return;
+        if (state == BTStateID::STATE_TURN_ON) {
+            impl_->LoadAppTypeCache();
         }
-        // All ongoing pairings are aborted when bluetooth is turned off; drop the initiator
-        // ledger so that a stale record can never authorize cancelling a later pairing.
-        std::lock_guard<std::mutex> lock(impl_->pairRecordMutex_);
-        impl_->pairingInitiatorMap_.Clear();
+        if (state == BTStateID::STATE_TURN_OFF) {
+            // All ongoing pairings are aborted when bluetooth is turned off; drop the initiator
+            // ledger so that a stale record can never authorize cancelling a later pairing.
+            std::lock_guard<std::mutex> lock(impl_->pairRecordMutex_);
+            impl_->pairingInitiatorMap_.Clear();
+        }
     }
 
     BluetoothHostServer::impl *impl_ = nullptr;
