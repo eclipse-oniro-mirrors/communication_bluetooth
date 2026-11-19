@@ -274,6 +274,7 @@ std::string PbabPseDataShareUtils::ComposeCallLogVcard(int32_t contentType, int3
         callLogVard += CreateOneCallLog(vcardType, result);
         opRet = result->GoToNextRow();
     }
+    result->Close();
 
     return callLogVard;
 }
@@ -471,6 +472,7 @@ int32_t PbabPseDataShareUtils::GetQueryResultCount(int32_t queryTableType, std::
         retCount++;
         opRet = result->GoToNextRow();
     }
+    result->Close();
     return retCount;
 }
 
@@ -514,6 +516,7 @@ void PbabPseDataShareUtils::GetCallHistoryList(std::vector<std::string> &names, 
         GetNameListBySet(names, resultSet);
         operationResult = resultSet->GoToNextRow();
     }
+    resultSet->Close();
 }
 
 void PbabPseDataShareUtils::GetNameListBySet(std::vector<std::string> &names,
@@ -580,6 +583,7 @@ void PbabPseDataShareUtils::GetContactNameList(std::vector<std::string> &names, 
         names.push_back(name);
         operationResult = resultSet->GoToNextRow();
     }
+    resultSet->Close();
 }
 
 void PbabPseDataShareUtils::GetContactNamesByNumber(const std::string &number, std::vector<std::string> &names)
@@ -624,12 +628,14 @@ void PbabPseDataShareUtils::QueryRawContactIdsByNumber(const std::string &number
     int32_t goToRet = resultSet->GoToFirstRow();
     if (goToRet != DataShare::E_OK) {
         HILOGE("GoToFirstRow failed, ret: %{public}d", goToRet);
+        resultSet->Close();
         return;
     }
     int32_t rawContactId;
     if (GetValue(resultSet, RAW_CONTACT_ID, rawContactId) == DataShare::E_OK) {
         rawContactIds.push_back(rawContactId);
     }
+    resultSet->Close();
 }
 
 void PbabPseDataShareUtils::QueryNameByRawContactId(int32_t rawContactId, std::vector<std::string> &names)
@@ -654,6 +660,7 @@ void PbabPseDataShareUtils::QueryNameByRawContactId(int32_t rawContactId, std::v
         name += "," + std::to_string(rawContactId);
         names.push_back(name);
     }
+    resultSet->Close();
 }
 }  // namespace Bluetooth
 }  // namespace OHOS
