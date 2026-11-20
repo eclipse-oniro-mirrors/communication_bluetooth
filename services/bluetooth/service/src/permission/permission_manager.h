@@ -89,6 +89,14 @@ enum DiscardHapType {
 // Max size of calling name cache. When exceeded, clear the cache before inserting new entries.
 constexpr size_t MAX_CALLING_NAME_CACHE_SIZE = 100;
 
+// Max size of api version cache. When exceeded, clear the cache before inserting new entries.
+constexpr size_t MAX_API_VERSION_CACHE_SIZE = 100;
+
+struct ApiVersionCacheEntry {
+    uint32_t tokenId = 0;
+    int32_t apiVersion = API_VERSION_INVALID;
+};
+
 // Invalid user id, means no valid multi-user routing target.
 constexpr int32_t INVALID_USER_ID = -1;
 // The system user (user 0).
@@ -279,6 +287,7 @@ public:
 private:
     static bool IsPermissionsGranted(const std::set<std::string> &permissions);
     static SafeMap<uint32_t, std::string> callingNameCache_;
+    static SafeMap<int32_t, ApiVersionCacheEntry> apiVersionCache_;
 };
 
 }  // namespace bluetooth

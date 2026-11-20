@@ -37,6 +37,7 @@ using namespace Security::AccessToken;
 bool g_isAllGranted = false;
 
 SafeMap<uint32_t, std::string> PermissionManager::callingNameCache_ {};
+SafeMap<int32_t, ApiVersionCacheEntry> PermissionManager::apiVersionCache_ {};
 
 bool PermissionManager::VerifyPermission(const std::string &permissionName)
 {
@@ -142,6 +143,19 @@ int32_t PermissionManager::GetApiVersion()
 int32_t PermissionManager::GetApiVersion(uint32_t tokenId)
 {
     HITRACE_METER(BT_TRACE_TAG);
+    // The cache is keyed by calling pid and validated with the calling tokenId, so the cached
+    // version is bound to one process session. A recycled pid with another caller's tokenId is
+    // detected and evicted here.
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    if (pid > 0) {
+        ApiVersionCacheEntry entry;
+        if (apiVersionCache_.Find(pid, entry)) {
+            if (entry.tokenId == tokenId) {
+                return entry.apiVersion;
+            }
+            apiVersionCache_.Erase(pid);
+        }
+    }
     if (!IsHapCaller(tokenId)) {
         return API_VERSION_INVALID;
     }
@@ -150,7 +164,16 @@ int32_t PermissionManager::GetApiVersion(uint32_t tokenId)
         HILOGE("[PERMISSION] GetHapTokenInfo failed.");
         return API_VERSION_INVALID;
     }
-    return hapTokenInfo.apiVersion;
+    int32_t apiVersion = hapTokenInfo.apiVersion;
+    // pid is unavailable outside the IPC context, such cases bypass the cache entirely.
+    // Failed lookups are not cached, only successful results are cached.
+    if (pid > 0) {
+        if (static_cast<size_t>(apiVersionCache_.Size()) > MAX_API_VERSION_CACHE_SIZE) {
+            apiVersionCache_.Clear();
+        }
+        apiVersionCache_.EnsureInsert(pid, ApiVersionCacheEntry { tokenId, apiVersion });
+    }
+    return apiVersion;
 }
 
 int32_t PermissionManager::GetCallingUid()

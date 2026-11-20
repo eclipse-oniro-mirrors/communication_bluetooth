@@ -261,5 +261,118 @@ HWTEST_F(PermissionManagerIsUserRealAddrTest, Permission_Manager_GetCallingName_
     PermissionManager::callingNameCache_.Clear();
     HILOGI("Permission_Manager_GetCallingName_Cache_Test_001 end");
 }
+/**
+ * @tc.name: Permission_Manager_GetApiVersion_Cache_Test_001
+ * @tc.desc: verify GetApiVersion returns the cached value on pid + tokenId hit, without querying AccessTokenKit
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionManagerIsUserRealAddrTest, Permission_Manager_GetApiVersion_Cache_Test_001, TestSize.Level0)
+{
+    HILOGI("Permission_Manager_GetApiVersion_Cache_Test_001 start");
+    PermissionManager::apiVersionCache_.Clear();
+    constexpr int32_t fakePid = 1000;
+    constexpr uint32_t hapTokenId = 123;
+    constexpr int32_t cachedVersion = API_VERSION_12;
+    PermissionManager::apiVersionCache_.EnsureInsert(
+        fakePid, ApiVersionCacheEntry { hapTokenId, cachedVersion });
+    IPCSkeleton::SetCallingPid(fakePid);
+    // The query path would return API 10, a cache hit must return the cached API 12.
+    AccessTokenKit::tokenType_ = ATokenTypeEnum::TOKEN_HAP;
+    AccessTokenKit::hapTokenInfoRet_ = RET_SUCCESS;
+    AccessTokenKit::hapTokenInfo_.apiVersion = API_VERSION_10;
+    EXPECT_EQ(cachedVersion, PermissionManager::GetApiVersion(hapTokenId));
+    EXPECT_EQ(static_cast<size_t>(1), PermissionManager::apiVersionCache_.Size());
+
+    // restore stub defaults
+    IPCSkeleton::SetCallingPid(0);
+    PermissionManager::apiVersionCache_.Clear();
+    AccessTokenKit::tokenType_ = ATokenTypeEnum::TOKEN_NATIVE;
+    AccessTokenKit::hapTokenInfo_.apiVersion = 0;
+    HILOGI("Permission_Manager_GetApiVersion_Cache_Test_001 end");
+}
+
+/**
+ * @tc.name: Permission_Manager_GetApiVersion_Cache_Test_002
+ * @tc.desc: verify a recycled pid with a different tokenId evicts the stale entry and re-queries
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionManagerIsUserRealAddrTest, Permission_Manager_GetApiVersion_Cache_Test_002, TestSize.Level0)
+{
+    HILOGI("Permission_Manager_GetApiVersion_Cache_Test_002 start");
+    PermissionManager::apiVersionCache_.Clear();
+    constexpr int32_t fakePid = 1001;
+    constexpr uint32_t oldTokenId = 111;
+    constexpr uint32_t newTokenId = 222;
+    PermissionManager::apiVersionCache_.EnsureInsert(
+        fakePid, ApiVersionCacheEntry { oldTokenId, API_VERSION_12 });
+    IPCSkeleton::SetCallingPid(fakePid);
+    AccessTokenKit::tokenType_ = ATokenTypeEnum::TOKEN_HAP;
+    AccessTokenKit::hapTokenInfoRet_ = RET_SUCCESS;
+    AccessTokenKit::hapTokenInfo_.apiVersion = API_VERSION_10;
+    // The stale API 12 entry must be evicted and the fresh query result returned.
+    EXPECT_EQ(API_VERSION_10, PermissionManager::GetApiVersion(newTokenId));
+    ApiVersionCacheEntry entry;
+    EXPECT_TRUE(PermissionManager::apiVersionCache_.Find(fakePid, entry));
+    EXPECT_EQ(newTokenId, entry.tokenId);
+    EXPECT_EQ(API_VERSION_10, entry.apiVersion);
+
+    // restore stub defaults
+    IPCSkeleton::SetCallingPid(0);
+    PermissionManager::apiVersionCache_.Clear();
+    AccessTokenKit::tokenType_ = ATokenTypeEnum::TOKEN_NATIVE;
+    AccessTokenKit::hapTokenInfo_.apiVersion = 0;
+    HILOGI("Permission_Manager_GetApiVersion_Cache_Test_002 end");
+}
+
+/**
+ * @tc.name: Permission_Manager_GetApiVersion_Cache_Test_003
+ * @tc.desc: verify failed lookup (native caller) is not cached, including on retry
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionManagerIsUserRealAddrTest, Permission_Manager_GetApiVersion_Cache_Test_003, TestSize.Level0)
+{
+    HILOGI("Permission_Manager_GetApiVersion_Cache_Test_003 start");
+    PermissionManager::apiVersionCache_.Clear();
+    constexpr int32_t fakePid = 1002;
+    IPCSkeleton::SetCallingPid(fakePid);
+    AccessTokenKit::tokenType_ = ATokenTypeEnum::TOKEN_NATIVE;
+    EXPECT_EQ(API_VERSION_INVALID, PermissionManager::GetApiVersion(0));
+    EXPECT_EQ(API_VERSION_INVALID, PermissionManager::GetApiVersion(0));
+    EXPECT_EQ(static_cast<size_t>(0), PermissionManager::apiVersionCache_.Size());
+    ApiVersionCacheEntry entry;
+    EXPECT_FALSE(PermissionManager::apiVersionCache_.Find(fakePid, entry));
+
+    // restore stub defaults
+    IPCSkeleton::SetCallingPid(0);
+    HILOGI("Permission_Manager_GetApiVersion_Cache_Test_003 end");
+}
+
+/**
+ * @tc.name: Permission_Manager_GetApiVersion_Cache_Test_004
+ * @tc.desc: verify pid unavailable (<= 0) bypasses the cache and does not pollute it
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionManagerIsUserRealAddrTest, Permission_Manager_GetApiVersion_Cache_Test_004, TestSize.Level0)
+{
+    HILOGI("Permission_Manager_GetApiVersion_Cache_Test_004 start");
+    PermissionManager::apiVersionCache_.Clear();
+    constexpr uint32_t hapTokenId = 333;
+    AccessTokenKit::tokenType_ = ATokenTypeEnum::TOKEN_HAP;
+    AccessTokenKit::hapTokenInfoRet_ = RET_SUCCESS;
+    AccessTokenKit::hapTokenInfo_.apiVersion = API_VERSION_10;
+    IPCSkeleton::SetCallingPid(0);
+    EXPECT_EQ(API_VERSION_10, PermissionManager::GetApiVersion(hapTokenId));
+    EXPECT_EQ(static_cast<size_t>(0), PermissionManager::apiVersionCache_.Size());
+
+    // a stale entry under pid 0 must never be hit
+    PermissionManager::apiVersionCache_.EnsureInsert(0, ApiVersionCacheEntry { hapTokenId, API_VERSION_12 });
+    EXPECT_EQ(API_VERSION_10, PermissionManager::GetApiVersion(hapTokenId));
+
+    // restore stub defaults
+    PermissionManager::apiVersionCache_.Clear();
+    AccessTokenKit::tokenType_ = ATokenTypeEnum::TOKEN_NATIVE;
+    AccessTokenKit::hapTokenInfo_.apiVersion = 0;
+    HILOGI("Permission_Manager_GetApiVersion_Cache_Test_004 end");
+}
 }  // namespace Bluetooth
 }  // namespace OHOS

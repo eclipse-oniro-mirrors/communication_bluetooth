@@ -19,6 +19,9 @@
 
 #include "taihe_bluetooth_utils.h"
 
+#include <atomic>
+#include <mutex>
+
 #include "bluetooth_log.h"
 #include "bluetooth_utils.h"
 #include "bundle_mgr_proxy.h"
@@ -35,38 +38,49 @@ namespace Bluetooth {
 
 int GetCurrentSdkVersion(void)
 {
-    int version = SDK_VERSION_20;  // default sdk version is api 20
-
+    // The target sdk version of the calling hap never changes during the process lifetime,
+    // so query bundle manager only once and cache the result. The cache is set only when the
+    // query succeeds, so a failed first query (e.g. bundle manager not ready yet) is retried.
+    static std::atomic<bool> sdkVersionInited(false);
+    static int sdkVersion = SDK_VERSION_20;  // default sdk version is api 20
+    if (sdkVersionInited.load(std::memory_order_acquire)) {
+        return sdkVersion;
+    }
+    static std::mutex sdkVersionMutex;
+    std::lock_guard<std::mutex> lock(sdkVersionMutex);
+    if (sdkVersionInited.load(std::memory_order_relaxed)) {
+        return sdkVersion;
+    }
     auto systemAbilityManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (!systemAbilityManager) {
         HILOGE("fail to get system ability mgr.");
-        return version;
+        return sdkVersion;
     }
     auto remoteObject = systemAbilityManager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     if (!remoteObject) {
         HILOGE("fail to get bundle manager proxy.");
-        return version;
+        return sdkVersion;
     }
     sptr<AppExecFwk::BundleMgrProxy> bundleMgrProxy = iface_cast<AppExecFwk::BundleMgrProxy>(remoteObject);
     if (bundleMgrProxy == nullptr) {
         HILOGE("Failed to get bundle manager proxy.");
-        return version;
+        return sdkVersion;
     }
     AppExecFwk::BundleInfo bundleInfo;
     auto flags = AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_APPLICATION;
     auto ret = bundleMgrProxy->GetBundleInfoForSelf(static_cast<int32_t>(flags), bundleInfo);
     if (ret != ERR_OK) {
         HILOGE("GetBundleInfoForSelf: get fail.");
-        return version;
+        return sdkVersion;
     }
-
-    version = static_cast<int>(bundleInfo.targetVersion % 100); // %100 to get the real version
-    return version;
+    sdkVersion = static_cast<int>(bundleInfo.targetVersion % 100); // %100 to get the real version
+    sdkVersionInited.store(true, std::memory_order_release);
+    return sdkVersion;
 }
 
 int GetSDKAdaptedStatusCode(int status)
 {
-    std::set<int> statusCodeForNewSdk = {
+    static const std::set<int> statusCodeForNewSdk = {
         BT_ERR_MAX_RESOURCES,
         BT_ERR_OPERATION_BUSY,
         BT_ERR_GATT_CONNECTION_NOT_ESTABILISHED,
