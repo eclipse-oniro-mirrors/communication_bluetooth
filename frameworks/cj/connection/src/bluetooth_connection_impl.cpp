@@ -31,7 +31,10 @@ namespace OHOS {
 namespace CJSystemapi {
 namespace CJBluetoothConnection {
 using Bluetooth::BluetoothHost;
+using Bluetooth::BT_ERR_DEVICE_NOT_PAIRING;
+using Bluetooth::BT_ERR_INTERNAL_ERROR;
 using Bluetooth::BT_ERR_INVALID_PARAM;
+using Bluetooth::BT_ERR_PAIRING_INITIATED_BY_OTHER;
 using Bluetooth::BT_NO_ERROR;
 using Bluetooth::BT_TRANSPORT_BREDR;
 using Bluetooth::BTConnectState;
