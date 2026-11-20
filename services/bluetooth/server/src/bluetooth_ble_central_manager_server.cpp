@@ -33,6 +33,7 @@
 #include "bt_chr_ue_manager.h"
 #include "bt_chr_hci_process_data.h"
 #include "bt_chr_dft_exception.h"
+#include "bt_chr_airtime.h"
 #include "hisysevent.h"
 #include "interface_adapter_ble.h"
 #include "interface_adapter_manager.h"
@@ -1044,6 +1045,7 @@ int BluetoothBleCentralManagerServer::StartScan(int32_t scannerId, const Bluetoo
 
     CHECK_AND_RETURN_LOG_RET(CheckBleScanPermission(), BT_ERR_PERMISSION_FAILED, "CheckBleScanPermission failed");
     CHECK_AND_RETURN_LOG_RET(scannerId != BLE_SCAN_INVALID_ID, BT_ERR_INTERNAL_ERROR, "Invalid scannerId");
+    BtChr2g4BleScanPkgNameSet(callingName);
     BleScanSettingsImpl settingsImpl;
     SetScanSettingsInfo(settingsImpl, settings);
     if (settings.GetScanMode() == SCAN_MODE_LOW_LATENCY) {

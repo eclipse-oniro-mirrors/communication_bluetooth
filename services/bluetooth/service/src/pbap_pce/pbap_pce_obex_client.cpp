@@ -26,6 +26,7 @@
 #include "pbap_pce_obex_client.h"
 #include "pbap_pce_service_impl.h"
 #include "interface_profile_socket.h"
+#include "bt_chr_dft_exception.h"
 #include "profile_service_manager.h"
 #include "raw_address.h"
 #include "service_util.h"
@@ -383,7 +384,7 @@ void PbapPceObexClient::OnConnectResp(ObexHeader &reply, uint8_t responseCode)
     auto session = GetClientSessionLocked();
     if (session == nullptr) {
         HILOGE("[PbapPceObexClient] OnConnectResp: clientSession_ is null");
-        NotifyConnectFailed();
+        NotifyConnectFailed(responseCode);
         return;
     }
 
@@ -395,14 +396,13 @@ void PbapPceObexClient::OnConnectResp(ObexHeader &reply, uint8_t responseCode)
         case OBEX_HTTP_FORBIDDEN:
         case OBEX_HTTP_UNAVAILABLE:
             HILOGE("[PbapPceObexClient] Service unavailable");
-            NotifyConnectFailed();
+            NotifyConnectFailed(responseCode);
             break;
         default:
             HILOGE("[PbapPceObexClient] Connect failed, responseCode: 0x%02x", responseCode);
-            NotifyConnectFailed();
+            NotifyConnectFailed(responseCode);
             break;
     }
-
 }
 
 void PbapPceObexClient::HandleConnectSuccess(ObexHeader &reply)
@@ -423,11 +423,11 @@ void PbapPceObexClient::HandleConnectSuccess(ObexHeader &reply)
 }
 
 
-void PbapPceObexClient::NotifyConnectFailed()
+void PbapPceObexClient::NotifyConnectFailed(int responseCode)
 {
-    HILOGI("[PbapPceObexClient] NotifyConnectFailed");
+    HILOGI("[PbapPceObexClient] NotifyConnectFailed, responseCode: %{public}d", responseCode);
     isObexConnected_ = false;
-    utility::Message msg(PCE_OBEX_CONNECT_FAILED, 0, nullptr);
+    utility::Message msg(PCE_OBEX_CONNECT_FAILED, responseCode, nullptr);
     pceService_.OnObexResponse(RawAddress(obexConfig_.addr), msg);
 }
 
@@ -934,7 +934,8 @@ void PbapPceObexClient::DownloadContactsAndCallLogs()
     if (session == nullptr) {
         HILOGE("[PbapPceObexClient] DownloadContactsAndCallLogs failed, clientSession_ is null");
         isBatchDownloading_.store(false);
-        NotifyDownloadFailed();
+        // 会话已不存在，按断开归因，避免消费端把默认零值误判成 OBEX 报文错误
+        NotifyDownloadFailed(PBAP_PCE_SYNC_FAIL_DISCONNECT);
         return;
     }
 
@@ -1185,6 +1186,7 @@ void PbapPceObexClient::FinalizeDownload(bool failed)
 {
     auto endTime = SteadyClock::now();
     int64_t totalMs = ElapsedMs(downloadStartTime_, endTime);
+    bool disconnectedDuringSync = isDisconnectRequested_.load();
 
     HILOGI("[PbapPceObexClient] FinalizeDownload, addr: %{public}s, failed=%{public}d, "
         "inFlightDbTasks=%{public}d",
@@ -1200,6 +1202,14 @@ void PbapPceObexClient::FinalizeDownload(bool failed)
             "continue finalize", inFlightDbTasks_.load(), PBAP_PCE_DB_DRAIN_TIMEOUT_MS);
     }
 
+    int syncFailReason = PBAP_PCE_SYNC_FAIL_OBEX_ERR;
+    if (failed) {
+        if (disconnectedDuringSync) {
+            syncFailReason = PBAP_PCE_SYNC_FAIL_DISCONNECT;
+        } else if (!drained) {
+            syncFailReason = PBAP_PCE_SYNC_FAIL_DB_TIMEOUT;
+        }
+    }
     isBatchDownloading_ = false;
     isDisconnectRequested_ = false;
     pceService_.SetPowerStatusBusy(RawAddress(obexConfig_.addr), false);
@@ -1212,7 +1222,7 @@ void PbapPceObexClient::FinalizeDownload(bool failed)
         static_cast<long long>(calllogsTotalMs_));
 
     if (failed) {
-        NotifyDownloadFailed();
+        NotifyDownloadFailed(syncFailReason);
     } else {
         NotifyDownloadComplete();
     }
@@ -1258,9 +1268,9 @@ void PbapPceObexClient::NotifyDownloadComplete()
     pceService_.OnObexResponse(RawAddress(obexConfig_.addr), msg);
 }
 
-void PbapPceObexClient::NotifyDownloadFailed()
+void PbapPceObexClient::NotifyDownloadFailed(int failReason)
 {
-    utility::Message msg(PCE_DOWNLOAD_FAILED);
+    utility::Message msg(PCE_DOWNLOAD_FAILED, failReason, nullptr);
     pceService_.OnObexResponse(RawAddress(obexConfig_.addr), msg);
 }
 

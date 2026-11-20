@@ -26,6 +26,7 @@
 #include "profile_service_manager.h"
 #include "raw_address.h"
 #include "bt_def.h"
+#include "bt_chr_dft_exception.h"
 #include "thread_util.h"
 
 using namespace testing;
@@ -110,7 +111,7 @@ public:
     std::unique_ptr<PceDisconnectingState> disconnectingState;
 };
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_GetDevice_00100
  * @tc.name: GetDevice
  * @tc.desc: Verify GetDevice returns the device passed to constructor.
@@ -122,7 +123,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_GetDevice_00100, TestSiz
     HILOGI("Pbap_Pce_Statemachine_GetDevice_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_GetPceService_00100
  * @tc.name: GetPceService
  * @tc.desc: Verify GetPceService returns the service passed to constructor.
@@ -134,7 +135,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_GetPceService_00100, Tes
     HILOGI("Pbap_Pce_Statemachine_GetPceService_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_VersionNumber_00100
  * @tc.name: SetVersionNumber and GetVersionNumber
  * @tc.desc: Verify Set and Get version number.
@@ -147,7 +148,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_VersionNumber_00100, Tes
     HILOGI("Pbap_Pce_Statemachine_VersionNumber_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_SupportedRes_00100
  * @tc.name: SetSupportedRes and GetSupportedRes
  * @tc.desc: Verify Set and Get supported repositories.
@@ -160,7 +161,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_SupportedRes_00100, Test
     HILOGI("Pbap_Pce_Statemachine_SupportedRes_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_SupportedFeature_00100
  * @tc.name: SetSupportedFeature and GetSupportedFeature
  * @tc.desc: Verify Set and Get supported features.
@@ -173,7 +174,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_SupportedFeature_00100, 
     HILOGI("Pbap_Pce_Statemachine_SupportedFeature_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_FeatureFlag_00100
  * @tc.name: SetFeatureFlag and GetFeatureFlag
  * @tc.desc: Verify Set and Get feature flag.
@@ -188,7 +189,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_FeatureFlag_00100, TestS
     HILOGI("Pbap_Pce_Statemachine_FeatureFlag_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_ConnectId_00100
  * @tc.name: SetConnectId
  * @tc.desc: Verify SetConnectId does not crash.
@@ -201,7 +202,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_ConnectId_00100, TestSiz
     HILOGI("Pbap_Pce_Statemachine_ConnectId_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_TargetState_00100
  * @tc.name: SetTargetState and GetTargetState
  * @tc.desc: Verify Set and Get target state.
@@ -216,7 +217,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_TargetState_00100, TestS
     HILOGI("Pbap_Pce_Statemachine_TargetState_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_IsBusy_00100
  * @tc.name: IsBusy with null obexClient
  * @tc.desc: Verify IsBusy returns false when obexClient is null.
@@ -229,7 +230,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_IsBusy_00100, TestSize.L
     HILOGI("Pbap_Pce_Statemachine_IsBusy_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_SetBusy_00100
  * @tc.name: SetBusy with null obexClient
  * @tc.desc: Verify SetBusy returns false when obexClient is null.
@@ -242,7 +243,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_SetBusy_00100, TestSize.
     HILOGI("Pbap_Pce_Statemachine_SetBusy_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_AbortDownloading_00100
  * @tc.name: AbortDownloading with null obexClient
  * @tc.desc: Verify AbortDownloading returns RET_BAD_STATUS when obexClient is null.
@@ -255,7 +256,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_AbortDownloading_00100, 
     HILOGI("Pbap_Pce_Statemachine_AbortDownloading_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_ForceCloseObexClient_00100
  * @tc.name: ForceCloseObexClient with null obexClient
  * @tc.desc: Verify ForceCloseObexClient does not crash when obexClient is null.
@@ -269,7 +270,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_ForceCloseObexClient_001
     HILOGI("Pbap_Pce_Statemachine_ForceCloseObexClient_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_ResetObexClient_00100
  * @tc.name: ResetObexClient
  * @tc.desc: Verify ResetObexClient sets obexClient to nullptr.
@@ -282,7 +283,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_ResetObexClient_00100, T
     HILOGI("Pbap_Pce_Statemachine_ResetObexClient_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_DisconnectedState_Dispatch_00100
  * @tc.name: PceDisconnectedState Dispatch
  * @tc.desc: Verify PceDisconnectedState Dispatch handles various messages.
@@ -301,7 +302,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_DisconnectedState_Dispat
     HILOGI("Pbap_Pce_Statemachine_DisconnectedState_Dispatch_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_ConnectingState_Dispatch_00100
  * @tc.name: PceConnectingState Dispatch
  * @tc.desc: Verify PceConnectingState Dispatch handles various messages.
@@ -320,7 +321,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_ConnectingState_Dispatch
     HILOGI("Pbap_Pce_Statemachine_ConnectingState_Dispatch_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_ConnectedState_Dispatch_00100
  * @tc.name: PceConnectedState Dispatch
  * @tc.desc: Verify PceConnectedState Dispatch handles various messages.
@@ -342,7 +343,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_ConnectedState_Dispatch_
     HILOGI("Pbap_Pce_Statemachine_ConnectedState_Dispatch_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_DisconnectingState_Dispatch_00100
  * @tc.name: PceDisconnectingState Dispatch
  * @tc.desc: Verify PceDisconnectingState Dispatch handles various messages.
@@ -364,7 +365,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_DisconnectingState_Dispa
     HILOGI("Pbap_Pce_Statemachine_DisconnectingState_Dispatch_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_TryReleasePbapMsg_00100
  * @tc.name: TryReleasePbapMsg
  * @tc.desc: Verify TryReleasePbapMsg releases payload only for SDP/OBEX msg types.
@@ -402,7 +403,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_TryReleasePbapMsg_00100,
     HILOGI("Pbap_Pce_Statemachine_TryReleasePbapMsg_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_PullPhoneBook_00100
  * @tc.name: PullPhoneBook with null obexClient
  * @tc.desc: Verify PullPhoneBook with null obexClient does not crash.
@@ -417,7 +418,7 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_PullPhoneBook_00100, Tes
     HILOGI("Pbap_Pce_Statemachine_PullPhoneBook_00100 end");
 }
 
-/*
+/**
  * @tc.number: Pbap_Pce_Statemachine_TransitTargetState_00100
  * @tc.name: TransitTargetState with UNKNOWN target
  * @tc.desc: Verify TransitTargetState with UNKNOWN target does not crash.
@@ -429,6 +430,97 @@ HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_TransitTargetState_00100
     g_pbapPceStmStateMachine_->TransitTargetState();
     EXPECT_EQ(g_pbapPceStmStateMachine_->GetTargetState(), PCE_TARGET_STATE_UNKNOWN);
     HILOGI("Pbap_Pce_Statemachine_TransitTargetState_00100 end");
+}
+/**
+ * @tc.number: Pbap_Pce_Statemachine_ConnectFailReason_00100
+ * @tc.name: SetConnectFailReason and ClearConnectFailed
+ * @tc.desc: Verify connect fail reason is stored, and cleared together with connect failed flag.
+ */
+HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_ConnectFailReason_00100, TestSize.Level1)
+{
+    HILOGI("Pbap_Pce_Statemachine_ConnectFailReason_00100 start");
+    g_pbapPceStmStateMachine_->SetConnectFailReason(PBAP_PCE_CONN_FAIL_TIMEOUT);
+    EXPECT_EQ(g_pbapPceStmStateMachine_->GetConnectFailReason(), PBAP_PCE_CONN_FAIL_TIMEOUT);
+    g_pbapPceStmStateMachine_->MarkConnectFailed();
+    EXPECT_TRUE(g_pbapPceStmStateMachine_->IsConnectFailed());
+    g_pbapPceStmStateMachine_->ClearConnectFailed();
+    EXPECT_FALSE(g_pbapPceStmStateMachine_->IsConnectFailed());
+    EXPECT_EQ(g_pbapPceStmStateMachine_->GetConnectFailReason(), PBAP_PCE_CONN_FAIL_NONE);
+    HILOGI("Pbap_Pce_Statemachine_ConnectFailReason_00100 end");
+}
+
+/**
+ * @tc.number: Pbap_Pce_Statemachine_ContactsConnecting_00100
+ * @tc.name: RecordContactsConnecting
+ * @tc.desc: Verify connecting time is recorded and sync fields are reset when a new connection starts.
+ */
+HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_ContactsConnecting_00100, TestSize.Level1)
+{
+    HILOGI("Pbap_Pce_Statemachine_ContactsConnecting_00100 start");
+    g_pbapPceStmStateMachine_->RecordContactsConnecting();
+    EXPECT_GT(g_pbapPceStmStateMachine_->chrConnConnectingTime_, 0);
+    EXPECT_EQ(g_pbapPceStmStateMachine_->chrConnConnectedTime_, 0);
+    EXPECT_EQ(g_pbapPceStmStateMachine_->chrSyncStartTime_, 0);
+    EXPECT_EQ(g_pbapPceStmStateMachine_->chrSyncEndTime_, 0);
+    EXPECT_FALSE(g_pbapPceStmStateMachine_->chrSyncStarted_);
+    EXPECT_FALSE(g_pbapPceStmStateMachine_->chrSyncFailed_);
+    EXPECT_EQ(g_pbapPceStmStateMachine_->chrSyncFailReason_, PBAP_PCE_SYNC_FAIL_NONE);
+    HILOGI("Pbap_Pce_Statemachine_ContactsConnecting_00100 end");
+}
+
+/**
+ * @tc.number: Pbap_Pce_Statemachine_ContactsSync_00100
+ * @tc.name: MarkChrSyncStart and MarkChrSyncFinish
+ * @tc.desc: Verify sync start/finish times, result and fail reason are recorded.
+ */
+HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_ContactsSync_00100, TestSize.Level1)
+{
+    HILOGI("Pbap_Pce_Statemachine_ContactsSync_00100 start");
+    g_pbapPceStmStateMachine_->RecordContactsConnecting();
+    g_pbapPceStmStateMachine_->MarkChrConnConnected();
+    g_pbapPceStmStateMachine_->MarkChrSyncStart();
+    EXPECT_GT(g_pbapPceStmStateMachine_->chrConnConnectedTime_, 0);
+    EXPECT_TRUE(g_pbapPceStmStateMachine_->chrSyncStarted_);
+    EXPECT_GT(g_pbapPceStmStateMachine_->chrSyncStartTime_, 0);
+    EXPECT_EQ(g_pbapPceStmStateMachine_->chrSyncEndTime_, 0);
+
+    g_pbapPceStmStateMachine_->MarkChrSyncFinish(true, PBAP_PCE_SYNC_FAIL_OBEX_ERR);
+    EXPECT_TRUE(g_pbapPceStmStateMachine_->chrSyncFailed_);
+    EXPECT_EQ(g_pbapPceStmStateMachine_->chrSyncFailReason_, PBAP_PCE_SYNC_FAIL_OBEX_ERR);
+    EXPECT_GT(g_pbapPceStmStateMachine_->chrSyncEndTime_, 0);
+
+    g_pbapPceStmStateMachine_->RecordContactsSyncFinish(false, PBAP_PCE_SYNC_FAIL_NONE);
+    EXPECT_FALSE(g_pbapPceStmStateMachine_->chrSyncFailed_);
+    EXPECT_EQ(g_pbapPceStmStateMachine_->chrSyncFailReason_, PBAP_PCE_SYNC_FAIL_NONE);
+    HILOGI("Pbap_Pce_Statemachine_ContactsSync_00100 end");
+}
+
+/**
+ * @tc.number: Pbap_Pce_Statemachine_ReportContactsSynUeEvent_00100
+ * @tc.name: ReportContactsSynUeEvent
+ * @tc.desc: Verify CONTACTS_SYN_STATUS_RECORD is reported and local record is reset after reporting.
+ */
+HWTEST_F(PbapPceStatemachineTest, Pbap_Pce_Statemachine_ReportContactsSynUeEvent_00100, TestSize.Level1)
+{
+    HILOGI("Pbap_Pce_Statemachine_ReportContactsSynUeEvent_00100 start");
+    g_pbapPceStmStateMachine_->RecordContactsConnecting();
+    g_pbapPceStmStateMachine_->MarkChrConnConnected();
+    g_pbapPceStmStateMachine_->MarkChrSyncStart();
+    g_pbapPceStmStateMachine_->RecordContactsSyncFinish(false, PBAP_PCE_SYNC_FAIL_NONE);
+    g_pbapPceStmStateMachine_->SetConnectFailReason(PBAP_PCE_CONN_FAIL_TRANSPORT);
+    g_pbapPceStmStateMachine_->MarkConnectFailed();
+
+    g_pbapPceStmStateMachine_->ReportContactsSynUeEvent(true,
+        g_pbapPceStmStateMachine_->GetConnectFailReason());
+    EXPECT_EQ(g_pbapPceStmStateMachine_->chrConnConnectingTime_, 0);
+    EXPECT_EQ(g_pbapPceStmStateMachine_->chrConnConnectedTime_, 0);
+    EXPECT_EQ(g_pbapPceStmStateMachine_->chrSyncStartTime_, 0);
+    EXPECT_EQ(g_pbapPceStmStateMachine_->chrSyncEndTime_, 0);
+    EXPECT_FALSE(g_pbapPceStmStateMachine_->chrSyncStarted_);
+    EXPECT_FALSE(g_pbapPceStmStateMachine_->chrSyncFailed_);
+    EXPECT_EQ(g_pbapPceStmStateMachine_->chrSyncFailReason_, PBAP_PCE_SYNC_FAIL_NONE);
+    g_pbapPceStmStateMachine_->ClearConnectFailed();
+    HILOGI("Pbap_Pce_Statemachine_ReportContactsSynUeEvent_00100 end");
 }
 }  // namespace bluetooth
 }  // namespace OHOS

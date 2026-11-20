@@ -1139,6 +1139,7 @@ if (bluetooth_pbap_pce_feature) {
   ]
 
   btpbap_pce_deps = [
+    "$PART_DIR/btchr:btchr",
     "$PART_DIR/common:btservice_common",
     "$BT_SERVICE_DIR/src/obex:bt_obex",
     "$PART_DIR/service:btservice",

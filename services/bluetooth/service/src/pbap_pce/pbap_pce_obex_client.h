@@ -33,6 +33,7 @@
 #include "obex_response_handler.h"
 #include "pbap_pce_app_params.h"
 #include "pbap_pce_datashare_helper.h"
+#include "pbap_pce_def.h"
 #include "pbap_pce_header_msg.h"
 #include "interface_profile.h"
 #include "interface_profile_manager.h"
@@ -210,7 +211,7 @@ private:
     void CloseTransport();
     int CreateSocketConnection();
     void HandleConnectSuccess(ObexHeader &reply);
-    void NotifyConnectFailed();
+    void NotifyConnectFailed(int responseCode);
     void CloseSocket();
     void BuildConnectHeader(ObexHeader& header, bool supported);
     void BuildGetHeader(ObexHeader &header, const std::string &path, const PbapPceAppParams &appParams);
@@ -219,7 +220,7 @@ private:
         std::shared_ptr<ObexBodyObject> writer, ObexHeader &resp);
     static PbapPceCallType DetermineCallType(const std::string &path);
     void NotifyDownloadComplete();
-    void NotifyDownloadFailed();
+    void NotifyDownloadFailed(int failReason);
     // 记录联系人阶段结束耗时；failed=true 以失败收尾，否则准备进入通话记录阶段
     void FinishContactsPhase(bool failed, const char *reason);
     // 联系人阶段异常终止公共路径（disconnect/batch-failed）：扣留批次数据照发但
