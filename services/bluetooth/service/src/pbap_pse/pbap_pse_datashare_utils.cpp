@@ -480,7 +480,11 @@ void PbabPseDataShareUtils::GenerateCallLogParamByType(int32_t contentType, Data
 {
     HITRACE_METER(BT_TRACE_TAG);
     if (contentType == INCOMING_CALL_HISTORY) {
-        predicates.EqualTo(CALL_DIRECTION, INCOMING_TYPE);
+        // ich 与 mch 必须互斥：主流手机 PSE 按通话类型（已接/未接各自独立）返回，车机等
+        // PCE 默认按目录入库且不做跨目录去重。未接来电（direction=INCOMING，answer_state=
+        // MISSED）若同时命中 ich，会与本机 mch 拉取的同一记录重复展示，故 ICH 排除未接来电
+        predicates.EqualTo(CALL_DIRECTION, INCOMING_TYPE)->And()
+            ->NotEqualTo(ANSWER_STATE, CALL_ANSWER_MISSED);
     } else if (contentType == OUTGOING_CALL_HISTORY) {
         predicates.EqualTo(CALL_DIRECTION, OUTGOING_TYPE);
     } else if (contentType == MISSED_CALL_HISTORY) {
