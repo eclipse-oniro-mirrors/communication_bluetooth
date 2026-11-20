@@ -162,11 +162,10 @@ void ConnectionImpl::SetDevicePairingConfirmation(std::string deviceId, bool acc
         return;
     }
     BluetoothRemoteDevice remoteDevice = Bluetooth::BluetoothRemoteDevice(deviceId);
-    if (accept) {
-        *errCode = remoteDevice.SetDevicePairingConfirmation(accept);
-    } else {
-        *errCode = remoteDevice.CancelPairing();
-    }
+    // Keep the legacy confirmation contract: reject (accept=false) must go through
+    // SetDevicePairingConfirmation so an unpaired device still returns 2900099.
+    // The new 2900018/2900019 codes belong to cancelPairingDevice.
+    *errCode = remoteDevice.SetDevicePairingConfirmation(accept);
     return;
 }
 

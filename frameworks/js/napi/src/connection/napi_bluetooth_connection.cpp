@@ -617,11 +617,10 @@ napi_value SetDevicePairingConfirmation(napi_env env, napi_callback_info info)
     HILOGI("SetDevicePairingConfirmation::accept = %{public}d", accept);
     BluetoothRemoteDevice remoteDevice = BluetoothRemoteDevice(remoteAddr);
     int32_t ret = BT_NO_ERROR;
-    if (accept) {
-        ret = remoteDevice.SetDevicePairingConfirmation(accept);
-    } else {
-        ret = remoteDevice.CancelPairing();
-    }
+    // Keep the legacy confirmation contract: reject (accept=false) must go through
+    // SetDevicePairingConfirmation so an unpaired device still returns 2900099.
+    // The new 2900018/2900019 codes belong to cancelPairingDevice.
+    ret = remoteDevice.SetDevicePairingConfirmation(accept);
     NAPI_BT_ASSERT_RETURN_FALSE(env, ret == BT_NO_ERROR, ret);
     return NapiGetBooleanTrue(env);
 }
