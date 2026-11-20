@@ -68,6 +68,7 @@ ohos_shared_library("btchr") {
 
   sources = [
     "src/bt_chr_app_behavior_reporter.cpp",
+    "src/bt_chr_airtime.cpp",
     "src/bt_chr_base.cpp",
     "src/bt_chr_dft_exception.cpp",
     "src/bt_chr_dft_statictics.cpp",

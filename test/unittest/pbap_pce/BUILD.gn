@@ -52,6 +52,7 @@ config("module_private_config") {
     "$PART_DIR/server/src",
     "$PART_DIR/ipc/include",
     "$PART_DIR/common",
+    "$PART_DIR/btchr/include",
   ]
   defines = [
     "HAS_NO_BDROID_BUILDCFG",

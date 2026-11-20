@@ -27,6 +27,7 @@
 #include <set>
 
 #include "bt_chr_ue_manager.h"
+#include "bt_chr_airtime.h"
 #include "btif_dm.h"
 #include "btif_gatt.h"
 #include "class_creator.h"
@@ -163,6 +164,7 @@ void GattClientService::impl::Connect(int appId, bool autoConnect, const std::st
         CarKey::CarKeyProcessLogReport(CarKey::START_GATT_CONNECT, (*iter)->GetAddress().GetAddress(), pkgName);
         (*iter)->Connect(autoConnect);
         BtChrBleConnData((*iter)->GetAddress().GetAddress(), CHR_BLE_GATT, pkgName);
+        BtChr2g4BleGattPkgNameSet((*iter)->GetAddress().GetAddress(), pkgName);
         BtChrAddConnSceneInfo((*iter)->GetAddress().GetAddress(), PAIR_TYPE_USER_CONNECT, pkgName, 0);
     }
 }

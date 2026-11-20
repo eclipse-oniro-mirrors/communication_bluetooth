@@ -569,7 +569,7 @@ void HfpHfStateMachine::ProcessAcceptCall(int flag)
 {
     int action = HFP_HF_CALL_DEFAULT_ACTION;
     bool hasAction = true;
-    
+
     if (calls_->HasCallState(BTHF_CLIENT_CALL_STATE_INCOMING)) {
         hasAction = ProcessIncomingCallFlag(flag, action);
     } else if (calls_->HasCallState(BTHF_CLIENT_CALL_STATE_WAITING)) {
@@ -582,13 +582,13 @@ void HfpHfStateMachine::ProcessAcceptCall(int flag)
         HILOGI("[HFP_STATE_MACHINE]No call to accept");
         return;
     }
-    
+
     if (!hasAction) {
         return;
     }
-    
+
     HandleCallAction((bthf_client_call_action_t)action, HFP_HF_ACCEPT_CALL_EVT);
-    
+
     if (flag == HFP_HF_ACCEPT_CALL_ACTION_HOLD) {
         SetAudioConnectionState(true);
 #ifdef BLUETOOTH_SET_HFP_CALL_ENABLE
@@ -603,14 +603,14 @@ bool HfpHfStateMachine::ProcessIncomingCallFlag(int flag, int& action)
         HILOGW("[HFP_STATE_MACHINE]Invalid flag for incoming call: %d", flag);
         return false;
     }
-    
+
 #ifdef BLUETOOTH_WATCH_ENABLE
     auto watchService = WatchService::GetInstance();
     if (watchService != nullptr) {
         watchService->SetAllowHfScoConnect(address_, true);
     }
 #endif
-    
+
     action = BTHF_CLIENT_CALL_ACTION_ATA;
     HILOGI("[HFP_STATE_MACHINE]Accept incoming call");
     return true;
@@ -623,7 +623,7 @@ bool HfpHfStateMachine::ProcessWaitingCallFlag(int flag, int& action)
         HILOGW("[HFP_STATE_MACHINE]No active call for waiting call");
         return false;
     }
-    
+
     if ((flag == HFP_HF_ACCEPT_CALL_ACTION_NONE) || (flag == HFP_HF_ACCEPT_CALL_ACTION_HOLD)) {
         action = HFP_HF_CHLD_ACTION_2;
         HILOGI("[HFP_STATE_MACHINE]Hold active, accept waiting");
@@ -634,14 +634,14 @@ bool HfpHfStateMachine::ProcessWaitingCallFlag(int flag, int& action)
         HILOGE("[HFP_STATE_MACHINE]Invalid flag[%d] for waiting call", flag);
         return false;
     }
-    
+
     return true;
 }
 
 bool HfpHfStateMachine::ProcessHeldCallFlag(int flag, int& action)
 {
     action = HFP_HF_CHLD_ACTION_2;
-    
+
     if (flag == HFP_HF_ACCEPT_CALL_ACTION_FINISH) {
         action = HFP_HF_CHLD_ACTION_1;
         HILOGI("[HFP_STATE_MACHINE]Finish active, accept held");
@@ -652,7 +652,7 @@ bool HfpHfStateMachine::ProcessHeldCallFlag(int flag, int& action)
         action = HFP_HF_CHLD_ACTION_3;
         HILOGI("[HFP_STATE_MACHINE]Merge active and held to conference");
     }
-    
+
     HILOGI("[HFP_STATE_MACHINE]Accept held call, action=%d", action);
     return true;
 }
@@ -753,8 +753,13 @@ void HfpHfStateMachine::ProcessInteractiveEvent(const HfpHfMessage &event)
 
 void HfpHfStateMachine::ProcessAtCommandResult(const HfpHfMessage &event)
 {
-    HILOGI("[HFP_STATE_MACHINE]action = %{public}d", queuedActions.front());
-    switch (queuedActions.front()) {
+    if (queuedActions.empty()) {
+        HILOGE("[HFP_STATE_MACHINE]queuedActions is empty");
+        return;
+    }
+    int action = queuedActions.front();
+    HILOGI("[HFP_STATE_MACHINE]action = %{public}d", action);
+    switch (action) {
         case HFP_HF_TYPE_QUERY_CURRENT_CALLS_DONE:
             calls_->UpdateCallDone();
             isOnClcc_ = false;

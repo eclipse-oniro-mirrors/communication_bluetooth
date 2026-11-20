@@ -29,6 +29,7 @@
 #include "bluetooth_log.h"
 #include "ble_defs.h"
 #include "bt_chr_dft_statictics.h"
+#include "bt_chr_airtime.h"
 #include "interface_adapter_ble.h"
 #include "interface_adapter_manager.h"
 #include "ipc_skeleton.h"
@@ -400,6 +401,13 @@ int BluetoothBleAdvertiserServer::StartAdvertising(const BluetoothBleAdvertiserS
     std::string callingName = PermissionManager::GetCallingName();
     std::string logKey = "(StartAdvertising)callingName:" + callingName;
     HILOGI_ACCUMULATE(logKey, "interval:%d, advHandle:%d", settings.GetInterval(), advHandle);
+    int32_t pid = IPCSkeleton::GetCallingPid();
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    if (pimpl->applications->IsApplicationAdv(pid, uid, advHandle)) {
+        BtChr2g4BleAdvPkgNameSet(advHandle, callingName);
+    } else {
+        HILOGW("skip airtime pkg name, advHandle:%{public}d is not owned by caller", advHandle);
+    }
     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
     if (bleService != nullptr) {
         BleAdvertiserSettingsImpl implSettings = pimpl->CovertImplSettingDataInner(callingName, settings);

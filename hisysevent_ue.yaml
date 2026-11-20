@@ -681,3 +681,164 @@ BT_ABNORMAL_STREAM_EVENT:
   PKG_NAME: {type: STRING, desc: package name}
   SCENE_CODE: {type: INT32, desc: main scene code}
   SUB_SCENE_CODE: {type: INT32, desc: sub scene code}
+
+CONTACTS_SYN_STATUS_RECORD:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: bluetooth pbap pce contacts sync status record}
+  PBAPCLIENTCONNECTING: {type: STRING, desc: start time of the pbap connection}
+  PBAPCLIENTCONNECTED: {type: STRING, desc: successful pbap connection time}
+  SYNCSTARTTIME: {type: STRING, desc: address book synchronization start time}
+  SYNCENDTIME: {type: STRING, desc: address book synchronization completion time}
+  PBAPCLIENTDISCONNECTED: {type: STRING, desc: pbap disconnection time}
+  CONNRESULT: {type: INT32, desc: pbap connect result}
+  CONNFAILREASON: {type: INT32, desc: pbap connect fail reason}
+  SYNCRESULT: {type: INT32, desc: contacts sync result}
+  SYNCFAILREASON: {type: INT32, desc: contacts sync fail reason}
+  BTCOMMON: {type: STRING, desc: subevent bt common}
+  PNAMEID: {type: STRING, desc: package name}
+  PVERSIONID: {type: STRING, desc: application version}
+
+BT_2G4_A2DP_AIRTIME:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: bluetooth a2dp airtime occupation}
+  SESSION_ID: {type: INT32, desc: session id}
+  START_TS: {type: STRING, desc: avdtp connect request start time}
+  ACTIVE_TS: {type: STRING, desc: avdtp start success time}
+  STOP_TS: {type: STRING, desc: audio stream stop or avdtp close time}
+  FAIL_TS: {type: STRING, desc: avdtp open or start fail time}
+  CODEC_INDEX: {type: INT32, desc: a2dp codec index}
+  BITRATE_BPS: {type: INT32, desc: a2dp codec bitrate bps}
+  ACL_PKT_TYPE: {type: INT32, desc: acl packet type}
+  RETRY_FACTOR_Q10: {type: INT32, desc: acl retransmission factor q10}
+  STATUS: {type: INT32, desc: bta av status code}
+  FAIL_SCENE: {type: INT32, desc: fail scene}
+  ROLE: {type: INT32, desc: a2dp role}
+  PNAMEID: {type: STRING, desc: package name}
+  PVERSIONID: {type: STRING, desc: application version}
+
+BT_2G4_SCO_AIRTIME:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: bluetooth sco airtime occupation}
+  SESSION_ID: {type: INT32, desc: session id}
+  START_TS: {type: STRING, desc: sco connect start time}
+  ACTIVE_TS: {type: STRING, desc: sco connected time}
+  STOP_TS: {type: STRING, desc: sco disconnect time}
+  FAIL_TS: {type: STRING, desc: sco connect or codec negotiate fail time}
+  SCO_CODEC: {type: INT32, desc: sco codec}
+  PKT_TYPE: {type: INT32, desc: sco packet type}
+  T_SCO: {type: INT32, desc: sco interval us}
+  RETRY_FACTOR_Q10: {type: INT32, desc: sco retransmission factor q10}
+  HCI_STATUS: {type: INT32, desc: hci error code}
+  FAIL_SCENE: {type: INT32, desc: fail scene}
+  PNAMEID: {type: STRING, desc: package name}
+  PVERSIONID: {type: STRING, desc: application version}
+
+BT_2G4_BR_HID_AIRTIME:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: bluetooth br hid airtime occupation}
+  SESSION_ID: {type: INT32, desc: session id}
+  START_TS: {type: STRING, desc: hid host connect start time}
+  ACTIVE_TS: {type: STRING, desc: hid host connected time}
+  STOP_TS: {type: STRING, desc: hid close or virtual unplug time}
+  FAIL_TS: {type: STRING, desc: hid host open fail time}
+  REPORT_RATE_HZ: {type: INT32, desc: report rate hz}
+  REPORT_SIZE_B: {type: INT32, desc: average report size byte}
+  ACL_PKT_TYPE: {type: INT32, desc: hid acl packet type}
+  BR_SCHED_SLOTS: {type: INT32, desc: sniff schedule slots}
+  FAIL_SCENE: {type: INT32, desc: fail scene}
+  STATUS: {type: INT32, desc: hci error code}
+  PNAMEID: {type: STRING, desc: package name}
+  PVERSIONID: {type: STRING, desc: application version}
+
+BT_2G4_BR_SOCKET_AIRTIME:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: bluetooth br socket airtime occupation}
+  SESSION_ID: {type: INT32, desc: session id}
+  START_TS: {type: STRING, desc: rfcomm connect start or server accept time}
+  ACTIVE_TS: {type: STRING, desc: rfcomm connected time}
+  STOP_TS: {type: STRING, desc: rfcomm channel close time}
+  FAIL_TS: {type: STRING, desc: rfcomm connect fail time}
+  CHANNEL: {type: INT32, desc: rfcomm channel number}
+  PAYLOAD_BPS: {type: INT32, desc: payload bitrate bps}
+  ACL_PKT_TYPE: {type: INT32, desc: socket acl packet type}
+  BR_SCHED_SLOTS: {type: INT32, desc: sniff schedule slots}
+  RETRY_FACTOR_Q10: {type: INT32, desc: socket retransmission factor q10}
+  STATUS: {type: INT32, desc: status code}
+  FAIL_SCENE: {type: INT32, desc: fail scene}
+  SERVICE_TYPE: {type: INT32, desc: rfcomm service type}
+  PNAMEID: {type: STRING, desc: package name}
+  PVERSIONID: {type: STRING, desc: application version}
+
+BT_2G4_BLE_HOGP_AIRTIME:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: bluetooth ble hogp airtime occupation}
+  SESSION_ID: {type: INT32, desc: session id}
+  START_TS: {type: STRING, desc: gattc connect start time}
+  ACTIVE_TS: {type: STRING, desc: gattc open success or first hid notification time}
+  STOP_TS: {type: STRING, desc: gattc close time}
+  FAIL_TS: {type: STRING, desc: gattc open fail time}
+  CONN_INTERVAL: {type: INT32, desc: le connection interval}
+  REPORT_RATE_HZ: {type: INT32, desc: report rate hz}
+  REPORT_SIZE_B: {type: INT32, desc: average report size byte}
+  NOTIF_COUNT: {type: INT32, desc: notification count}
+  PHY: {type: INT32, desc: le phy}
+  STATUS: {type: INT32, desc: status code}
+  FAIL_SCENE: {type: INT32, desc: fail scene}
+  PNAMEID: {type: STRING, desc: package name}
+  PVERSIONID: {type: STRING, desc: application version}
+
+BT_2G4_BLE_GATT_AIRTIME:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: bluetooth ble gatt airtime occupation}
+  SESSION_ID: {type: INT32, desc: session id}
+  START_TS: {type: STRING, desc: gatt connect start or server accept time}
+  ACTIVE_TS: {type: STRING, desc: gatt connected or service discovery complete time}
+  STOP_TS: {type: STRING, desc: gatt close time}
+  FAIL_TS: {type: STRING, desc: gatt open or discovery fail time}
+  CONN_INTERVAL: {type: INT32, desc: le connection interval}
+  PHY: {type: INT32, desc: gatt le phy}
+  TX_BYTES: {type: INT32, desc: tx bytes count}
+  RX_BYTES: {type: INT32, desc: rx bytes count}
+  PAYLOAD_BPS: {type: INT32, desc: payload bitrate bps}
+  RETRY_FACTOR_X100: {type: INT32, desc: le retransmission factor x100}
+  STATUS: {type: INT32, desc: status code}
+  PACKAGE_NAME: {type: STRING, desc: caller package name}
+  FAIL_SCENE: {type: INT32, desc: fail scene}
+  PNAMEID: {type: STRING, desc: package name}
+  PVERSIONID: {type: STRING, desc: application version}
+
+BT_2G4_BLE_SCAN_AIRTIME:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: bluetooth ble scan airtime occupation}
+  START_TS: {type: STRING, desc: scan config effective time}
+  ACTIVE_TS: {type: STRING, desc: first scan enable success time}
+  STOP_TS: {type: STRING, desc: scan stop time}
+  FAIL_TS: {type: STRING, desc: scan enable fail time}
+  SCAN_WINDOW: {type: INT32, desc: scan window}
+  SCAN_INTERVAL: {type: INT32, desc: scan interval}
+  SCAN_TYPE: {type: INT32, desc: scan type}
+  PHY: {type: INT32, desc: scan le phy}
+  FAIL_STAT: {type: INT32, desc: btm status code}
+  PACKAGE_NAME: {type: STRING, desc: caller package name}
+  PNAMEID: {type: STRING, desc: package name}
+  PVERSIONID: {type: STRING, desc: application version}
+
+BT_2G4_BLE_ADV_AIRTIME:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: bluetooth ble advertising airtime occupation}
+  SESSION_ID: {type: INT32, desc: session id}
+  START_TS: {type: STRING, desc: advertising config start time}
+  ACTIVE_TS: {type: STRING, desc: advertising enabled time}
+  STOP_TS: {type: STRING, desc: advertising stop or unregister time}
+  FAIL_TS: {type: STRING, desc: advertising start fail time}
+  ADV_INTERVAL: {type: INT32, desc: advertising interval ms}
+  ADV_TYPE: {type: INT32, desc: advertising type}
+  PAYLOAD_LEN_B: {type: INT32, desc: adv data length byte}
+  PACKAGE_NAME: {type: STRING, desc: caller package name}
+  PHY: {type: INT32, desc: adv le phy}
+  PNAMEID: {type: STRING, desc: package name}
+  PVERSIONID: {type: STRING, desc: application version}
+
+BT_2G4_CLASSIC_DISCOVERY_AIRTIME:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: bluetooth classic discovery airtime occupation}
+  PROCEDURE_TYPE: {type: INT32, desc: classic discovery procedure time}
+  START_TS: {type: STRING, desc: procedure start time}
+  ACTIVE_TS: {type: STRING, desc: procedure active time}
+  FAIL_TS: {type: STRING, desc: procedure fail time}
+  STOP_TS: {type: STRING, desc: procedure stop time}
+  SCAN_WINDOW_SLOTS: {type: INT32, desc: scan window}
+  SCAN_INTERVAL_SLOTS: {type: INT32, desc: scan interval}
+  FAIL_REASON: {type: INT32, desc: hci fail reason}
+  PNAMEID: {type: STRING, desc: package name}
+  PVERSIONID: {type: STRING, desc: application version}
