@@ -805,11 +805,13 @@ void SetDevicePairingConfirmation(taihe::string_view deviceId, bool accept)
     HILOGI("SetDevicePairingConfirmation::accept = %{public}d", accept);
     BluetoothRemoteDevice remoteDevice = BluetoothRemoteDevice(remoteAddr);
     int32_t ret = BT_NO_ERROR;
-    // Keep the legacy confirmation contract: reject (accept=false) must go through
-    // SetDevicePairingConfirmation so an unpaired device still returns 2900099.
-    // The new 2900018/2900019 codes belong to cancelPairingDevice and must converge
-    // to 2900099 here because this API does not declare them.
-    ret = remoteDevice.SetDevicePairingConfirmation(accept);
+    if (accept) {
+        ret = remoteDevice.SetDevicePairingConfirmation(accept);
+    } else {
+        // Keep the legacy reject path: CANCEL_PAIRING only requires ACCESS_BLUETOOTH.
+        // 2900018/2900019 are not declared by this API and converge to 2900099 via _VERIFY.
+        ret = remoteDevice.CancelPairing();
+    }
     TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(ret == BT_NO_ERROR, ret);
 }
 

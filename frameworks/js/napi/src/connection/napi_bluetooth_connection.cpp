@@ -609,19 +609,25 @@ napi_value GetProfileConnectionStateEx(napi_env env, napi_callback_info info)
 napi_value SetDevicePairingConfirmation(napi_env env, napi_callback_info info)
 {
     HILOGD("enter");
+    std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT,
+                                           BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE, BT_ERR_INTERNAL_ERROR };
+    NAPI_BT_CONTEXT_WITHOUT_HA(env, validErrCodes);
     std::string remoteAddr{};
     bool accept = false;
     bool checkRet = CheckSetDevicePairingConfirmationParam(env, info, remoteAddr, accept);
-    NAPI_BT_ASSERT_RETURN_FALSE(env, checkRet, BT_ERR_INVALID_PARAM);
+    NAPI_BT_ASSERT_RETURN_FALSE_VERIFY(env, checkRet, BT_ERR_INVALID_PARAM);
 
     HILOGI("SetDevicePairingConfirmation::accept = %{public}d", accept);
     BluetoothRemoteDevice remoteDevice = BluetoothRemoteDevice(remoteAddr);
     int32_t ret = BT_NO_ERROR;
-    // Keep the legacy confirmation contract: reject (accept=false) must go through
-    // SetDevicePairingConfirmation so an unpaired device still returns 2900099.
-    // The new 2900018/2900019 codes belong to cancelPairingDevice.
-    ret = remoteDevice.SetDevicePairingConfirmation(accept);
-    NAPI_BT_ASSERT_RETURN_FALSE(env, ret == BT_NO_ERROR, ret);
+    if (accept) {
+        ret = remoteDevice.SetDevicePairingConfirmation(accept);
+    } else {
+        // Keep the legacy reject path: CANCEL_PAIRING only requires ACCESS_BLUETOOTH.
+        // 2900018/2900019 are not declared by this API and converge to 2900099 via _VERIFY.
+        ret = remoteDevice.CancelPairing();
+    }
+    NAPI_BT_ASSERT_RETURN_FALSE_VERIFY(env, ret == BT_NO_ERROR, ret);
     return NapiGetBooleanTrue(env);
 }
 

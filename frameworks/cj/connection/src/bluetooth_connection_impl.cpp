@@ -162,10 +162,16 @@ void ConnectionImpl::SetDevicePairingConfirmation(std::string deviceId, bool acc
         return;
     }
     BluetoothRemoteDevice remoteDevice = Bluetooth::BluetoothRemoteDevice(deviceId);
-    // Keep the legacy confirmation contract: reject (accept=false) must go through
-    // SetDevicePairingConfirmation so an unpaired device still returns 2900099.
-    // The new 2900018/2900019 codes belong to cancelPairingDevice.
-    *errCode = remoteDevice.SetDevicePairingConfirmation(accept);
+    if (accept) {
+        *errCode = remoteDevice.SetDevicePairingConfirmation(accept);
+    } else {
+        // Keep the legacy reject path: CANCEL_PAIRING only requires ACCESS_BLUETOOTH.
+        // 2900018/2900019 are not declared by this API and converge to 2900099.
+        *errCode = remoteDevice.CancelPairing();
+        if (*errCode == BT_ERR_DEVICE_NOT_PAIRING || *errCode == BT_ERR_PAIRING_INITIATED_BY_OTHER) {
+            *errCode = BT_ERR_INTERNAL_ERROR;
+        }
+    }
     return;
 }
 

@@ -2077,9 +2077,9 @@ int32_t BluetoothHostServer::StartCrediblePair(int32_t transport, const std::str
 
 int32_t BluetoothHostServer::CancelPairing(int32_t transport, const std::string &address)
 {
-    // Used by cancelPairingDevice (callback / promise). setDevicePairingConfirmation(false)
-    // keeps its legacy SetDevicePairingConfirmation path and must not use this method,
-    // otherwise the new 2900018/2900019 codes would leak into the old API contract.
+    // Shared by cancelPairingDevice (callback / promise) and setDevicePairingConfirmation(false).
+    // The legacy confirmation API maps 2900018/2900019 to 2900099 at the API frontend because
+    // its d.ts does not declare them.
     HILOGI("callingName(%{public}s, transport(%{public}d), address(%{public}s))",
         PermissionManager::GetCallingName().c_str(), transport, GET_ENCRYPT_STR_ADDR(address));
     RawAddress addr(address);
