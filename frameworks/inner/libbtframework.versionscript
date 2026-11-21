@@ -187,6 +187,7 @@
     _ZN4OHOS9Bluetooth10GattClient10GetServiceERKNS0_4UUIDE;
     _ZN4OHOS9Bluetooth10GattClient10GetServiceEv;
     _ZN4OHOS9Bluetooth10GattClient14ReadDescriptorERNS0_14GattDescriptorE;
+    _ZN4OHOS9Bluetooth10GattClient15RefreshServicesEv;
     _ZN4OHOS9Bluetooth10GattClient15WriteDescriptorERNS0_14GattDescriptorE;
     _ZN4OHOS9Bluetooth10GattClient16DiscoverServicesEv;
     _ZN4OHOS9Bluetooth10GattClient17GetConnectedStateERi;
@@ -1084,6 +1085,7 @@
     _ZN4OHOS9Bluetooth21BluetoothRemoteDevice19ReadRemoteRssiValueEv;
     _ZN4OHOS9Bluetooth21BluetoothRemoteDevice20SetMessagePermissionEi;
     _ZN4OHOS9Bluetooth21BluetoothRemoteDevice22SetPhonebookPermissionEi;
+    _ZN4OHOS9Bluetooth21BluetoothRemoteDevice24CancelPairingByInitiatorEv;
     _ZN4OHOS9Bluetooth21BluetoothRemoteDevice28SetDevicePairingConfirmationEb;
     _ZN4OHOS9Bluetooth21BluetoothRemoteDevice9StartPairEv;
     _ZN4OHOS9Bluetooth21BluetoothRemoteDeviceC1ERKNS0_11AddressInfoEi;
