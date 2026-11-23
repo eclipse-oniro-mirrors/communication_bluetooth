@@ -144,10 +144,12 @@ int32_t PermissionManager::GetApiVersion(uint32_t tokenId)
 {
     HITRACE_METER(BT_TRACE_TAG);
     // The cache is keyed by calling pid and validated with the calling tokenId, so the cached
-    // version is bound to one process session. A recycled pid with another caller's tokenId is
-    // detected and evicted here.
+    // version is bound to one process session. It only serves the app-initiated IPC path where
+    // the queried identity is the current caller: notification fan-outs query per-subscriber
+    // tokenId and bypass the cache entirely.
     pid_t pid = IPCSkeleton::GetCallingPid();
-    if (pid > 0) {
+    bool isCurrentCaller = tokenId == IPCSkeleton::GetCallingTokenID();
+    if (pid > 0 && isCurrentCaller) {
         ApiVersionCacheEntry entry;
         if (apiVersionCache_.Find(pid, entry)) {
             if (entry.tokenId == tokenId) {
@@ -167,7 +169,7 @@ int32_t PermissionManager::GetApiVersion(uint32_t tokenId)
     int32_t apiVersion = hapTokenInfo.apiVersion;
     // pid is unavailable outside the IPC context, such cases bypass the cache entirely.
     // Failed lookups are not cached, only successful results are cached.
-    if (pid > 0) {
+    if (pid > 0 && isCurrentCaller) {
         if (static_cast<size_t>(apiVersionCache_.Size()) > MAX_API_VERSION_CACHE_SIZE) {
             apiVersionCache_.Clear();
         }
