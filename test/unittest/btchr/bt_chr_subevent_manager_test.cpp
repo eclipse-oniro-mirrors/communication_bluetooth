@@ -95,8 +95,8 @@ HWTEST_F(BtChrSubeventManagerTest, Test_BtChrUpdateLinkType_001, TestSize.Level1
     HILOGI("Test_BtChrUpdateLinkType_001 btCommonJonStr: %{public}s", btCommonJonStr.c_str());
     cJSON* deviceInfo = cJSON_GetObjectItemCaseSensitive(jsonVal, "DEVICEINFO");
     if (cJSON_IsObject(deviceInfo)) {
-    cJSON* likeType = cJSON_GetObjectItemCaseSensitive(deviceInfo, "LIKETYPE");
-        EXPECT_TRUE(likeType != nullptr && cJSON_IsNumber(likeType) && likeType->valueint == 0);
+    cJSON* linkType = cJSON_GetObjectItemCaseSensitive(deviceInfo, "LINKTYPE");
+        EXPECT_TRUE(linkType != nullptr && cJSON_IsNumber(linkType) && linkType->valueint == 0);
     }
 
     BtChrUpdateLinkType(addr, 1);
@@ -107,8 +107,8 @@ HWTEST_F(BtChrSubeventManagerTest, Test_BtChrUpdateLinkType_001, TestSize.Level1
     HILOGI("Test_BtChrUpdateLinkType_001 btCommonJonStr: %{public}s", btCommonJonStr.c_str());
     deviceInfo = cJSON_GetObjectItemCaseSensitive(jsonVal, "DEVICEINFO");
     if (cJSON_IsObject(deviceInfo)) {
-        cJSON* likeType = cJSON_GetObjectItemCaseSensitive(deviceInfo, "LIKETYPE");
-        EXPECT_TRUE(likeType != nullptr && cJSON_IsNumber(likeType) && likeType->valueint == 1);
+        cJSON* linkType = cJSON_GetObjectItemCaseSensitive(deviceInfo, "LINKTYPE");
+        EXPECT_TRUE(linkType != nullptr && cJSON_IsNumber(linkType) && linkType->valueint == 1);
     }
     cJSON_Delete(jsonVal);
     HILOGI("Test_BtChrUpdateLinkType_001 end");
