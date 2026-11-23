@@ -38,6 +38,9 @@
 #include "bluetooth_audio_framework_adapter.h"
 #include "hfp_ag_system_interface.h"
 #include "thread_util.h"
+#ifdef MULTI_A2DP_ENABLED
+#include "multi_a2dp_manager.h"
+#endif
 
 namespace OHOS {
 namespace bluetooth {
@@ -92,7 +95,16 @@ void AvrcpVolumeInterfaceImpl::DeviceConnected(const STACK::RawAddress &bdaddr, 
     }
 
     PreferencesManager::Save(bdaddr.ToString(), true, PreferencesManagerType::ABS_VOLUME_SWITCH);
+#ifdef MULTI_A2DP_ENABLED
+    /* Audio's SetActiveSinkDevice resync is unusable under Multi A2DP (it always carries the
+     * default zone device), so resync here once the peer is bound to a display. Must run after
+     * the callback map insertion above; SyncAbsVolumeOnZoneBound covers the opposite order. */
+    bool zoneBound = MultiA2dpManager::GetDisplayIdByAddr(bdaddr.ToString()) >= 0;
+    HILOGI("Multi A2DP: %{public}s zone bound %{public}d.", GET_ENCRYPT_STR_ADDR(bdaddr.ToString()), zoneBound);
+    SwitchAbsVolumeDevice(bdaddr, zoneBound);
+#else
     SwitchAbsVolumeDevice(bdaddr, false);
+#endif
     RefusePlayHelper::GetInstance()->SetLastAvrcpConnectTime(ServiceUtil::AddrFromStack(bdaddr).GetAddress());
     BluetoothHelper::BluetoothCommonEventHelper::PublishAvrcpConnectStateUpdateEvent(bdaddr.ToString(),
         static_cast<int32_t>(BTConnectState::CONNECTED));
@@ -103,6 +115,25 @@ void AvrcpVolumeInterfaceImpl::DeviceConnected(const STACK::RawAddress &bdaddr, 
             static_cast<int>(BTConnectState::CONNECTED), ServiceUtil::AddrFromStack(bdaddr), "avrcp");
     });
 }
+
+#ifdef MULTI_A2DP_ENABLED
+bool AvrcpVolumeInterfaceImpl::SyncAbsVolumeOnZoneBound(const STACK::RawAddress &addr)
+{
+    {
+        std::lock_guard<std::mutex> lock(volumeCallbackMapLock_);
+        if (volumeCallbackMap_.find(addr) == volumeCallbackMap_.end()) {
+            HILOGI("Multi A2DP: %{public}s avrcp abs volume not connected, wait for it.",
+                GET_ENCRYPT_STR_ADDR(addr.ToString()));
+            return false;
+        }
+    }
+    /* Audio may not have registered the A2DP device yet when AVRCP connects, so the abs volume
+     * declaration there can fail; the device is always known to audio once bound to a zone. */
+    HILOGI("Multi A2DP: %{public}s zone bound, resync abs volume.", GET_ENCRYPT_STR_ADDR(addr.ToString()));
+    SwitchAbsVolumeDevice(addr, true);
+    return true;
+}
+#endif
 
 void AvrcpVolumeInterfaceImpl::DeviceEmplaceSetVolume(const STACK::RawAddress &bdaddr, VolumeChangedCb cb)
 {

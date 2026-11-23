@@ -94,6 +94,7 @@ public:
             std::lock_guard<std::mutex> lock(g_displayCallbackMapMutex);
             g_deviceCallbackMap.clear();
         }
+        MultiA2dpManager::UnregisterDeviceBoundCallback();
     }
 
     static void ConnectDevice(const std::string &addr, int32_t displayId)
@@ -296,6 +297,49 @@ HWTEST_F(MultiA2dpManagerTest, CleanupWithoutInit_001, TestSize.Level1)
     EXPECT_EQ(kInvalidId, MultiA2dpManager::GetDisplayIdByAddr("aa:bb:cc:dd:ee:09"));
     EXPECT_EQ("", MultiA2dpManager::GetAddrByDisplayId(kCoDriverDisplayId));
     EXPECT_EQ(kInvalidId, MultiA2dpManager::GetUserIdByDisplayId(kCoDriverDisplayId));
+}
+
+/*
+ * @tc.name: DeviceBoundCallback_001
+ * @tc.desc: Connect notifies the registered callback with the reported address after
+ *           the binding is visible; disconnect does not notify.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MultiA2dpManagerTest, DeviceBoundCallback_001, TestSize.Level1)
+{
+    std::vector<std::string> notified;
+    int32_t displayIdSeen = kInvalidId;
+    MultiA2dpManager::RegisterDeviceBoundCallback([&](const std::string &addr) {
+        notified.push_back(addr);
+        displayIdSeen = MultiA2dpManager::GetDisplayIdByAddr(addr);
+    });
+
+    ConnectDevice("AA:BB:CC:DD:EE:10", kRearDisplayId);
+    ASSERT_EQ(1u, notified.size());
+    EXPECT_EQ("AA:BB:CC:DD:EE:10", notified[0]);
+    EXPECT_EQ(kRearDisplayId, displayIdSeen);
+
+    DisconnectDevice("AA:BB:CC:DD:EE:10", kRearDisplayId);
+    EXPECT_EQ(1u, notified.size());
+}
+
+/*
+ * @tc.name: DeviceBoundCallback_002
+ * @tc.desc: No callback or an unregistered callback is not invoked, and the mapping is
+ *           still recorded.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MultiA2dpManagerTest, DeviceBoundCallback_002, TestSize.Level1)
+{
+    ConnectDevice("AA:BB:CC:DD:EE:11", kCoDriverDisplayId);
+    EXPECT_EQ(kCoDriverDisplayId, MultiA2dpManager::GetDisplayIdByAddr("aa:bb:cc:dd:ee:11"));
+
+    int32_t count = 0;
+    MultiA2dpManager::RegisterDeviceBoundCallback([&](const std::string &) { count++; });
+    MultiA2dpManager::UnregisterDeviceBoundCallback();
+    ConnectDevice("AA:BB:CC:DD:EE:12", kRearDisplayId);
+    EXPECT_EQ(0, count);
+    EXPECT_EQ(kRearDisplayId, MultiA2dpManager::GetDisplayIdByAddr("aa:bb:cc:dd:ee:12"));
 }
 
 }  // namespace Bluetooth

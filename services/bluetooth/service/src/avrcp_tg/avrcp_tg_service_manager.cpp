@@ -123,6 +123,11 @@ void AvrcpServiceManager::SetActiveDevice(const RawAddress &rawAddr)
 }
 
 #ifdef MULTI_A2DP_ENABLED
+bool AvrcpServiceManager::SyncAbsVolumeOnZoneBound(const RawAddress &rawAddr)
+{
+    return g_volumeInterface.SyncAbsVolumeOnZoneBound(ServiceUtil::AddrToStack(rawAddr));
+}
+
 void AvrcpServiceManager::AddActiveDevice(const RawAddress &rawAddr)
 {
     if (mediaLoader_ != nullptr) {

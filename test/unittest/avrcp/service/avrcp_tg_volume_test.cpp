@@ -30,6 +30,9 @@
 #include "remote_device_properties.h"
 #include "bluetooth_audio_framework_adapter.h"
 #include "btcommon/timer_manager.h"
+#ifdef MULTI_A2DP_ENABLED
+#include "multi_a2dp_manager.h"
+#endif
 
 using namespace testing;
 using namespace testing::ext;
@@ -324,6 +327,94 @@ HWTEST_F(AvrcpTgVolumeTest, AvrcpTgVolumeTest_UnitTest_SwitchAbsVolumeDevice_003
     }
     HILOGI("AvrcpTgVolumeTest_UnitTest_SwitchAbsVolumeDevice_003 end");
 }
+
+#ifdef MULTI_A2DP_ENABLED
+/**
+ * @tc.name: AvrcpTgVolumeTest_UnitTest_SyncAbsVolumeOnZoneBound_001
+ * @tc.desc: Multi A2DP: zone bound before avrcp abs volume connects is deferred to DeviceConnected
+ * @tc.type: FUNC
+ */
+HWTEST_F(AvrcpTgVolumeTest, AvrcpTgVolumeTest_UnitTest_SyncAbsVolumeOnZoneBound_001, TestSize.Level1)
+{
+    HILOGI("AvrcpTgVolumeTest_UnitTest_SyncAbsVolumeOnZoneBound_001 enter");
+    STACK::RawAddress addr;
+    STACK::RawAddress::FromString("00:11:22:33:44:66", addr);
+    g_volumeInterface.DeviceDisconnected(addr);
+    PreferencesManager::Save(addr.ToString(), true, PreferencesManagerType::ABS_VOLUME_SWITCH);
+    EXPECT_FALSE(g_volumeInterface.SyncAbsVolumeOnZoneBound(addr));
+    HILOGI("AvrcpTgVolumeTest_UnitTest_SyncAbsVolumeOnZoneBound_001 end");
+}
+
+/**
+ * @tc.name: AvrcpTgVolumeTest_UnitTest_SyncAbsVolumeOnZoneBound_002
+ * @tc.desc: Multi A2DP: zone bound after avrcp connect resyncs like SwitchAbsVolumeDevice; the peer
+ *           is notified only when abs volume is usable
+ * @tc.type: FUNC
+ */
+HWTEST_F(AvrcpTgVolumeTest, AvrcpTgVolumeTest_UnitTest_SyncAbsVolumeOnZoneBound_002, TestSize.Level1)
+{
+    HILOGI("AvrcpTgVolumeTest_UnitTest_SyncAbsVolumeOnZoneBound_002 enter");
+    STACK::RawAddress addr;
+    STACK::RawAddress::FromString("00:11:22:33:44:66", addr);
+    auto rawAddr = ServiceUtil::AddrFromStack(addr);
+    auto remoteDevice = RemoteDeviceProperties::GetInstance()->FindRemoteDevice(rawAddr);
+    if (remoteDevice != nullptr) {
+        remoteDevice->SetDeviceAbsVolumeAbility(DeviceAbsVolumeAbility::DEVICE_ABSVOL_OPEN);
+    }
+    g_volumeInterface.DeviceConnected(addr,
+        std::bind(MockAbsVolumeCb, std::placeholders::_1, std::placeholders::_2));
+    PreferencesManager::Save(addr.ToString(), 9, PreferencesManagerType::ABS_VOLUME);
+
+    PreferencesManager::Save(addr.ToString(), false, PreferencesManagerType::ABS_VOLUME_SWITCH);
+    int32_t countBefore = g_absVolumeCbCount;
+    EXPECT_TRUE(g_volumeInterface.SyncAbsVolumeOnZoneBound(addr));
+    EXPECT_EQ(g_absVolumeCbCount, countBefore);
+
+    PreferencesManager::Save(addr.ToString(), true, PreferencesManagerType::ABS_VOLUME_SWITCH);
+    bool abilityUsable = RemoteDeviceProperties::GetInstance()->GetDeviceAbsVolumeAbility(rawAddr) !=
+        DeviceAbsVolumeAbility::DEVICE_ABSVOL_UNSUPPORT;
+    EXPECT_TRUE(g_volumeInterface.SyncAbsVolumeOnZoneBound(addr));
+    EXPECT_EQ(g_absVolumeCbCount > countBefore, abilityUsable);
+    if (abilityUsable) {
+        EXPECT_EQ(g_absVolumeCbValue, g_volumeInterface.SystemToAvrcpVolume(9) & 0x7F);
+    }
+    EXPECT_EQ(PreferencesManager::Get(addr.ToString(), 0, PreferencesManagerType::ABS_VOLUME), 9);
+
+    g_volumeInterface.DeviceDisconnected(addr);
+    EXPECT_FALSE(g_volumeInterface.SyncAbsVolumeOnZoneBound(addr));
+    HILOGI("AvrcpTgVolumeTest_UnitTest_SyncAbsVolumeOnZoneBound_002 end");
+}
+
+/**
+ * @tc.name: AvrcpTgVolumeTest_UnitTest_MultiA2dpDeviceConnected_001
+ * @tc.desc: Multi A2DP: avrcp connect without zone binding still notifies the peer and keeps stored volume
+ * @tc.type: FUNC
+ */
+HWTEST_F(AvrcpTgVolumeTest, AvrcpTgVolumeTest_UnitTest_MultiA2dpDeviceConnected_001, TestSize.Level1)
+{
+    HILOGI("AvrcpTgVolumeTest_UnitTest_MultiA2dpDeviceConnected_001 enter");
+    STACK::RawAddress addr;
+    STACK::RawAddress::FromString("00:11:22:33:44:77", addr);
+    auto rawAddr = ServiceUtil::AddrFromStack(addr);
+    EXPECT_LT(MultiA2dpManager::GetDisplayIdByAddr(rawAddr.GetAddress()), 0);
+    auto remoteDevice = RemoteDeviceProperties::GetInstance()->FindRemoteDevice(rawAddr);
+    if (remoteDevice != nullptr) {
+        remoteDevice->SetDeviceAbsVolumeAbility(DeviceAbsVolumeAbility::DEVICE_ABSVOL_OPEN);
+    }
+    PreferencesManager::Save(addr.ToString(), 9, PreferencesManagerType::ABS_VOLUME);
+    bool abilityUsable = RemoteDeviceProperties::GetInstance()->GetDeviceAbsVolumeAbility(rawAddr) !=
+        DeviceAbsVolumeAbility::DEVICE_ABSVOL_UNSUPPORT;
+    int32_t countBefore = g_absVolumeCbCount;
+
+    g_volumeInterface.DeviceConnected(addr,
+        std::bind(MockAbsVolumeCb, std::placeholders::_1, std::placeholders::_2));
+    EXPECT_EQ(g_absVolumeCbCount > countBefore, abilityUsable);
+    EXPECT_EQ(PreferencesManager::Get(addr.ToString(), 0, PreferencesManagerType::ABS_VOLUME), 9);
+
+    g_volumeInterface.DeviceDisconnected(addr);
+    HILOGI("AvrcpTgVolumeTest_UnitTest_MultiA2dpDeviceConnected_001 end");
+}
+#endif
 
 }  // namespace bluetooth
 }  // namespace OHOS

@@ -41,6 +41,7 @@ public:
 #ifdef MULTI_A2DP_ENABLED
     void AddActiveDevice(const RawAddress &rawAddr);
     void RemoveActiveDevice(const RawAddress &rawAddr);
+    bool SyncAbsVolumeOnZoneBound(const RawAddress &rawAddr);
 #endif
     void DisableBipService();
 

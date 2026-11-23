@@ -18,14 +18,20 @@
 
 #include <string>
 #include <cstdint>
+#include <functional>
 
 namespace OHOS {
 namespace Bluetooth {
 
 class MultiA2dpManager {
 public:
+    /* Invoked on the vendor callback thread after addr is bound to a display; must not block or do IPC. */
+    using DeviceBoundCallback = std::function<void(const std::string &addr)>;
+
     static void Init();
     static void Cleanup();
+    static void RegisterDeviceBoundCallback(DeviceBoundCallback callback);
+    static void UnregisterDeviceBoundCallback();
 
     static int32_t GetDisplayIdByAddr(const std::string &addr);
     static std::string GetAddrByDisplayId(int32_t displayId);

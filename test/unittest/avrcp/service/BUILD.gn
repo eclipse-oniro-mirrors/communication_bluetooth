@@ -211,6 +211,11 @@ ohos_unittest("btfw_avrcp_tg_serv_volume_test") {
     "private = public",
   ]
 
+  if (bluetooth_multi_a2dp_enabled) {
+    defines += [ "MULTI_A2DP_ENABLED" ]
+    include_dirs = [ "$BT_SERVICE_DIR/src/car_policy/multi_a2dp" ]
+  }
+
   configs = [ ":module_private_config" ]
 
   deps = [

@@ -99,6 +99,16 @@ public:
      */
     void SwitchAbsVolumeDevice(const STACK::RawAddress &rawAddr, bool isNeedSetVolume = true);
 
+#ifdef MULTI_A2DP_ENABLED
+    /**
+     * @brief Multi A2DP: device bound to a display, resync its abs volume state and stored volume
+     *        to audio, same as SwitchAbsVolumeDevice(addr, true).
+     * @param[in] addr The device.
+     * @return true if synced; false if avrcp abs volume is not connected yet for it.
+     */
+    bool SyncAbsVolumeOnZoneBound(const STACK::RawAddress &addr);
+#endif
+
     /**
      * @brief Set device abs volume ability.
      * @param[in] rawAddr The device.
