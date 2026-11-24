@@ -45,7 +45,6 @@ public:
         int32_t msgState;
         bool sent;
         bool readFlag;
-        int64_t deleteTime;
     };
 
     class MapDataShareObserver : public DataShare::DataShareObserver {
@@ -54,7 +53,6 @@ public:
         ~MapDataShareObserver() = default;
         void OnChange(const ChangeInfo &changeInfo) override
         {
-            HILOGI("LQ MapDataShareObserver OnChange received");
             DoInMapThread([observer = &mapMseContentObserver_]() { observer->HandleSmsMessageListChanged(); });
         }
 

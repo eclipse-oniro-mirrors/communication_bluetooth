@@ -161,8 +161,6 @@ void MapMseMnsClient::SendEvent(int32_t masId, const std::string &eventData)
     request.SetHeader(APPLICATION_PARAMETER, appParamsRaw);
     request.SetConnectionId(connectHeader_.GetConnectionId());
 
-    HILOGI("LQ send event to remote, masId=%{public}d, data size=%{public}d",
-        masId, static_cast<int32_t>(eventData.size()));
     clientSession_->SendEvent(request, eventData);
 }
 

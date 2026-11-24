@@ -85,20 +85,12 @@ const uint8_t STATUS_INDICATOR_READ = 0;
 const uint8_t STATUS_INDICATOR_DELETED = 1;
 const uint8_t MESSAGE_STATE_IS_DRAFT = 3;
 
-// delete_time is the millisecond timestamp of soft deletion, and 0 means not deleted
-static bool IsMessageDeleted(const MapMseContentObserver::Message &msg)
-{
-    return msg.deleteTime > 0;
-}
-
 int32_t MapMseContentObserver::SetNotificationRegistration(int32_t masId, std::shared_ptr<MapMseAppParams> &params)
 {
     if (!params->notificationStatus_.has_value()) {
         HILOGE("notificationStatus is empty");
         return ResponseCodes::OBEX_HTTP_BAD_REQUEST;
     }
-    HILOGI("LQ SetNotificationRegistration masId=%{public}d, notificationStatus=%{public}d",
-        masId, params->notificationStatus_.value());
     masInstanceId_ = masId;
     std::thread([client = mnsClient_, masId, params] {
         auto sharedClient = client.lock();
@@ -201,8 +193,6 @@ void MapMseContentObserver::HandleSmsMessageListChanged()
     HITRACE_METER(BT_TRACE_TAG);
     HILOGI("recv new message or deliverd success");
     std::lock_guard<std::mutex> lock(smsMessageCollectionLock_);
-    HILOGI("LQ HandleSmsMessageListChanged enter, saved message count=%{public}d",
-        static_cast<int32_t>(smsMessageCollection_.size()));
     auto resultSet = QueryMessages();
     if (!resultSet) {
         HILOGE("QueryMessages failed.");
@@ -221,12 +211,7 @@ void MapMseContentObserver::HandleSmsMessageListChanged()
         int64_t msgState = GetLongFromResultSet(resultSet, "msg_state");
         bool sent = (GetLongFromResultSet(resultSet, "is_sender") == 0) ? true : false;
         bool read = (GetLongFromResultSet(resultSet, "is_read") == 1) ? true : false;
-        int64_t deleteTime = GetLongFromResultSet(resultSet, "delete_time");
-        Message msg{handle, msgState, sent, read, deleteTime};
-        HILOGI("LQ db message handle=%{public}lld, msgState=%{public}lld"
-            ", sent=%{public}d, read=%{public}d, deleteTime=%{public}lld",
-            static_cast<long long>(handle), static_cast<long long>(msgState), static_cast<int32_t>(sent),
-            static_cast<int32_t>(read), static_cast<long long>(deleteTime));
+        Message msg{handle, msgState, sent, read};
         if (!smsMessageCollection_.count(handle)) {
             // new message
             HandleListChangeForNewMessage(currMessageList, msg);
@@ -241,8 +226,6 @@ void MapMseContentObserver::HandleSmsMessageListChanged()
 
     smsMessageCollection_ = std::move(currMessageList);
     resultSet->Close();
-    HILOGI("LQ HandleSmsMessageListChanged end, current message count=%{public}d",
-        static_cast<int32_t>(smsMessageCollection_.size()));
 }
 
 void MapMseContentObserver::HandleSmsSendResult(const ISendShortMessageCallback::SmsSendResult result)
@@ -385,10 +368,7 @@ void MapMseContentObserver::InitMessageList()
         int64_t msgState = GetLongFromResultSet(resultSet, "msg_state");
         bool sent = GetLongFromResultSet(resultSet, "is_sender") == 0 ? true : false;
         bool read = (GetLongFromResultSet(resultSet, "is_read") == 1) ? true : false;
-        int64_t deleteTime = GetLongFromResultSet(resultSet, "delete_time");
-        Message msg{handle, msgState, sent, read, deleteTime};
-        HILOGI("LQ init message handle=%{public}lld, deleteTime=%{public}lld",
-            static_cast<long long>(handle), static_cast<long long>(deleteTime));
+        Message msg{handle, msgState, sent, read};
         smsMessageCollection_[handle] = msg;
         opRet = resultSet->GoToNextRow();
     }
@@ -412,17 +392,13 @@ std::shared_ptr<DataShare::DataShareResultSet> MapMseContentObserver::QueryMessa
         "msg_content",
         "is_read",
         "session_id",
-        "msg_state",
-        "delete_time"};
+        "msg_state"};
     Uri uri(SMS_MMS_INFO_URI_STR);
     auto resultSet = smsDataShareHelper_->Query(uri, predicates, columns);
     if (!resultSet) {
         HILOGE("Query data failed.");
         return nullptr;
     }
-    int32_t deleteTimeIndex = -1;
-    auto ret = resultSet->GetColumnIndex("delete_time", deleteTimeIndex);
-    HILOGI("LQ QueryMessages getColumnIndex(delete_time) ret=%{public}d, index=%{public}d", ret, deleteTimeIndex);
     return resultSet;
 }
 
@@ -430,9 +406,7 @@ void MapMseContentObserver::SendEvent(const MapEvent &event)
 {
     auto sharedMnsClient = mnsClient_.lock();
     if (sharedMnsClient != nullptr && sharedMnsClient->IsConnect()) {
-        std::string eventData = event.Encode();
-        HILOGI("LQ SendEvent masId=%{public}d, data=%{public}s", masInstanceId_, eventData.c_str());
-        sharedMnsClient->SendEvent(masInstanceId_, eventData);
+        sharedMnsClient->SendEvent(masInstanceId_, event.Encode());
     } else {
         HILOGE("masInstanceId_ is %{public}d, mnsClient_ is not connect", masInstanceId_);
     }
@@ -442,12 +416,6 @@ void MapMseContentObserver::HandleListChangeForNewMessage(std::map<int64_t, Mess
 {
     HITRACE_METER(BT_TRACE_TAG);
     newMsgList[msg.handle] = msg;
-    HILOGI("LQ handle new message handle=%{public}lld, sent=%{public}d, deleted=%{public}d",
-        static_cast<long long>(msg.handle), static_cast<int32_t>(msg.sent),
-        static_cast<int32_t>(IsMessageDeleted(msg)));
-    if (IsMessageDeleted(msg)) {  // message has been deleted
-        return;
-    }
     if (!msg.sent) {  // recieve new messages
         SendEvent(MapEvent(msg.handle, EVENT_TYPE_NEW, MAP_EVENT_FOLDER_INBOX));
         return;
@@ -472,17 +440,7 @@ void MapMseContentObserver::HandleListChangeForExistMessage(std::map<int64_t, Me
     HITRACE_METER(BT_TRACE_TAG);
     newMsgList[msg.handle] = msg;
     auto existMsg = smsMessageCollection_[msg.handle];
-    HILOGI("LQ handle exist message handle=%{public}lld, oldState=%{public}d, oldDeleteTime=%{public}lld"
-        ", newState=%{public}d, newDeleteTime=%{public}lld", static_cast<long long>(msg.handle), existMsg.msgState,
-        static_cast<long long>(existMsg.deleteTime), msg.msgState, static_cast<long long>(msg.deleteTime));
-    if (IsMessageDeleted(msg)) {  // message has been deleted
-        if (!IsMessageDeleted(existMsg)) {
-            HILOGI("LQ report MessageDeleted handle=%{public}lld, folder=%{public}s",
-                static_cast<long long>(msg.handle), GetMessageEventFolder(existMsg).c_str());
-            SendEvent(MapEvent(msg.handle, EVENT_TYPE_DELETE, GetMessageEventFolder(existMsg)));
-        }
-        return;
-    }
+
     if ((msg.msgState != existMsg.msgState) && (msg.msgState == 0)) {  // mse send message success
         SendEvent(MapEvent(msg.handle, EVENT_TYPE_SHIFT, MAP_EVENT_FOLDER_SENT, MAP_EVENT_FOLDER_OUTBOX));
     }
@@ -500,17 +458,11 @@ void MapMseContentObserver::HandleListChangeForDeleteMessage(std::map<int64_t, M
     }
     // some message has been deleted when smsMessageCollection_ message not in currMessageList
     for (auto &msg : smsMessageCollection_) {
-        if (newMsgList.count(msg.first)) {
-            continue;
+        if (!newMsgList.count(msg.first)) {
+            HILOGI("msgId=%{public}ld has been delete", msg.first);
+            SendEvent(MapEvent(msg.first, EVENT_TYPE_DELETE, GetMessageEventFolder(msg.second)));
+            break;
         }
-        // skip messages deleted softly which have been reported
-        if (IsMessageDeleted(msg.second)) {
-            HILOGI("LQ msgId=%{public}lld already reported as deleted, skip",
-                static_cast<long long>(msg.first));
-            continue;
-        }
-        HILOGI("msgId=%{public}lld has been delete", static_cast<long long>(msg.first));
-        SendEvent(MapEvent(msg.first, EVENT_TYPE_DELETE, GetMessageEventFolder(msg.second)));
     }
 }
 
