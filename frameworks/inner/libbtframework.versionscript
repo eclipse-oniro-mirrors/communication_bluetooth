@@ -41,7 +41,6 @@
     BleGattsStopServiceEx;
     BleGattsUnRegister;
     BleRegisterScanCallbacks;
-    BleScanNativeFilterLog;
     BleSetAdvData;
     BleSetScanParameters;
     BleSetSecurityAuthReq;
@@ -58,16 +57,6 @@
     CheckAdvIdInUse;
     CheckAndAllocateAdvHandle;
     ClearGlobalResource;
-    ConverWriteType;
-    ConvertAclState;
-    ConvertAddr;
-    ConvertAdvDeviceInfo;
-    ConvertAdvSettingParam;
-    ConvertBtTransport;
-    ConvertBtUuid;
-    ConvertDataToHex;
-    ConvertLpDeviceParamData;
-    ConvertScanFilterParam;
     DisableBle;
     DisableBt;
     DisableBtStack;
@@ -77,14 +66,9 @@
     EnableBtStack;
     EnableSyncDataToLpDevice;
     GapRegisterCallbacks;
-    GetAclStateName;
-    GetAddrFromByte;
-    GetAddrFromString;
     GetAdvHandle;
     GetAdvPowerForRangingBusiness;
-    GetBleCentralManagerObject;
     GetBtState;
-    GetGattcResult;
     GetLocalAddr;
     GetRandomAddress;
     InitBtStack;
@@ -93,7 +77,6 @@
     IsLpDeviceAvailable;
     IsSocketConnected;
     IsSppConnected;
-    IsSupportVlinkFeature;
     PairRequestReply;
     ReadBtMacAddr;
     RemoveLpDeviceParam;
