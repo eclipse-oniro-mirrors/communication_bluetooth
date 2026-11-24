@@ -613,7 +613,7 @@ void AvrcpMediaInterfaceImpl::impl::OnPlaybackStateChange(const AVSession::AVPla
         audioManager_->DealWithNewPlayingStatus();
     } else if (currentState == OHOS::AVSession::AVPlaybackState::PLAYBACK_STATE_PAUSE &&
         lastAudioManagerState_ != OHOS::AVSession::AVPlaybackState::PLAYBACK_STATE_PAUSE) {
-        // 播放状态变更为pause时，处理pause  
+        // 播放状态变更为pause时，处理pause
         audioManager_->DealWithPauseStatus();
     }
     lastAudioManagerState_ = currentState;

@@ -277,7 +277,7 @@ int64_t RefusePlayHelper::TryLearnFromUserPause(const std::string &device, TimeR
             "windowEnd: %{public}lld", pauseTime, timeRecord.pendingPlayTime, windowEnd);
         timeRecord.ResetPendingPlay();
         return DEFAULT_VALUE;
-    } 
+    }
     // 只有 T 大于该车当前窗口才学习，保证窗口只增不减
     int64_t currentWindow = GetEffectiveAutoPlayDuration(device);
     if (timeRecord.pendingPlayOffset > currentWindow) {

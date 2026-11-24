@@ -102,7 +102,7 @@ private:
      */
     void TryLearnAndSave(const std::string &device, TimeRecord &timeRecord, int64_t pauseTime);
     /**
-     *  上报自动播放拦截CHR，携带本次连接锁存的拦截窗口   
+     *  上报自动播放拦截CHR，携带本次连接锁存的拦截窗口
      */
     void WriteAutoPlayRefuseUe(const std::string &device);
     // 时间记录
