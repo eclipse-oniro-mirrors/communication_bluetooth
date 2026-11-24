@@ -1,3 +1,7 @@
+# Export list for libopp.z.so. Generated from the built artifact's dynamic
+# symbol table (llvm-nm -D --defined-only) and frozen: anonymous
+# version node, explicit enumeration, no wildcards.
+# Re-generate only for intentional ABI changes.
 {
   global:
     __cfi_check;

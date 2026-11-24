@@ -1,0 +1,104 @@
+# Copyright (c) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Export list shared by the seven cj ffi libraries. Generated from the built
+# artifacts' dynamic symbol tables (llvm-nm -D --defined-only) and frozen with
+# explicit enumeration, no wildcards.
+# Exception to the anonymous-node convention: the 1.0 named node is kept
+# because these symbols carry @1.0 version tags (existing ABI metadata).
+
+1.0 {
+  global:
+    extern "C" {
+      FfiBluetoothA2dpGetConnectedDevices;
+      FfiBluetoothA2dpGetConnectionState;
+      FfiBluetoothA2dpGetPlayingState;
+      FfiBluetoothA2dpOn;
+      FfiBluetoothAccDisableBluetooth;
+      FfiBluetoothAccEnableBluetooth;
+      FfiBluetoothAccGetState;
+      FfiBluetoothAccOn;
+      FfiBluetoothBleCreateGattClientDevice;
+      FfiBluetoothBleCreateGattServer;
+      FfiBluetoothBleDisableAdvertising;
+      FfiBluetoothBleEnableAdvertising;
+      FfiBluetoothBleGattClientDeviceClose;
+      FfiBluetoothBleGattClientDeviceConnect;
+      FfiBluetoothBleGattClientDeviceDisconnect;
+      FfiBluetoothBleGattClientDeviceGetDeviceName;
+      FfiBluetoothBleGattClientDeviceGetRssiValue;
+      FfiBluetoothBleGattClientDeviceGetServices;
+      FfiBluetoothBleGattClientDeviceOn;
+      FfiBluetoothBleGattClientDeviceReadCharacteristicValue;
+      FfiBluetoothBleGattClientDeviceReadDescriptorValue;
+      FfiBluetoothBleGattClientDeviceSetBLEMtuSize;
+      FfiBluetoothBleGattClientDeviceSetCharacteristicChangeIndication;
+      FfiBluetoothBleGattClientDeviceSetCharacteristicChangeIndicationV2;
+      FfiBluetoothBleGattClientDeviceSetCharacteristicChangeNotification;
+      FfiBluetoothBleGattClientDeviceSetCharacteristicChangeNotificationV2;
+      FfiBluetoothBleGattClientDeviceWriteCharacteristicValue;
+      FfiBluetoothBleGattClientDeviceWriteDescriptorValue;
+      FfiBluetoothBleGattServerAddService;
+      FfiBluetoothBleGattServerClose;
+      FfiBluetoothBleGattServerNotifyCharacteristicChanged;
+      FfiBluetoothBleGattServerOn;
+      FfiBluetoothBleGattServerRemoveService;
+      FfiBluetoothBleGattServerSendResponse;
+      FfiBluetoothBleGetConnectedBleDevices;
+      FfiBluetoothBleOn;
+      FfiBluetoothBleStartAdvertising;
+      FfiBluetoothBleStartAdvertisingWithId;
+      FfiBluetoothBleStartBleScan;
+      FfiBluetoothBleStopAdvertising;
+      FfiBluetoothBleStopAdvertisingWithId;
+      FfiBluetoothBleStopBleScan;
+      FfiBluetoothConGetBluetoothScanMode;
+      FfiBluetoothConGetLocalName;
+      FfiBluetoothConGetPairState;
+      FfiBluetoothConGetPairedDevices;
+      FfiBluetoothConGetProfileConnectionState;
+      FfiBluetoothConGetRemoteDeviceBatteryInfo;
+      FfiBluetoothConGetRemoteDeviceClass;
+      FfiBluetoothConGetRemoteDeviceName;
+      FfiBluetoothConGetRemoteProfileUuids;
+      FfiBluetoothConIsBluetoothDiscovering;
+      FfiBluetoothConOn;
+      FfiBluetoothConPairDevice;
+      FfiBluetoothConSetBluetoothScanMode;
+      FfiBluetoothConSetDevicePairingConfirmation;
+      FfiBluetoothConSetDevicePinCode;
+      FfiBluetoothConSetLocalName;
+      FfiBluetoothConSetRemoteDeviceName;
+      FfiBluetoothConStartBluetoothDiscovery;
+      FfiBluetoothConStopBluetoothDiscovery;
+      FfiBluetoothHfpGetConnectedDevices;
+      FfiBluetoothHfpGetConnectionState;
+      FfiBluetoothHfpOn;
+      FfiBluetoothHidHostGetConnectedDevices;
+      FfiBluetoothHidHostGetConnectionState;
+      FfiBluetoothHidHostOn;
+      FfiBluetoothSocketGetDeviceId;
+      FfiBluetoothSocketOff;
+      FfiBluetoothSocketOn;
+      FfiBluetoothSocketSppAccept;
+      FfiBluetoothSocketSppCloseClientSocket;
+      FfiBluetoothSocketSppCloseServerSocket;
+      FfiBluetoothSocketSppConnect;
+      FfiBluetoothSocketSppFreeReadData;
+      FfiBluetoothSocketSppListen;
+      FfiBluetoothSocketSppRead;
+      FfiBluetoothSocketSppWrite;
+    };
+  local:
+    *;
+};

@@ -77,7 +77,7 @@ ohos_shared_library("cj_bluetooth_connection_ffi") {
   ]
 
   # Used to control the export of dynamic library symbols.
-  version_script = "../libcj_bluetooth_ffi.map"
+  version_script = "../libcj_bluetooth_ffi.versionscript"
 
   innerapi_tags = [ "platformsdk" ]
   subsystem_name = "communication"
