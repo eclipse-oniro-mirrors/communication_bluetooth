@@ -154,7 +154,7 @@ HWTEST_F(HostStubTest, HostStub_ModuleTest_SetRemoteDeviceBatteryInfoInner_00100
 /**
  * @tc.number: CancelPairingInner_00100
  * @tc.name:
- * @tc.desc: The CANCEL_PAIRING stub writes a bool result into the reply parcel
+ * @tc.desc: The CANCEL_PAIRING stub writes the int32 error code into the reply parcel
  */
 HWTEST_F(HostStubTest, HostStub_ModuleTest_CancelPairingInner_00100, TestSize.Level1)
 {
@@ -169,41 +169,17 @@ HWTEST_F(HostStubTest, HostStub_ModuleTest_CancelPairingInner_00100, TestSize.Le
 
     int32_t ret = hostServer->CancelPairingInner(data, reply);
     EXPECT_EQ(ret, BT_NO_ERROR);
-    bool result = true;
-    EXPECT_TRUE(reply.ReadBool(result));
-    EXPECT_FALSE(result);
-    HILOGI("HostStub_ModuleTest_CancelPairingInner_00100 end, result:%d", result);
-}
-
-/**
- * @tc.number: CancelPairingByInitiatorInner_00100
- * @tc.name:
- * @tc.desc: The CANCEL_PAIRING_BY_INITIATOR stub writes an int32 error code into the reply parcel
- */
-HWTEST_F(HostStubTest, HostStub_ModuleTest_CancelPairingByInitiatorInner_00100, TestSize.Level1)
-{
-    HILOGI("HostStub_ModuleTest_CancelPairingByInitiatorInner_00100 start");
-
-    MessageParcel data;
-    MessageParcel reply;
-    int32_t transport = 1;
-    std::string address = "11:22:33:44:55:66";
-    data.WriteInt32(transport);
-    data.WriteString(address);
-
-    int32_t ret = hostServer->CancelPairingByInitiatorInner(data, reply);
-    EXPECT_EQ(ret, BT_NO_ERROR);
     int32_t errCode = BT_NO_ERROR;
     EXPECT_TRUE(reply.ReadInt32(errCode));
     EXPECT_TRUE(errCode == BT_ERR_DEVICE_NOT_PAIRING || errCode == BT_ERR_INVALID_STATE);
-    HILOGI("HostStub_ModuleTest_CancelPairingByInitiatorInner_00100 end, errCode:%d", errCode);
+    HILOGI("HostStub_ModuleTest_CancelPairingInner_00100 end, errCode:%d", errCode);
 }
 
 /**
  * @tc.number: CancelPairingPermItem_00100
  * @tc.name:
- * @tc.desc: The CANCEL_PAIRING permission item keeps the original system-hap gate (202 for
- *           third-party applications), api10+ permission set is exactly ACCESS_BLUETOOTH (201 model),
+ * @tc.desc: The CANCEL_PAIRING permission item is open to third-party applications:
+ *           no system-hap gate (no 202), api10+ permission set is exactly ACCESS_BLUETOOTH (201 model),
  *           and the api9 permission set keeps empty as before
  */
 HWTEST_F(HostStubTest, HostStub_ModuleTest_CancelPairingPermItem_00100, TestSize.Level1)
@@ -212,35 +188,6 @@ HWTEST_F(HostStubTest, HostStub_ModuleTest_CancelPairingPermItem_00100, TestSize
 
     auto it = BluetoothHostStub::memberFuncMap_.find(
         static_cast<uint32_t>(BluetoothHostInterfaceCode::CANCEL_PAIRING));
-    ASSERT_TRUE(it != BluetoothHostStub::memberFuncMap_.end());
-    std::shared_ptr<PermissionItem> permItem = it->second.second;
-    ASSERT_TRUE(permItem != nullptr);
-
-    EXPECT_TRUE(permItem->SystemHapNeeded());
-
-    std::set<std::string> permsApi10 = permItem->GetPermissions(API_VERSION_10);
-    EXPECT_EQ(permsApi10.size(), static_cast<size_t>(1));
-    EXPECT_TRUE(permsApi10.find("ohos.permission.ACCESS_BLUETOOTH") != permsApi10.end());
-
-    std::set<std::string> permsApi9 = permItem->GetPermissions(API_VERSION_9);
-    EXPECT_TRUE(permsApi9.empty());
-
-    HILOGI("HostStub_ModuleTest_CancelPairingPermItem_00100 end");
-}
-
-/**
- * @tc.number: CancelPairingByInitiatorPermItem_00100
- * @tc.name:
- * @tc.desc: The CANCEL_PAIRING_BY_INITIATOR permission item is open to third-party applications:
- *           no system-hap gate (no 202), api10+ permission set is exactly ACCESS_BLUETOOTH (201 model),
- *           and the api9 permission set keeps empty as before
- */
-HWTEST_F(HostStubTest, HostStub_ModuleTest_CancelPairingByInitiatorPermItem_00100, TestSize.Level1)
-{
-    HILOGI("HostStub_ModuleTest_CancelPairingByInitiatorPermItem_00100 start");
-
-    auto it = BluetoothHostStub::memberFuncMap_.find(
-        static_cast<uint32_t>(BluetoothHostInterfaceCode::CANCEL_PAIRING_BY_INITIATOR));
     ASSERT_TRUE(it != BluetoothHostStub::memberFuncMap_.end());
     std::shared_ptr<PermissionItem> permItem = it->second.second;
     ASSERT_TRUE(permItem != nullptr);
@@ -254,7 +201,7 @@ HWTEST_F(HostStubTest, HostStub_ModuleTest_CancelPairingByInitiatorPermItem_0010
     std::set<std::string> permsApi9 = permItem->GetPermissions(API_VERSION_9);
     EXPECT_TRUE(permsApi9.empty());
 
-    HILOGI("HostStub_ModuleTest_CancelPairingByInitiatorPermItem_00100 end");
+    HILOGI("HostStub_ModuleTest_CancelPairingPermItem_00100 end");
 }
 
 /**

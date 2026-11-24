@@ -354,7 +354,6 @@ enum BluetoothHostInterfaceCode {
     SET_BT_CHANNEL_SCAN,
     GET_BR_ADDRESS_BY_BLE_ADDRESS,
     GET_BLE_MAC_BY_BR_MAC,
-    CANCEL_PAIRING_BY_INITIATOR,
     // The last code, if you want to add a new code, please add it before this
     BT_HOST_BUTT
 };

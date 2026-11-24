@@ -295,9 +295,7 @@ public:
                     observer->OnStateChanged(transport, state);
                 }
             });
-            if (state == BTStateID::STATE_TURN_ON) {
-                impl_->LoadAppTypeCache();
-            }
+            HandleAdapterTurnOnOffState(state);
             if (state == BTStateID::STATE_TURN_ON || state == BTStateID::STATE_TURN_OFF) {
                 int32_t pid = IPCSkeleton::GetCallingPid();
                 int32_t uid = IPCSkeleton::GetCallingUid();
@@ -354,6 +352,19 @@ public:
     }
 
 private:
+    void HandleAdapterTurnOnOffState(const BTStateID state)
+    {
+        if (state == BTStateID::STATE_TURN_ON) {
+            impl_->LoadAppTypeCache();
+        }
+        if (state == BTStateID::STATE_TURN_OFF) {
+            // All ongoing pairings are aborted when bluetooth is turned off; drop the initiator
+            // ledger so that a stale record can never authorize cancelling a later pairing.
+            std::lock_guard<std::mutex> lock(impl_->pairRecordMutex_);
+            impl_->pairingInitiatorMap_.Clear();
+        }
+    }
+
     BluetoothHostServer::impl *impl_ = nullptr;
     BLUETOOTH_DISALLOW_COPY_AND_ASSIGN(AdapterStateObserver);
 };
@@ -582,8 +593,12 @@ public:
     // PAIR_NONE 收尾：配对/发起者台账清理、保留标志复位、移除已配对设备与虚拟设备联动
     void HandlePairCleared(const RawAddress &device)
     {
-        impl_->pairRecords_.Erase(device.GetAddress());
-        impl_->pairingInitiatorMap_.Erase(device.GetAddress());
+        {
+            // Keep the ledger access serialized with StartPair and CheckPairingInitiator.
+            std::lock_guard<std::mutex> lock(impl_->pairRecordMutex_);
+            impl_->pairRecords_.Erase(device.GetAddress());
+            impl_->pairingInitiatorMap_.Erase(device.GetAddress());
+        }
         BluetoothDeviceManager::GetInstance()->SetDeviceRetentionFlag(device, false);
         OHOS::bluetooth::ClassicConfig::GetInstance().RemovePairedDevice(device.GetAddress());
         HILOGI("start to remove virtual device");
@@ -2064,26 +2079,18 @@ int32_t BluetoothHostServer::StartCrediblePair(int32_t transport, const std::str
     return BT_ERR_INTERNAL_ERROR;
 }
 
-bool BluetoothHostServer::CancelPairing(int32_t transport, const std::string &address)
+int32_t BluetoothHostServer::CancelPairing(int32_t transport, const std::string &address)
 {
-    HILOGI("address: %{public}s", GET_ENCRYPT_STR_ADDR(address));
-    RawAddress addr(address);
-    RawAddress realAddr;
-    if (!BluetoothDeviceManager::GetInstance()->ConvertToRealAddress(addr, realAddr)) {
-        return false;
-    }
-    auto classicService = IAdapterManager::GetInstance()->GetClassicAdapterInterface();
-    CHECK_AND_RETURN_LOG_RET(classicService != nullptr, false, "transport invalid or BT current state is not enabled!");
-    return classicService->CancelPairing(realAddr);
-}
-
-int32_t BluetoothHostServer::CancelPairingByInitiator(int32_t transport, const std::string &address)
-{
+    // Shared by cancelPairingDevice (callback / promise) and setDevicePairingConfirmation(false).
+    // The legacy confirmation API maps 2900018/2900019 to 2900099 at the API frontend because
+    // its d.ts does not declare them.
     HILOGI("callingName(%{public}s, transport(%{public}d), address(%{public}s))",
         PermissionManager::GetCallingName().c_str(), transport, GET_ENCRYPT_STR_ADDR(address));
     RawAddress addr(address);
     RawAddress realAddr;
-    if (!BluetoothDeviceManager::GetInstance()->ConvertToRealAddress(addr, realAddr)) {
+    // Keep the address normalization consistent with GetPairState, otherwise the same device may
+    // be reported as pairing by getPairState while being rejected as not pairing by this API.
+    if (!BluetoothDeviceManager::GetInstance()->GetRealUsedAddress(addr, realAddr)) {
         HILOGE("address not exist");
         return BT_ERR_DEVICE_NOT_PAIRING;
     }
@@ -2112,6 +2119,12 @@ int32_t BluetoothHostServer::CheckPairingInitiator(const std::string &realAddr, 
     // keep the system pairing-dialog reject flow unchanged.
     if (isSystemHap) {
         return BT_NO_ERROR;
+    }
+    // An empty identity can never be verified against the ledger: comparing two empty strings
+    // would falsely treat different callers as the same application.
+    if (appIdentifier.empty() || pkgName.empty()) {
+        HILOGE("failed, caller identity is empty, the pairing initiator cannot be verified");
+        return BT_ERR_PAIRING_INITIATED_BY_OTHER;
     }
     PairRecord record;
     {

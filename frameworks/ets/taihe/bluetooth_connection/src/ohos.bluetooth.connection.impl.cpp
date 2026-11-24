@@ -795,9 +795,12 @@ void StopBluetoothDiscovery()
 void SetDevicePairingConfirmation(taihe::string_view deviceId, bool accept)
 {
     HILOGD("enter");
+    std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT,
+                                           BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE, BT_ERR_INTERNAL_ERROR };
+    TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
     std::string remoteAddr = std::string(deviceId);
     bool checkRet = CheckDeviceIdParam(remoteAddr);
-    TAIHE_BT_ASSERT_RETURN_VOID(checkRet, BT_ERR_INVALID_PARAM);
+    TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(checkRet, BT_ERR_INVALID_PARAM);
 
     HILOGI("SetDevicePairingConfirmation::accept = %{public}d", accept);
     BluetoothRemoteDevice remoteDevice = BluetoothRemoteDevice(remoteAddr);
@@ -805,9 +808,11 @@ void SetDevicePairingConfirmation(taihe::string_view deviceId, bool accept)
     if (accept) {
         ret = remoteDevice.SetDevicePairingConfirmation(accept);
     } else {
+        // Keep the legacy reject path: CANCEL_PAIRING only requires ACCESS_BLUETOOTH.
+        // 2900018/2900019 are not declared by this API and converge to 2900099 via _VERIFY.
         ret = remoteDevice.CancelPairing();
     }
-    TAIHE_BT_ASSERT_RETURN_VOID(ret == BT_NO_ERROR, ret);
+    TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(ret == BT_NO_ERROR, ret);
 }
 
 void ConnectAllowedProfilesSync(taihe::string_view deviceId)
@@ -900,14 +905,19 @@ void SetDevicePinCodeSync(taihe::string_view deviceId, taihe::string_view code)
 void CancelPairingDeviceSync(taihe::string_view deviceId)
 {
     HILOGD("enter");
+    std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT,
+                                           BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE,
+                                           BT_ERR_PAIRING_INITIATED_BY_OTHER, BT_ERR_DEVICE_NOT_PAIRING,
+                                           BT_ERR_INTERNAL_ERROR };
+    TAIHE_BT_CONTEXT_WITHOUT_HA(validErrCodes);
     std::string remoteAddr = std::string(deviceId);
     bool checkRet = CheckDeviceIdParam(remoteAddr);
-    TAIHE_BT_ASSERT_RETURN_VOID(checkRet, BT_ERR_INVALID_PARAM);
+    TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(checkRet, BT_ERR_INVALID_PARAM);
 
     BluetoothRemoteDevice remoteDevice = BluetoothRemoteDevice(remoteAddr);
-    int32_t err = remoteDevice.CancelPairingByInitiator();
+    int32_t err = remoteDevice.CancelPairing();
     HILOGI("err: %{public}d", err);
-    TAIHE_BT_ASSERT_RETURN_VOID(err == BT_NO_ERROR, err);
+    TAIHE_BT_ASSERT_RETURN_VOID_VERIFY(err == BT_NO_ERROR, err);
 }
 
 void CancelPairedDeviceSync(taihe::string_view deviceId)

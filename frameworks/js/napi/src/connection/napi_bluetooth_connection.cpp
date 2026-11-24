@@ -609,10 +609,13 @@ napi_value GetProfileConnectionStateEx(napi_env env, napi_callback_info info)
 napi_value SetDevicePairingConfirmation(napi_env env, napi_callback_info info)
 {
     HILOGD("enter");
+    std::vector<int32_t> validErrCodes = { BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT,
+                                           BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE, BT_ERR_INTERNAL_ERROR };
+    NAPI_BT_CONTEXT_WITHOUT_HA(env, validErrCodes);
     std::string remoteAddr{};
     bool accept = false;
     bool checkRet = CheckSetDevicePairingConfirmationParam(env, info, remoteAddr, accept);
-    NAPI_BT_ASSERT_RETURN_FALSE(env, checkRet, BT_ERR_INVALID_PARAM);
+    NAPI_BT_ASSERT_RETURN_FALSE_VERIFY(env, checkRet, BT_ERR_INVALID_PARAM);
 
     HILOGI("SetDevicePairingConfirmation::accept = %{public}d", accept);
     BluetoothRemoteDevice remoteDevice = BluetoothRemoteDevice(remoteAddr);
@@ -620,9 +623,11 @@ napi_value SetDevicePairingConfirmation(napi_env env, napi_callback_info info)
     if (accept) {
         ret = remoteDevice.SetDevicePairingConfirmation(accept);
     } else {
+        // Keep the legacy reject path: CANCEL_PAIRING only requires ACCESS_BLUETOOTH.
+        // 2900018/2900019 are not declared by this API and converge to 2900099 via _VERIFY.
         ret = remoteDevice.CancelPairing();
     }
-    NAPI_BT_ASSERT_RETURN_FALSE(env, ret == BT_NO_ERROR, ret);
+    NAPI_BT_ASSERT_RETURN_FALSE_VERIFY(env, ret == BT_NO_ERROR, ret);
     return NapiGetBooleanTrue(env);
 }
 
@@ -737,20 +742,6 @@ napi_status CheckDeviceAsyncParam(napi_env env, napi_callback_info info, std::st
     NAPI_BT_CALL_RETURN(napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
     NAPI_BT_RETURN_IF(argc != ARGS_SIZE_ONE && argc != ARGS_SIZE_TWO, "Requires 1 or 2 arguments", napi_invalid_arg);
     NAPI_BT_CALL_RETURN(NapiParseBdAddr(env, argv[PARAM0], addr));
-    return napi_ok;
-}
-
-// cancelPairingDevice has both a promise overload and a legacy callback overload (systemapi).
-// The two overloads declare different error code contracts, so the calling form is required.
-napi_status CheckCancelPairingDeviceParam(napi_env env, napi_callback_info info,
-    std::string &addr, bool &isCallbackForm)
-{
-    size_t argc = ARGS_SIZE_TWO;
-    napi_value argv[ARGS_SIZE_TWO] = {nullptr};
-    NAPI_BT_CALL_RETURN(napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
-    NAPI_BT_RETURN_IF(argc != ARGS_SIZE_ONE && argc != ARGS_SIZE_TWO, "Requires 1 or 2 arguments", napi_invalid_arg);
-    NAPI_BT_CALL_RETURN(NapiParseBdAddr(env, argv[PARAM0], addr));
-    isCallbackForm = (argc == ARGS_SIZE_TWO) && (NapiIsFunction(env, argv[PARAM1]) == napi_ok);
     return napi_ok;
 }
 
@@ -996,22 +987,24 @@ napi_value CancelPairingDevice(napi_env env, napi_callback_info info)
 {
     HILOGD("enter");
     std::vector<int32_t> validErrCodes = {
-        BT_ERR_PERMISSION_FAILED, BT_ERR_SYSTEM_PERMISSION_FAILED, BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT,
+        BT_ERR_PERMISSION_FAILED, BT_ERR_INVALID_PARAM, BT_ERR_API_NOT_SUPPORT,
         BT_ERR_SERVICE_DISCONNECTED, BT_ERR_INVALID_STATE, BT_ERR_PAIRING_INITIATED_BY_OTHER,
         BT_ERR_DEVICE_NOT_PAIRING, BT_ERR_INTERNAL_ERROR,
     };
     NAPI_BT_CONTEXT(env, "connection.CancelPairingDevice", validErrCodes);
     std::string remoteAddr{};
-    bool isCallbackForm = false;
-    bool checkRet = CheckCancelPairingDeviceParam(env, info, remoteAddr, isCallbackForm);
+    napi_status checkRet = CheckDeviceAsyncParam(env, info, remoteAddr);
     NAPI_BT_ASSERT_RETURN_UNDEF(env, checkRet == napi_ok, BT_ERR_INVALID_PARAM);
 
-    auto func = [remoteAddr, isCallbackForm]() {
+    auto func = [remoteAddr]() {
         BluetoothRemoteDevice remoteDevice = BluetoothRemoteDevice(remoteAddr);
-        // Route by call form: the callback overload keeps the legacy CancelPairing chain
-        // (systemapi, 202-gated, bool contract), while the promise overload takes the new
-        // initiator-aware chain whose error codes follow its d.ts throws contract.
-        int32_t err = isCallbackForm ? remoteDevice.CancelPairing() : remoteDevice.CancelPairingByInitiator();
+        // Both overloads declared in @ohos.bluetooth.connection.d.ts share the same contract:
+        // only the pairing initiated by the calling application can be cancelled (2900018),
+        // and the device must be in the pairing state (2900019). They reuse the CANCEL_PAIRING
+        // IPC, and the async work factory dispatches the callback and promise forms from the
+        // JS arguments.
+        int32_t err = remoteDevice.CancelPairing();
+        HILOGI("err: %{public}d", err);
         return NapiAsyncWorkRet(err);
     };
     auto asyncWork = CREATE_ASYNC_WORK_WITH_CONTEXT(env, info, func, ASYNC_WORK_NO_NEED_CALLBACK);

@@ -31,7 +31,11 @@ namespace OHOS {
 namespace CJSystemapi {
 namespace CJBluetoothConnection {
 using Bluetooth::BluetoothHost;
+using Bluetooth::BT_ERR_DEVICE_NOT_PAIRING;
+using Bluetooth::BT_ERR_INTERNAL_ERROR;
 using Bluetooth::BT_ERR_INVALID_PARAM;
+using Bluetooth::BT_ERR_IPC_TRANS_FAILED;
+using Bluetooth::BT_ERR_PAIRING_INITIATED_BY_OTHER;
 using Bluetooth::BT_NO_ERROR;
 using Bluetooth::BT_TRANSPORT_BREDR;
 using Bluetooth::BTConnectState;
@@ -165,7 +169,13 @@ void ConnectionImpl::SetDevicePairingConfirmation(std::string deviceId, bool acc
     if (accept) {
         *errCode = remoteDevice.SetDevicePairingConfirmation(accept);
     } else {
+        // Keep the legacy reject path: CANCEL_PAIRING only requires ACCESS_BLUETOOTH.
+        // 2900018/2900019/2900100 are not declared by this API and converge to 2900099.
         *errCode = remoteDevice.CancelPairing();
+        if (*errCode == BT_ERR_DEVICE_NOT_PAIRING || *errCode == BT_ERR_PAIRING_INITIATED_BY_OTHER ||
+            *errCode == BT_ERR_IPC_TRANS_FAILED) {
+            *errCode = BT_ERR_INTERNAL_ERROR;
+        }
     }
     return;
 }
