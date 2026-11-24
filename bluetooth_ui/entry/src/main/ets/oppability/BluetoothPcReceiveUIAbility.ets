@@ -611,12 +611,11 @@ export default class BluetoothReceiveUIAbility extends UIAbility {
         this.timeInterval = currentTimeInMsUsingGetTime;
 
         console.info(TAG, 'ready to pullUpSendProgressNotification');
-        this.isEnabledLive2 = systemParameterEnhance.getSync('persist.systemui.live2', 'false') == 'true';
-        console.info(TAG, 'this.isEnabledLive2 = ' + this.isEnabledLive2);
-
         let imagePixelMapButton: image.PixelMap | undefined = undefined;
         let imagePixelMapCapsule: image.PixelMap | undefined = undefined;
         try {
+            this.isEnabledLive2 = systemParameterEnhance.getSync('persist.systemui.live2', 'false') == 'true';
+            console.info(TAG, 'this.isEnabledLive2 = ' + this.isEnabledLive2);
             let drawableDescriptor1: DrawableDescriptor = this.context.resourceManager.getDrawableDescriptor($r('app.media.public_cancel_filled').id);
             imagePixelMapButton = drawableDescriptor1.getPixelMap();
             let drawableDescriptor2: DrawableDescriptor;

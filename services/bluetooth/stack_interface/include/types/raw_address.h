@@ -80,8 +80,8 @@ class RawAddress final {
 };
 
 inline std::ostream& operator<<(std::ostream& os, const RawAddress& a) {
-  os << a.ToString();
-  return os;
+    os << a.ToLogString();
+    return os;
 }
 
 #include <functional>
