@@ -593,8 +593,12 @@ public:
     // PAIR_NONE 收尾：配对/发起者台账清理、保留标志复位、移除已配对设备与虚拟设备联动
     void HandlePairCleared(const RawAddress &device)
     {
-        impl_->pairRecords_.Erase(device.GetAddress());
-        impl_->pairingInitiatorMap_.Erase(device.GetAddress());
+        {
+            // Keep the ledger access serialized with StartPair and CheckPairingInitiator.
+            std::lock_guard<std::mutex> lock(impl_->pairRecordMutex_);
+            impl_->pairRecords_.Erase(device.GetAddress());
+            impl_->pairingInitiatorMap_.Erase(device.GetAddress());
+        }
         BluetoothDeviceManager::GetInstance()->SetDeviceRetentionFlag(device, false);
         OHOS::bluetooth::ClassicConfig::GetInstance().RemovePairedDevice(device.GetAddress());
         HILOGI("start to remove virtual device");
@@ -2115,6 +2119,12 @@ int32_t BluetoothHostServer::CheckPairingInitiator(const std::string &realAddr, 
     // keep the system pairing-dialog reject flow unchanged.
     if (isSystemHap) {
         return BT_NO_ERROR;
+    }
+    // An empty identity can never be verified against the ledger: comparing two empty strings
+    // would falsely treat different callers as the same application.
+    if (appIdentifier.empty() || pkgName.empty()) {
+        HILOGE("failed, caller identity is empty, the pairing initiator cannot be verified");
+        return BT_ERR_PAIRING_INITIATED_BY_OTHER;
     }
     PairRecord record;
     {

@@ -627,6 +627,23 @@ HWTEST_F(HostServerTest, host_server_cancel_pairing_005, TestSize.Level1)
 }
 
 /**
+ * @tc.name: host_server_cancel_pairing_006
+ * @tc.desc: A caller with an empty identity can never match the ledger, even when the stored
+ *           record is empty as well, expect BT_ERR_PAIRING_INITIATED_BY_OTHER (2900018)
+ * @tc.type: FUNC
+ */
+HWTEST_F(HostServerTest, host_server_cancel_pairing_006, TestSize.Level1)
+{
+    HILOGI("host_server_cancel_pairing_006 enter");
+    std::string addr = "11:22:33:44:55:66";
+    hostServer_->pimpl->pairingInitiatorMap_.EnsureInsert(addr,
+        PairRecord {GetNowTimestamp(), "", "", true});
+    EXPECT_EQ(hostServer_->CheckPairingInitiator(addr, false, "", ""),
+        BT_ERR_PAIRING_INITIATED_BY_OTHER);
+    HILOGI("host_server_cancel_pairing_006 end");
+}
+
+/**
  * @tc.name: host_server_acl_001
  * @tc.desc: HostServerTest:
  * @tc.type: FUNC
