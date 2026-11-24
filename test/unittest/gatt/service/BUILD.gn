@@ -48,6 +48,11 @@ config("module_private_config") {
     "$BT_SERVICE_DIR/src/permission",
     "$BT_SERVICE_DIR/src/common",
     "$BT_SERVICE_DIR/src/util",
+    "$BT_SERVICE_DIR/src/dialog",
+    "$SUBSYSTEM_DIR/bluetooth/config",
+    "$PART_DIR/stack_interface/include",
+    "$PART_DIR/stack_interface/include/hardware",
+    "$PART_DIR/stack_interface/include/types",
   ]
   defines = [
     "BTFW_LOG_TAG = \"bluetooth_test\"",
