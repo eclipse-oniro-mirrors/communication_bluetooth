@@ -359,7 +359,8 @@ void MapMseContent::SetSmsMessageListingQueryParam(const std::string &folderName
     } else if (folderName == MAP_MSE_FOLDER_NAME_SENT) {
         predicates.EqualTo("is_sender", 0)->And()->NotEqualTo("session_id", -1);
     } else if (folderName == MAP_MSE_FOLDER_NAME_DELETED) {
-        predicates.EqualTo("session_id", -1);
+        HILOGI("LQ query deleted folder with condition delete_time > 0");
+        predicates.GreaterThan("delete_time", 0);
     } else if (folderName == MAP_MSE_FOLDER_NAME_OTHER) {
         predicates.EqualTo("session_id", 1);
     } else {
