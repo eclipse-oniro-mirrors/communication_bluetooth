@@ -19,6 +19,7 @@
 #include <cstdint>
 
 #include "bluetooth_errorcode.h"
+#include "bt_caller_identity.h"
 #include "interface_adapter_manager.h"
 #include "ipc_skeleton.h"
 #include "permission_manager.h"
@@ -39,7 +40,7 @@ namespace bluetooth {
  *
  * @return Bluetooth::BT_NO_ERROR 放行；否则返回对应错误码。
  */
-inline int32_t CheckBleHalfStateForCaller()
+inline int32_t CheckBleHalfState(const CallerIdentity *caller)
 {
     IAdapterManager *adapterManager = IAdapterManager::GetInstance();
     if (adapterManager == nullptr) {
@@ -53,17 +54,41 @@ inline int32_t CheckBleHalfStateForCaller()
     if (!isBleOn) {
         return Bluetooth::BT_ERR_INVALID_STATE;
     }
-    int32_t pid = IPCSkeleton::GetCallingPid();
-    uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
+    if (caller == nullptr) {
+        int32_t pid = IPCSkeleton::GetCallingPid();
+        uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
+        if (adapterManager->IsBleOwnerMode()) {
+            return adapterManager->IsBleOwnerModeApp(pid) ?
+                Bluetooth::BT_NO_ERROR : Bluetooth::BT_ERR_RESTRICT_STATE;
+        }
+        // IsSystemHap 对 native/shell 亦返回 true（非 HAP 类型视为系统侧），故无需再判 IsNativeCaller
+        if (Bluetooth::PermissionManager::IsSystemHap(fullTokenId)) {
+            return Bluetooth::BT_NO_ERROR;
+        }
+        return Bluetooth::BT_ERR_RESTRICT_STATE;
+    }
     if (adapterManager->IsBleOwnerMode()) {
-        return adapterManager->IsBleOwnerModeApp(pid) ?
+        return adapterManager->IsBleOwnerModeApp(caller->pid) ?
             Bluetooth::BT_NO_ERROR : Bluetooth::BT_ERR_RESTRICT_STATE;
     }
     // IsSystemHap 对 native/shell 亦返回 true（非 HAP 类型视为系统侧），故无需再判 IsNativeCaller
-    if (Bluetooth::PermissionManager::IsSystemHap(fullTokenId)) {
+    if (caller->IsSystemHap()) {
         return Bluetooth::BT_NO_ERROR;
     }
     return Bluetooth::BT_ERR_RESTRICT_STATE;
+}
+
+inline int32_t CheckBleHalfStateForCaller()
+{
+    return CheckBleHalfState(nullptr);
+}
+
+/**
+ * @brief 复用入口采集的调用方身份，避免半开态下重复读取 IPCSkeleton/AccessTokenKit。
+ */
+inline int32_t CheckBleHalfStateForCaller(const CallerIdentity &caller)
+{
+    return CheckBleHalfState(&caller);
 }
 
 } // namespace bluetooth

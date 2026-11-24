@@ -28,6 +28,7 @@
 
 #include "bluetooth_device_manager.h"
 #include "bluetooth_errorcode.h"
+#include "bt_caller_identity.h"
 #include "bt_state_check.h"
 #include "bluetooth_hitrace.h"
 #include "bluetooth_log.h"
@@ -534,19 +535,20 @@ int BluetoothGattClientServer::DiscoveryServices(int32_t appId)
 int BluetoothGattClientServer::ReadCharacteristic(int32_t appId, const BluetoothGattCharacteristic &characteristic)
 {
     HILOGI("appId: %{public}d", appId);
-    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    const bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller(caller);
     CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     if (pimpl->clientService_ == nullptr) {
         HILOGE("request not support.");
         return BT_ERR_INTERNAL_ERROR;
     }
-    int32_t uid = IPCSkeleton::GetCallingUid();
-    int32_t pid = IPCSkeleton::GetCallingPid();
+    int32_t uid = caller.uid;
+    int32_t pid = caller.pid;
 #ifdef RES_SCHED_SUPPORT
     OHOS::bluetooth::FreezeUtil::GetInstance()->RequestActive(pid, uid, "ReadCharacteristic");
 #endif
-    std::string appName = PermissionManager::GetCallingName();
+    std::string appName = PermissionManager::GetCallingName(caller.tokenId);
     bluetooth::BtChrAppBehaviorReporter::GetInstance().ReportAppBehavior(
         { .appName = appName, .appUid = uid, .appPid = pid, .businessType = bluetooth::GATT_TRANSFER });
     return pimpl->clientService_->ReadCharacteristic(appId, (Characteristic)characteristic);
@@ -575,9 +577,10 @@ int BluetoothGattClientServer::ReadCharacteristicByUuid(int32_t appId, const std
 int BluetoothGattClientServer::WriteCharacteristic(int32_t appId, BluetoothGattCharacteristic *characteristic,
     bool withoutRespond, bool isWithContext)
 {
-    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    const bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller(caller);
     CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
-    if (isWithContext && !PermissionManager::IsSystemHap()) {
+    if (isWithContext && !caller.IsSystemHap()) {
         // WriteCharacteristicWithContext is a private solution for smartLock product and system HAPs.
         HILOGE("Non-system applications are not allowed to use system APIs.");
         return BT_ERR_SYSTEM_PERMISSION_FAILED;
@@ -591,12 +594,12 @@ int BluetoothGattClientServer::WriteCharacteristic(int32_t appId, BluetoothGattC
         HILOGE("request not support.");
         return BT_ERR_GATT_CLIENT_ERROR;
     }
-    int32_t uid = IPCSkeleton::GetCallingUid();
-    int32_t pid = IPCSkeleton::GetCallingPid();
+    int32_t uid = caller.uid;
+    int32_t pid = caller.pid;
 #ifdef RES_SCHED_SUPPORT
     OHOS::bluetooth::FreezeUtil::GetInstance()->RequestActive(pid, uid, "WriteCharacteristic");
 #endif
-    std::string appName = PermissionManager::GetCallingName();
+    std::string appName = PermissionManager::GetCallingName(caller.tokenId);
     bluetooth::BtChrAppBehaviorReporter::GetInstance().ReportAppBehavior(
         { .appName = appName, .appUid = uid, .appPid = pid, .businessType = bluetooth::GATT_TRANSFER });
     return pimpl->clientService_->WriteCharacteristic(appId, character, withoutRespond);
@@ -621,19 +624,20 @@ int BluetoothGattClientServer::SignedWriteCharacteristic(int32_t appId, Bluetoot
 int BluetoothGattClientServer::ReadDescriptor(int32_t appId, const BluetoothGattDescriptor &descriptor)
 {
     HILOGI("appId: %{public}d", appId);
-    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    const bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller(caller);
     CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     if (pimpl->clientService_ == nullptr) {
         HILOGE("request not support.");
         return BT_ERR_INTERNAL_ERROR;
     }
-    int32_t uid = IPCSkeleton::GetCallingUid();
-    int32_t pid = IPCSkeleton::GetCallingPid();
+    int32_t uid = caller.uid;
+    int32_t pid = caller.pid;
 #ifdef RES_SCHED_SUPPORT
     OHOS::bluetooth::FreezeUtil::GetInstance()->RequestActive(pid, uid, "ReadDescriptor");
 #endif
-    std::string appName = PermissionManager::GetCallingName();
+    std::string appName = PermissionManager::GetCallingName(caller.tokenId);
     bluetooth::BtChrAppBehaviorReporter::GetInstance().ReportAppBehavior(
         { .appName = appName, .appUid = uid, .appPid = pid, .businessType = bluetooth::GATT_TRANSFER });
     return pimpl->clientService_->ReadDescriptor(appId, (Descriptor)descriptor);
@@ -642,7 +646,8 @@ int BluetoothGattClientServer::ReadDescriptor(int32_t appId, const BluetoothGatt
 int BluetoothGattClientServer::WriteDescriptor(int32_t appId, BluetoothGattDescriptor *descriptor)
 {
     HILOGI("appId: %{public}d", appId);
-    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    const bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller(caller);
     CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     Descriptor desc(descriptor->handle_);
     desc.length_ = descriptor->length_;
@@ -653,12 +658,12 @@ int BluetoothGattClientServer::WriteDescriptor(int32_t appId, BluetoothGattDescr
         HILOGE("request not support.");
         return BT_ERR_INTERNAL_ERROR;
     }
-    int32_t uid = IPCSkeleton::GetCallingUid();
-    int32_t pid = IPCSkeleton::GetCallingPid();
+    int32_t uid = caller.uid;
+    int32_t pid = caller.pid;
 #ifdef RES_SCHED_SUPPORT
     OHOS::bluetooth::FreezeUtil::GetInstance()->RequestActive(pid, uid, "WriteDescriptor");
 #endif
-    std::string appName = PermissionManager::GetCallingName();
+    std::string appName = PermissionManager::GetCallingName(caller.tokenId);
     bluetooth::BtChrAppBehaviorReporter::GetInstance().ReportAppBehavior(
         { .appName = appName, .appUid = uid, .appPid = pid, .businessType = bluetooth::GATT_TRANSFER });
     return pimpl->clientService_->WriteDescriptor(appId, desc);
@@ -709,19 +714,20 @@ int BluetoothGattClientServer::RequestConnectionPriority(int32_t appId, int32_t 
 int BluetoothGattClientServer::GetServices(int32_t appId, ::std::vector<BluetoothGattService> &service)
 {
     HILOGI("appId: %{public}d", appId);
-    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    const bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller(caller);
     CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     if (pimpl->clientService_ == nullptr) {
         HILOGE("request not support.");
         return BT_ERR_INTERNAL_ERROR;
     }
-    int32_t uid = IPCSkeleton::GetCallingUid();
-    int32_t pid = IPCSkeleton::GetCallingPid();
+    int32_t uid = caller.uid;
+    int32_t pid = caller.pid;
 #ifdef RES_SCHED_SUPPORT
     OHOS::bluetooth::FreezeUtil::GetInstance()->RequestActive(pid, uid, "GetServices");
 #endif
-    std::string appName = PermissionManager::GetCallingName();
+    std::string appName = PermissionManager::GetCallingName(caller.tokenId);
     bluetooth::BtChrAppBehaviorReporter::GetInstance().ReportAppBehavior(
         { .appName = appName, .appUid = uid, .appPid = pid, .businessType = bluetooth::GATT_TRANSFER });
     for (auto &svc : pimpl->clientService_->GetServices(appId)) {
