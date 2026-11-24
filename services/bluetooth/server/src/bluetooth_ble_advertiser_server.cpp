@@ -26,6 +26,7 @@
 #include "log_utils.h"
 #include "bluetooth_ble_central_manager_server.h"
 #include "bluetooth_errorcode.h"
+#include "bt_state_check.h"
 #include "bluetooth_log.h"
 #include "ble_defs.h"
 #include "bt_chr_dft_statictics.h"
@@ -389,6 +390,8 @@ int BluetoothBleAdvertiserServer::StartAdvertising(const BluetoothBleAdvertiserS
     const BluetoothBleAdvertiserData &advData, const BluetoothBleAdvertiserData &scanResponse, int32_t advHandle,
     uint16_t duration, bool isRawData)
 {
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     if (advData.HasAdvertiseName() || scanResponse.HasAdvertiseName()) {
         bool hasAdvNamePerm = PermissionManager::VerifyPermission(MANAGE_BLUETOOTH_ADVERTISER_NAME);
         if (!hasAdvNamePerm) {
@@ -422,6 +425,8 @@ int BluetoothBleAdvertiserServer::StartAdvertising(const BluetoothBleAdvertiserS
 int BluetoothBleAdvertiserServer::EnableAdvertising(uint8_t advHandle, uint16_t duration)
 {
     HILOGI("advHandle: %{public}d, duration: %{public}d", advHandle, duration);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     int pid = IPCSkeleton::GetCallingPid();
     int uid = IPCSkeleton::GetCallingUid();
     if (!pimpl->applications->IsApplicationAdv(pid, uid, advHandle)) {
@@ -524,6 +529,8 @@ void BluetoothBleAdvertiserServer::DeregisterBleAdvertiserCallback(const sptr<IB
 int32_t BluetoothBleAdvertiserServer::GetAdvertiserHandle(int32_t &advHandle,
     const sptr<IBluetoothBleAdvertiseCallback> &callback)
 {
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
     if (bleService == nullptr) {
         HILOGE("request not support.");
@@ -568,6 +575,8 @@ void BluetoothBleAdvertiserServer::SetAdvertisingData(const BluetoothBleAdvertis
     const BluetoothBleAdvertiserData &scanResponse, int32_t advHandle, bluetooth::SetAdvDataType type)
 {
     HILOGI("advHandle: %{public}d, type: %{public}d", advHandle, type);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG(stateCheckRet == BT_NO_ERROR, "ble half state not allowed, ret: %{public}d", stateCheckRet);
     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
     if (bleService) {
         BleAdvertiserDataImpl bleAdvertiserData = pimpl->ConvertAdvertisingData(advData);
@@ -591,6 +600,8 @@ void BluetoothBleAdvertiserServer::SetAdvertisingData(const BluetoothBleAdvertis
 int BluetoothBleAdvertiserServer::ChangeAdvertisingParams(uint8_t advHandle,
     const BluetoothBleAdvertiserSettings &settings)
 {
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::string callingName = PermissionManager::GetCallingName();
     HILOGI("callingName(%{public}s), advHandle:%{public}u,minterval=%{public}d", callingName.c_str(), advHandle,
         settings.GetInterval());
@@ -606,6 +617,8 @@ int BluetoothBleAdvertiserServer::ChangeAdvertisingParams(uint8_t advHandle,
 int BluetoothBleAdvertiserServer::GetAdvPowerForRangingBusiness(bluetooth::BleAppType appType, int8_t &advpower)
 {
     HILOGI("GetAdvPowerForRangingBusiness appType: %{public}d", appType);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
     if (bleService == nullptr) {
         HILOGE("request not support.");
@@ -619,6 +632,8 @@ int BluetoothBleAdvertiserServer::GetAdvPowerForRangingBusiness(bluetooth::BleAp
 int BluetoothBleAdvertiserServer::BleRestoreRangingAntSwitch(bluetooth::BleAppType appType)
 {
     HILOGI("BleRestoreRangingAntSwitch appType: %{public}d", appType);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
     if (bleService == nullptr) {
         HILOGE("request not support.");

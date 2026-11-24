@@ -25,6 +25,7 @@
 
 #include "bluetooth_device_manager.h"
 #include "bluetooth_errorcode.h"
+#include "bt_state_check.h"
 #include "bluetooth_log.h"
 #include "bluetooth_utils_server.h"
 #include "gatt_data.h"
@@ -281,7 +282,7 @@ public:
         }
         callback_->OnBlePhyUpdate(bluetoothDevice, txPhy, rxPhy, status);
     }
- 
+
     void OnBlePhyRead(int32_t txPhy, int32_t rxPhy, int32_t status) override
     {
         HILOGI("txPhy: %{public}d, rxPhy: %{public}d, status: %{public}d", txPhy, rxPhy, status);
@@ -431,6 +432,8 @@ BluetoothGattServerServer::impl::~impl()
 int BluetoothGattServerServer::AddService(int32_t appId, BluetoothGattService *services)
 {
     HILOGI("appId: %{public}d", appId);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     if (!pimpl->serverService_) {
         HILOGE("serverService_ is null");
@@ -457,6 +460,8 @@ int BluetoothGattServerServer::ClearServices(int appId)
 int BluetoothGattServerServer::Connect(int appId, const BluetoothGattDevice &device, bool isDirect)
 {
     HILOGI("appId: %{public}d, addr: %{public}s, isDirect: %{public}d", appId, GET_ENCRYPT_GATT_ADDR(device), isDirect);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
 
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     CHECK_AND_RETURN_LOG_RET(pimpl->serverService_, BT_ERR_INTERNAL_ERROR, "serverService_ is null");
@@ -486,6 +491,8 @@ int BluetoothGattServerServer::NotifyClient(
     const BluetoothGattDevice &device, BluetoothGattCharacteristic *characteristic, bool needConfirm)
 {
     HILOGI("addr: %{public}s, needConfirm: %{public}d", GET_ENCRYPT_GATT_ADDR(device), needConfirm);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     if (!pimpl->serverService_) {
         HILOGE("serverService_ is null");
@@ -521,6 +528,8 @@ int BluetoothGattServerServer::RespondCharacteristicRead(
     const BluetoothGattDevice &device, BluetoothGattCharacteristic *characteristic, int32_t ret)
 {
     HILOGI("addr: %{public}s, ret: %{public}d", GET_ENCRYPT_GATT_ADDR(device), ret);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     if (!pimpl->serverService_) {
         HILOGE("serverService_ is null");
@@ -543,6 +552,8 @@ int BluetoothGattServerServer::RespondCharacteristicWrite(
     const BluetoothGattDevice &device, const BluetoothGattCharacteristic &characteristic, int32_t ret)
 {
     HILOGI("addr: %{public}s, ret: %{public}d", GET_ENCRYPT_GATT_ADDR(device), ret);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     if (!pimpl->serverService_) {
         HILOGE("serverService_ is null");
@@ -562,6 +573,8 @@ int BluetoothGattServerServer::RespondDescriptorRead(
     const BluetoothGattDevice &device, BluetoothGattDescriptor *descriptor, int32_t ret)
 {
     HILOGI("addr: %{public}s, ret: %{public}d", GET_ENCRYPT_GATT_ADDR(device), ret);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     if (!pimpl->serverService_) {
         HILOGE("serverService_ is null");
@@ -584,6 +597,8 @@ int BluetoothGattServerServer::RespondDescriptorWrite(
     const BluetoothGattDevice &device, const BluetoothGattDescriptor &descriptor, int32_t ret)
 {
     HILOGI("addr: %{public}s, ret: %{public}d", GET_ENCRYPT_GATT_ADDR(device), ret);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     if (!pimpl->serverService_) {
         HILOGE("serverService_ is null");
@@ -688,6 +703,8 @@ BluetoothGattServerServer::~BluetoothGattServerServer()
 
 int BluetoothGattServerServer::GetConnectedState(const std::string &deviceId, int &state)
 {
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     RawAddress address(deviceId);
     RawAddress realUsedAddress = BluetoothDeviceManager::GetInstance()->GetRealUsedAddress(address);
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
@@ -703,6 +720,8 @@ int BluetoothGattServerServer::GetConnectedState(const std::string &deviceId, in
 int BluetoothGattServerServer::SetPhy(int32_t appId,
     const std::string &deviceId, int32_t txPhy, int32_t rxPhy, int32_t phyOptions)
 {
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     RawAddress address(deviceId);
     RawAddress realUsedAddress = BluetoothDeviceManager::GetInstance()->GetRealUsedAddress(address);
@@ -712,9 +731,11 @@ int BluetoothGattServerServer::SetPhy(int32_t appId,
     }
     return pimpl->serverService_->SetPhy(appId, realUsedAddress, txPhy, rxPhy, phyOptions);
 }
- 
+
 int BluetoothGattServerServer::ReadPhy(int32_t appId, const std::string &deviceId)
 {
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     RawAddress address(deviceId);
     RawAddress realUsedAddress = BluetoothDeviceManager::GetInstance()->GetRealUsedAddress(address);

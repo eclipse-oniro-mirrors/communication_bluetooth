@@ -89,6 +89,8 @@ public:
     BluetoothBleCentralManagerServer::impl implTest ;
 };
 
+static void *BleAdapterCreate(void);
+
 void BluetoothBleCentralManagerServerTest::SetUpTestSuite(void)
 {
     HILOGI("SetUpTestCase start");
@@ -103,6 +105,12 @@ void BluetoothBleCentralManagerServerTest::SetUpTestSuite(void)
         host_->EnableBt();
         sleep(TIME);
     }
+    // 测试进程内的 AdapterManager 与设备 SA 不同进程，需显式创建 adapter 并置为开启
+    AdapterConfig::GetInstance()->Load();
+    ClassFactory::RegisterClass("BleAdapter", BleAdapterCreate);
+    AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
 
     HILOGI("SetUpTestCase end");
 }
@@ -154,6 +162,8 @@ HWTEST_F(BluetoothBleCentralManagerServerTest, BleServer_ModuleTest_Init001, Tes
     AdapterConfig::GetInstance()->Load();
     ClassFactory::RegisterClass("BleAdapter", BleAdapterCreate);
     AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
     wptr<BluetoothBleCentralManagerServer> wptr {nullptr};
     bluetoothBleCentralManagerServer->Init(wptr);
     wptr = new BluetoothBleCentralManagerServer();
@@ -267,6 +277,8 @@ HWTEST_F(BluetoothBleCentralManagerServerTest, BleServer_ModuleTest_FreezeByRss0
     AdapterConfig::GetInstance()->Load();
     ClassFactory::RegisterClass("BleAdapter", BleAdapterCreate);
     AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
 
     sptr<BluetoothBleAdvertiserServer> object = new BluetoothBleAdvertiserServer();
     sptr<IRemoteObject> remote = object->AsObject();
@@ -282,6 +294,8 @@ HWTEST_F(BluetoothBleCentralManagerServerTest, BleServer_ModuleTest_FreezeByRss0
 
     ClassFactory::RegisterClass("BleAdapter", BleAdapterCreateNull);
     AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
     HILOGI("BleServer_ModuleTest_FreezeByRss004 end");
 }
 
@@ -296,6 +310,8 @@ HWTEST_F(BluetoothBleCentralManagerServerTest, BleServer_ModuleTest_FreezeByRss0
     AdapterConfig::GetInstance()->Load();
     ClassFactory::RegisterClass("BleAdapter", BleAdapterCreate);
     AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
 
     sptr<BluetoothBleAdvertiserServer> object = new BluetoothBleAdvertiserServer();
     sptr<IRemoteObject> remote = object->AsObject();
@@ -312,6 +328,8 @@ HWTEST_F(BluetoothBleCentralManagerServerTest, BleServer_ModuleTest_FreezeByRss0
 
     ClassFactory::RegisterClass("BleAdapter", BleAdapterCreateNull);
     AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
     HILOGI("BleServer_ModuleTest_FreezeByRss005 end");
 }
 
@@ -386,6 +404,8 @@ HWTEST_F(BluetoothBleCentralManagerServerTest, BleServer_ModuleTest_ConfigScanFi
     AdapterConfig::GetInstance()->Load();
     ClassFactory::RegisterClass("BleAdapter", BleAdapterCreate);
     AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
     EXPECT_EQ(bluetoothBleCentralManagerServer->ConfigScanFilterInner(scannerId, setting, filters), BT_NO_ERROR);
     HILOGI("BleServer_ModuleTest_ConfigScanFilterInner001 end");
 }
@@ -528,6 +548,8 @@ HWTEST_F(BluetoothBleCentralManagerServerTest, BleServer_ModuleTest_UpdateScanFi
     AdapterConfig::GetInstance()->Load();
     ClassFactory::RegisterClass("BleAdapter", BleAdapterCreate);
     AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
     EXPECT_NE(bluetoothBleCentralManagerServer->UpdateScanFilterInner(0, settings, filters, 1), BT_NO_ERROR);
     EXPECT_NE(bluetoothBleCentralManagerServer->UpdateScanFilterInner(0, settings, filters, 3), BT_NO_ERROR);
     EXPECT_NE(bluetoothBleCentralManagerServer->UpdateScanFilterInner(0, settings, filters, 2), BT_NO_ERROR);
@@ -571,6 +593,8 @@ HWTEST_F(BluetoothBleCentralManagerServerTest, BleServer_ModuleTest_UpdateScanFi
     AdapterConfig::GetInstance()->Load();
     ClassFactory::RegisterClass("BleAdapter", BleAdapterCreate);
     AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
 
     sptr<BluetoothBleAdvertiserServer> object = new BluetoothBleAdvertiserServer();
     sptr<IRemoteObject> remote = object->AsObject();
@@ -687,6 +711,8 @@ HWTEST_F(BluetoothBleCentralManagerServerTest, BleCentralManagerServer_enable001
 
     ClassFactory::RegisterClass("BleAdapter", BleAdapterCreate);
     AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
 
     std::set<int> pidSet {0};
     bluetoothBleCentralManagerServer->FreezeByRss(pidSet, false, 0);
@@ -750,6 +776,8 @@ HWTEST_F(BluetoothBleCentralManagerServerTest, BleCentralManagerServer_enable001
 
     ClassFactory::RegisterClass("BleAdapter", BleAdapterCreateNull);
     AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
 
     HILOGI("BleCentralManagerServer_enable001 end");
 }

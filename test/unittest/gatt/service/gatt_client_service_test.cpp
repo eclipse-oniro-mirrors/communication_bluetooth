@@ -14,11 +14,15 @@
  */
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include "class_creator.h"
+#include "ble_adapter.h"
 #include <future>
 #include <memory>
 
 #include "btgatt_client_interface_mock.h"
 #include "gatt_client_service.h"
+#include "adapter_manager.h"
+#include "adapter_config.h"
 #include "bluetooth_gatt_interface.h"
 #include "btgatt_interface_inner.h"
 #include "gatt_client_callback_mock.h"
@@ -83,6 +87,11 @@ public:
 private:
 };
 
+static void *BleAdapterCreate(void)
+{
+    return new BleAdapter();
+}
+
 void GattClientServiceTest::SetUpTestSuite(void)
 {
     HILOGI("SetUpTestCase start");
@@ -97,6 +106,12 @@ void GattClientServiceTest::SetUpTestSuite(void)
         host_->EnableBt();
         sleep(TIME);
     }
+    // 测试进程内的 AdapterManager 与设备 SA 不同进程，需显式创建 adapter 并置为开启
+    AdapterConfig::GetInstance()->Load();
+    ClassFactory::RegisterClass("BleAdapter", BleAdapterCreate);
+    AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
     BluetoothGattInterface::GetInstance()->Initialize(&g_btgattInterface);
     auto manager = ProfileServiceManager::GetInstance();
     std::string profileName = "GattClientService";

@@ -14,10 +14,14 @@
  */
 
 #include <gtest/gtest.h>
+#include "class_creator.h"
+#include "ble_adapter.h"
 #include <gmock/gmock.h>
 
 #include "bluetooth_access_token_mock.h"
 #include "bluetooth_errorcode.h"
+#include "adapter_manager.h"
+#include "adapter_config.h"
 #include "bluetooth_gatt_server_server.cpp"
 #include "bluetooth_gatt_server_callback_stub.h"
 #include "bluetooth_gatt_server_callback_proxy.h"
@@ -256,6 +260,11 @@ public:
     std::unique_ptr<BluetoothGattServerServer::impl::GattServerCallbackImpl> gattServerCallbackImpl {nullptr};
 };
 
+static void *BleAdapterCreate(void)
+{
+    return new BleAdapter();
+}
+
 void BlueToothGattServerServerTest::SetUpTestSuite(void)
 {
     HILOGI("SetUpTestCase start");
@@ -271,6 +280,12 @@ void BlueToothGattServerServerTest::SetUpTestSuite(void)
         host_->EnableBt();
         sleep(TIME);
     }
+    // 测试进程内的 AdapterManager 与设备 SA 不同进程，需显式创建 adapter 并置为开启
+    AdapterConfig::GetInstance()->Load();
+    ClassFactory::RegisterClass("BleAdapter", BleAdapterCreate);
+    AdapterManager::GetInstance()->CreateAdapters();
+    AdapterManager::GetInstance()->UpdateBluetoothState(
+        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
 
     HILOGI("SetUpTestCase end");
 }

@@ -29,6 +29,7 @@
 #include "bt_chr_ue_manager.h"
 #include "btif_dm.h"
 #include "btif_gatt.h"
+#include "bt_state_check.h"
 #include "class_creator.h"
 #include "gatt_client_application.h"
 #include "gatt_service_base.h"
@@ -418,11 +419,10 @@ int GattClientService::Connect(int appId, bool autoConnect)
     std::string callingname = Bluetooth::PermissionManager::GetCallingName();
     bool isAllowed = BluetoothConnectionManager::GetInstance()->IsNativeAppOrSystemHap();
     HILOGI("callingName(%{public}s); IsNativeApp : %{public}d", callingname.c_str(), isAllowed);
-    if (IAdapterManager::GetInstance()->IsBluetoothRestricted()) {
-        if (!isAllowed) {
-            HILOGW("just allow system hap and native app connect gatt");
-            return Bluetooth::BT_ERR_RESTRICT_STATE;
-        }
+    int32_t stateCheckRet = CheckBleHalfStateForCaller();
+    if (stateCheckRet != Bluetooth::BT_NO_ERROR) {
+        HILOGW("gatt connect rejected by state check: %{public}d", stateCheckRet);
+        return stateCheckRet;
     }
 
     std::string pkgName = Bluetooth::PermissionManager::GetCallingName();
