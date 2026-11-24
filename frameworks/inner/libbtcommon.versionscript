@@ -1,7 +1,9 @@
 # Export list for libbtcommon.z.so. Generated from the built artifact's dynamic
-# symbol table (llvm-nm -D --defined-only) and frozen: anonymous
-# version node, explicit enumeration, no wildcards.
-# Re-generate only for intentional ABI changes.
+# symbol table (llvm-nm -D --defined-only) and frozen: anonymous version
+# node, explicit enumeration. C++ symbols whose signature contains a
+# bit-width dependent type (size_t / long / int64_t, i.e. 'm'/'l' on LP64 vs
+# 'j'/'x' on ILP32) are listed as '<name-prefix>*' so one list serves both
+# 32-bit and 64-bit products. Re-generate only for intentional ABI changes.
 {
   global:
     _ZN4OHOS9Bluetooth12ParcelBtUuid13WriteToParcelERNS_13MessageParcelERNS_9bluetooth4UuidE;
@@ -78,7 +80,7 @@
     _ZN4OHOS9Bluetooth22BluetoothSocketCocInfo13UnmarshallingERNS_6ParcelE;
     _ZN4OHOS9Bluetooth22BluetoothSocketCocInfo13WriteToParcelERNS_6ParcelE;
     _ZN4OHOS9Bluetooth22BluetoothSocketCocInfo14ReadFromParcelERNS_6ParcelE;
-    _ZN4OHOS9Bluetooth22IsValidSDPSettingParamERKNSt3__h12basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEEm;
+    _ZN4OHOS9Bluetooth22IsValidSDPSettingParamE*;
     _ZN4OHOS9Bluetooth23BluetoothGattDescriptor13UnmarshallingERNS_6ParcelE;
     _ZN4OHOS9Bluetooth23BluetoothGattDescriptor13WriteToParcelERNS_6ParcelE;
     _ZN4OHOS9Bluetooth23BluetoothGattDescriptor14ReadFromParcelERNS_6ParcelE;
@@ -120,40 +122,36 @@
     _ZN4OHOS9Bluetooth31BluetoothA2dpOffloadCodecStatus14ReadFromParcelERNS_6ParcelE;
     _ZN4OHOS9Bluetooth31BluetoothIOppTransferFileHolder13UnmarshallingERNS_6ParcelE;
     _ZN4OHOS9Bluetooth31BluetoothIOppTransferFileHolder14ReadFromParcelERNS_6ParcelE;
+    _ZN4OHOS9Bluetooth31BluetoothIOppTransferFileHolderC1E*;
     _ZN4OHOS9Bluetooth31BluetoothIOppTransferFileHolderC1ERKNS_9bluetooth22IOppTransferFileHolderE;
-    _ZN4OHOS9Bluetooth31BluetoothIOppTransferFileHolderC1ERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEERKlRKi;
+    _ZN4OHOS9Bluetooth31BluetoothIOppTransferFileHolderC2E*;
     _ZN4OHOS9Bluetooth31BluetoothIOppTransferFileHolderC2ERKNS_9bluetooth22IOppTransferFileHolderE;
-    _ZN4OHOS9Bluetooth31BluetoothIOppTransferFileHolderC2ERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEERKlRKi;
     _ZN4OHOS9Bluetooth32BluetoothIOppTransferInformation13UnmarshallingERNS_6ParcelE;
     _ZN4OHOS9Bluetooth32BluetoothIOppTransferInformation14ReadFromParcelERNS_6ParcelE;
     _ZN4OHOS9Bluetooth32BluetoothIOppTransferInformationC1ERKNS_9bluetooth23IOppTransferInformationE;
     _ZN4OHOS9Bluetooth32BluetoothIOppTransferInformationC2ERKNS_9bluetooth23IOppTransferInformationE;
-    _ZN4OHOS9bluetooth10AvrcMeItemC1EhmhhRKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEERKNS2_6vectorIjNS6_IjEEEERKNSB_IS8_NS6_IS8_EEEE;
-    _ZN4OHOS9bluetooth10AvrcMeItemC2EhmhhRKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEERKNS2_6vectorIjNS6_IjEEEERKNSB_IS8_NS6_IS8_EEEE;
+    _ZN4OHOS9bluetooth10AvrcMeItemC1E*;
+    _ZN4OHOS9bluetooth10AvrcMeItemC2E*;
     _ZN4OHOS9bluetooth10AvrcMpItemC1EhthjhRKNSt3__h6vectorIhNS2_9allocatorIhEEEERKNS2_12basic_stringIcNS2_11char_traitsIcEENS4_IcEEEE;
     _ZN4OHOS9bluetooth10AvrcMpItemC2EhthjhRKNSt3__h6vectorIhNS2_9allocatorIhEEEERKNS2_12basic_stringIcNS2_11char_traitsIcEENS4_IcEEEE;
-    _ZN4OHOS9bluetooth10DescriptorC1ERKNS0_4UuidEtiPKhm;
+    _ZN4OHOS9bluetooth10DescriptorC1E*;
     _ZN4OHOS9bluetooth10DescriptorC1ERKS1_;
-    _ZN4OHOS9bluetooth10DescriptorC1EtPKhm;
-    _ZN4OHOS9bluetooth10DescriptorC2ERKNS0_4UuidEtiPKhm;
+    _ZN4OHOS9bluetooth10DescriptorC2E*;
     _ZN4OHOS9bluetooth10DescriptorC2ERKS1_;
-    _ZN4OHOS9bluetooth10DescriptorC2EtPKhm;
     _ZN4OHOS9bluetooth10GattDeviceC1ERKNS0_10RawAddressEh;
     _ZN4OHOS9bluetooth10GattDeviceC1ERKNS0_10RawAddressEhh;
     _ZN4OHOS9bluetooth10GattDeviceC1ERKNS0_10RawAddressEhhi;
     _ZN4OHOS9bluetooth10GattDeviceC2ERKNS0_10RawAddressEh;
     _ZN4OHOS9bluetooth10GattDeviceC2ERKNS0_10RawAddressEhh;
     _ZN4OHOS9bluetooth10GattDeviceC2ERKNS0_10RawAddressEhhi;
-    _ZN4OHOS9bluetooth10RawAddress15ConvertToStringEPKhm;
+    _ZN4OHOS9bluetooth10RawAddress15ConvertToStringE*;
     _ZN4OHOS9bluetooth10ScanResultC1ERKNS0_17BleScanResultImplE;
     _ZN4OHOS9bluetooth10ScanResultC2ERKNS0_17BleScanResultImplE;
-    _ZN4OHOS9bluetooth14Characteristic8SetValueEPKhm;
-    _ZN4OHOS9bluetooth14CharacteristicC1ERKNS0_4UuidEtiiPKhm;
+    _ZN4OHOS9bluetooth14Characteristic8SetValueE*;
+    _ZN4OHOS9bluetooth14CharacteristicC1E*;
     _ZN4OHOS9bluetooth14CharacteristicC1ERKS1_;
-    _ZN4OHOS9bluetooth14CharacteristicC1EtPKhm;
-    _ZN4OHOS9bluetooth14CharacteristicC2ERKNS0_4UuidEtiiPKhm;
+    _ZN4OHOS9bluetooth14CharacteristicC2E*;
     _ZN4OHOS9bluetooth14CharacteristicC2ERKS1_;
-    _ZN4OHOS9bluetooth14CharacteristicC2EtPKhm;
     _ZN4OHOS9bluetooth15TrustPairDevice12GetParseUuidEv;
     _ZN4OHOS9bluetooth15TrustPairDevice12SetProductIdERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
     _ZN4OHOS9bluetooth15TrustPairDevice13SetDeviceNameERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
@@ -188,9 +186,9 @@
     _ZN4OHOS9bluetooth18HandsFreeUnitCalls13SetMultiPartyEb;
     _ZN4OHOS9bluetooth18HandsFreeUnitCalls8SetStateEi;
     _ZN4OHOS9bluetooth18HandsFreeUnitCalls9SetNumberERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
-    _ZN4OHOS9bluetooth18HandsFreeUnitCallsC1ERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEiiSA_RNS0_4UuidEbbbl;
+    _ZN4OHOS9bluetooth18HandsFreeUnitCallsC1E*;
     _ZN4OHOS9bluetooth18HandsFreeUnitCallsC1ERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEiiSA_bbb;
-    _ZN4OHOS9bluetooth18HandsFreeUnitCallsC2ERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEiiSA_RNS0_4UuidEbbbl;
+    _ZN4OHOS9bluetooth18HandsFreeUnitCallsC2E*;
     _ZN4OHOS9bluetooth18HandsFreeUnitCallsC2ERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEiiSA_bbb;
     _ZN4OHOS9bluetooth19BlePeripheralDevice10SetAddressERKNS0_10RawAddressE;
     _ZN4OHOS9bluetooth19BlePeripheralDevice10SetTXPowerEa;
@@ -230,7 +228,7 @@
     _ZN4OHOS9bluetooth19BleScanSettingsImpl13SetReportModeEi;
     _ZN4OHOS9bluetooth19BleScanSettingsImpl13SetScanWindowEt;
     _ZN4OHOS9bluetooth19BleScanSettingsImpl14SetEnhanceModeERKNS0_22BleScanEnhanceModeImplE;
-    _ZN4OHOS9bluetooth19BleScanSettingsImpl14SetReportDelayEl;
+    _ZN4OHOS9bluetooth19BleScanSettingsImpl14SetReportDelayE*;
     _ZN4OHOS9bluetooth19BleScanSettingsImpl15SetCallbackTypeEh;
     _ZN4OHOS9bluetooth19BleScanSettingsImpl15SetScanIntervalEt;
     _ZN4OHOS9bluetooth19BleScanSettingsImpl18SetSensitivityModeEh;
@@ -255,20 +253,20 @@
     _ZN4OHOS9bluetooth21BleAdvertiserDataImplC1Ev;
     _ZN4OHOS9bluetooth21BleAdvertiserDataImplC2Ev;
     _ZN4OHOS9bluetooth22IOppTransferFileHolder11SetFilePathERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
-    _ZN4OHOS9bluetooth22IOppTransferFileHolder11SetFileSizeERKl;
+    _ZN4OHOS9bluetooth22IOppTransferFileHolder11SetFileSizeE*;
     _ZN4OHOS9bluetooth22IOppTransferFileHolder9SetFileFdERKi;
-    _ZN4OHOS9bluetooth22IOppTransferFileHolderC1ERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEERKlRKi;
-    _ZN4OHOS9bluetooth22IOppTransferFileHolderC2ERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEERKlRKi;
+    _ZN4OHOS9bluetooth22IOppTransferFileHolderC1E*;
+    _ZN4OHOS9bluetooth22IOppTransferFileHolderC2E*;
     _ZN4OHOS9bluetooth23IOppTransferInformation11SetFileNameERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
     _ZN4OHOS9bluetooth23IOppTransferInformation11SetFilePathERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
     _ZN4OHOS9bluetooth23IOppTransferInformation11SetFileTypeERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
     _ZN4OHOS9bluetooth23IOppTransferInformation11SetIsAcceptEi;
     _ZN4OHOS9bluetooth23IOppTransferInformation12SetDirectionEi;
-    _ZN4OHOS9bluetooth23IOppTransferInformation12SetTimeStampEm;
+    _ZN4OHOS9bluetooth23IOppTransferInformation12SetTimeStampE*;
     _ZN4OHOS9bluetooth23IOppTransferInformation13SetDeviceNameERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
-    _ZN4OHOS9bluetooth23IOppTransferInformation13SetTotalBytesEm;
+    _ZN4OHOS9bluetooth23IOppTransferInformation13SetTotalBytesE*;
     _ZN4OHOS9bluetooth23IOppTransferInformation13SetTotalCountEi;
-    _ZN4OHOS9bluetooth23IOppTransferInformation15SetCurrentBytesEm;
+    _ZN4OHOS9bluetooth23IOppTransferInformation15SetCurrentBytesE*;
     _ZN4OHOS9bluetooth23IOppTransferInformation15SetCurrentCountEi;
     _ZN4OHOS9bluetooth23IOppTransferInformation15SetOperationNumEi;
     _ZN4OHOS9bluetooth23IOppTransferInformation16SetDeviceAddressERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
@@ -276,7 +274,7 @@
     _ZN4OHOS9bluetooth23IOppTransferInformation9SetFileFdEi;
     _ZN4OHOS9bluetooth23IOppTransferInformation9SetResultEi;
     _ZN4OHOS9bluetooth23IOppTransferInformation9SetStatusEi;
-    _ZN4OHOS9bluetooth25BleAdvertiserSettingsImpl10SetOwnAddrERKNSt3__h5arrayIhLm6EEE;
+    _ZN4OHOS9bluetooth25BleAdvertiserSettingsImpl10SetOwnAddrE*;
     _ZN4OHOS9bluetooth25BleAdvertiserSettingsImpl10SetTxPowerEa;
     _ZN4OHOS9bluetooth25BleAdvertiserSettingsImpl11SetIntervalEi;
     _ZN4OHOS9bluetooth25BleAdvertiserSettingsImpl13SetLegacyModeEb;
@@ -287,9 +285,9 @@
     _ZN4OHOS9bluetooth4Uuid17ConvertFrom16BitsEt;
     _ZN4OHOS9bluetooth4Uuid17ConvertFrom32BitsEj;
     _ZN4OHOS9bluetooth4Uuid17ConvertFromStringERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
-    _ZN4OHOS9bluetooth4Uuid18ConvertFrom128BitsERKNSt3__h5arrayIhLm16EEE;
-    _ZN4OHOS9bluetooth4Uuid18ConvertFromBytesLEEPKhm;
-    _ZN4OHOS9bluetooth4Uuid26ConvertFromMostAndLeastBitEmm;
+    _ZN4OHOS9bluetooth4Uuid18ConvertFrom128BitsE*;
+    _ZN4OHOS9bluetooth4Uuid18ConvertFromBytesLEE*;
+    _ZN4OHOS9bluetooth4Uuid26ConvertFromMostAndLeastBitE*;
     _ZN4OHOS9bluetooth4Uuid6RandomEv;
     _ZN4OHOS9bluetooth9BtOobData13SetDeviceNameERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
     _ZN4OHOS9bluetooth9BtOobData13SetDeviceRoleEh;
@@ -342,7 +340,7 @@
     _ZNK4OHOS9Bluetooth31BluetoothIOppTransferFileHolder13WriteToParcelERNS_6ParcelE;
     _ZNK4OHOS9Bluetooth32BluetoothIOppTransferInformation11MarshallingERNS_6ParcelE;
     _ZNK4OHOS9Bluetooth32BluetoothIOppTransferInformation13WriteToParcelERNS_6ParcelE;
-    _ZNK4OHOS9bluetooth10RawAddress14ConvertToUint8EPhm;
+    _ZNK4OHOS9bluetooth10RawAddress14ConvertToUint8E*;
     _ZNK4OHOS9bluetooth10RawAddresseqERKS1_;
     _ZNK4OHOS9bluetooth10RawAddressltERKS1_;
     _ZNK4OHOS9bluetooth15TrustPairDevice12GetProductIdEv;
@@ -469,7 +467,7 @@
     _ZNK4OHOS9bluetooth4Uuid15ConvertTo16BitsEv;
     _ZNK4OHOS9bluetooth4Uuid15ConvertTo32BitsEv;
     _ZNK4OHOS9bluetooth4Uuid16ConvertTo128BitsEv;
-    _ZNK4OHOS9bluetooth4Uuid16ConvertToBytesLEEPhm;
+    _ZNK4OHOS9bluetooth4Uuid16ConvertToBytesLEE*;
     _ZNK4OHOS9bluetooth4UuideqERKS1_;
     _ZNK4OHOS9bluetooth4UuidneERKS1_;
     _ZNK4OHOS9bluetooth9BtOobData10HasOobDataEv;

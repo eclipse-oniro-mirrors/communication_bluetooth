@@ -1,7 +1,9 @@
 # Export list for libbt_napi_common.z.so. Generated from the built artifact's dynamic
-# symbol table (llvm-nm -D --defined-only) and frozen: anonymous
-# version node, explicit enumeration, no wildcards.
-# Re-generate only for intentional ABI changes.
+# symbol table (llvm-nm -D --defined-only) and frozen: anonymous version
+# node, explicit enumeration. C++ symbols whose signature contains a
+# bit-width dependent type (size_t / long / int64_t, i.e. 'm'/'l' on LP64 vs
+# 'j'/'x' on ILP32) are listed as '<name-prefix>*' so one list serves both
+# 32-bit and 64-bit products. Re-generate only for intentional ABI changes.
 {
   global:
     _ZN4OHOS9Bluetooth10NapiIsNullEP10napi_env__P12napi_value__;
@@ -52,7 +54,7 @@
     _ZN4OHOS9Bluetooth14NapiParseArrayINS0_4UUIDEEE11napi_statusP10napi_env__P12napi_value__RNSt3__h6vectorIT_NS8_9allocatorISA_EEEE;
     _ZN4OHOS9Bluetooth14NapiParseArrayINSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEEE11napi_statusP10napi_env__P12napi_value__RNS2_6vectorIT_NS6_ISF_EEEE;
     _ZN4OHOS9Bluetooth14NapiParseInt32EP10napi_env__P12napi_value__Ri;
-    _ZN4OHOS9Bluetooth14NapiParseInt64EP10napi_env__P12napi_value__Rl;
+    _ZN4OHOS9Bluetooth14NapiParseInt64E*;
     _ZN4OHOS9Bluetooth14ProcessErrCodeEiRKNSt3__h6vectorIiNS1_9allocatorIiEEEE;
     _ZN4OHOS9Bluetooth15CheckEmptyParamEP10napi_env__P20napi_callback_info__;
     _ZN4OHOS9Bluetooth15NapiGetInt32RetEP10napi_env__i;
@@ -89,7 +91,7 @@
     _ZN4OHOS9Bluetooth16NapiHaEventUtilsD1Ev;
     _ZN4OHOS9Bluetooth16NapiHaEventUtilsD2Ev;
     _ZN4OHOS9Bluetooth16NapiParseBooleanEP10napi_env__P12napi_value__Rb;
-    _ZN4OHOS9Bluetooth16ParseArrayBufferEP10napi_env__PPhRmP12napi_value__;
+    _ZN4OHOS9Bluetooth16ParseArrayBufferE*;
     _ZN4OHOS9Bluetooth16ParseInt32ParamsEP10napi_env__P12napi_value__PKcRbRi;
     _ZN4OHOS9Bluetooth17GetSysBLEObserverEv;
     _ZN4OHOS9Bluetooth17NapiAsyncCallback12CallFunctionEiRKNSt3__h10shared_ptrINS0_16NapiNativeObjectEEERKNS2_12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
@@ -130,13 +132,13 @@
     _ZN4OHOS9Bluetooth20NapiParseObjectArrayINS0_4UUIDEEE11napi_statusP10napi_env__P12napi_value__PKcRNSt3__h6vectorIT_NSA_9allocatorISC_EEEE;
     _ZN4OHOS9Bluetooth20NapiParseObjectArrayINSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEEE11napi_statusP10napi_env__P12napi_value__PKcRNS2_6vectorIT_NS6_ISH_EEEE;
     _ZN4OHOS9Bluetooth20NapiParseObjectInt32EP10napi_env__P12napi_value__PKcRi;
-    _ZN4OHOS9Bluetooth20NapiParseObjectInt64EP10napi_env__P12napi_value__PKcRl;
+    _ZN4OHOS9Bluetooth20NapiParseObjectInt64E*;
     _ZN4OHOS9Bluetooth20NapiParseObjectUuidsEP10napi_env__P12napi_value__PKcRNSt3__h6vectorINS7_12basic_stringIcNS7_11char_traitsIcEENS7_9allocatorIcEEEENSC_ISE_EEEE;
     _ZN4OHOS9Bluetooth20NapiParseSetPhyValueEP10napi_env__P12napi_value__RNS0_10BlePhyInfoE;
     _ZN4OHOS9Bluetooth20NapiParseStringArrayEP10napi_env__P12napi_value__RNSt3__h6vectorINS5_12basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEENSA_ISC_EEEE;
     _ZN4OHOS9Bluetooth20ParseUint8ArrayParamEP10napi_env__P12napi_value__RNSt3__h6vectorIhNS5_9allocatorIhEEEE;
     _ZN4OHOS9Bluetooth21AsyncWorkCallFunctionERNS0_16NapiAsyncWorkMapENS0_13NapiAsyncTypeENSt3__h10shared_ptrINS0_16NapiNativeObjectEEEi;
-    _ZN4OHOS9Bluetooth21CheckProfileIdParamExEP10napi_env__P20napi_callback_info__RiRm;
+    _ZN4OHOS9Bluetooth21CheckProfileIdParamExE*;
     _ZN4OHOS9Bluetooth21GetCallbackErrorValueEP10napi_env__iRKNSt3__h12basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEE;
     _ZN4OHOS9Bluetooth21GetCallbackInfoByTypeERKNSt3__h12basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE;
     _ZN4OHOS9Bluetooth21GetScoConnectionStateEi;
