@@ -49,9 +49,8 @@ RefusePlayHelper* RefusePlayHelper::GetInstance()
 
 int RefusePlayHelper::GetEffectiveAutoPlayDuration(const std::string &device)
 {
-    int learnedDuration = 0;
-    GetLearnedAutoPlayDuration(device, learnedDuration);
-
+    int learnedDuration = GetLearnedAutoPlayDuration(device);
+    // 将时间窗限制为6-12s.
     int64_t windowDuration = std::max<int64_t>(learnedDuration, DEFAULT_CONNECT_AUTOPLAY_MAX_TIMEDIFF_MS);
     windowDuration = std::min<int64_t>(windowDuration, MAX_ADAPTIVE_AUTOPLAY_DURATION_MS);
     HILOGD("learnedDuration: %{public}d, windowDuration: %{public}lld, device: %{public}s",
@@ -70,14 +69,12 @@ void RefusePlayHelper::SetLastAvrcpConnectTime(const std::string &device)
     if (mTimeRecordMap_.Find(device, timeRecord)) {
         timeRecord.lastAvrcpConnectTime = currentTime;
         timeRecord.windowDuration = windowDuration;
-        timeRecord.firstPlayRecorded = false;
         timeRecord.pendingPlayTime = DEFAULT_VALUE;
         timeRecord.pendingPlayOffset = DEFAULT_VALUE;
         mTimeRecordMap_.EnsureInsert(device, timeRecord);
     } else {
         timeRecord.lastAvrcpConnectTime = currentTime;
         timeRecord.windowDuration = windowDuration;
-        timeRecord.firstPlayRecorded = false;
         timeRecord.pendingPlayTime = DEFAULT_VALUE;
         timeRecord.pendingPlayOffset = DEFAULT_VALUE;
         mTimeRecordMap_.Insert(device, timeRecord);
@@ -120,6 +117,17 @@ bool RefusePlayHelper::IsAutoPlay(const std::string &device, int64_t currentTime
     return true;
 }
 
+void RefusePlayHelper::WriteAutoPlayRefuseUe(const std::string &device)
+{
+    TimeRecord timeRecord;
+    int windowDuration = 0;
+    if (mTimeRecordMap_.Find(device, timeRecord)) {
+        windowDuration = static_cast<int>(timeRecord.windowDuration);
+    }
+    BtChrUeManager::GetInstance()->WriteCommandUe(CHR_UE_SEND_MEDIA_CMD, RawAddress(device), AVRC_ID_PLAY,
+        UE_COMMON_SCENE_CASE6, std::to_string(windowDuration));
+}
+
 bool RefusePlayHelper::IsRefusePlayAfterConnect(const std::string &device)
 {
     HILOGI("device: %{public}s", GET_ENCRYPT_STR_ADDR(device));
@@ -148,15 +156,7 @@ bool RefusePlayHelper::IsRefusePlayAfterConnect(const std::string &device)
     if (allowValue == AUTO_PLAY_ALLLOW) {
         return false;
     } else if (allowValue == AUTO_PLAY_NOT_ALLLOW) {
-        // 用户不允许自动播放，上报本次自动播放拦截时间窗长度。
-        TimeRecord timeRecord;
-        int windowDuration = 0;
-        if (mTimeRecordMap_.Find(device, timeRecord)) {
-            windowDuration = static_cast<int>(timeRecord.windowDuration);
-        }
-        HILOGI("windowDuration: %{public}d", windowDuration);
-        BtChrUeManager::GetInstance()->WriteCommandUe(CHR_UE_SEND_MEDIA_CMD, RawAddress(device), AVRC_ID_PLAY,
-            UE_COMMON_SCENE_CASE6, std::to_string(windowDuration));
+        WriteAutoPlayRefuseUe(device);
         return true;
     } else if (allowValue == AUTO_PLAY_UNKNOWN && !mWatingForAuthDevices_.Find(device, currentTime)) {
         DialogInfo dialog{device, AUTO_PLAY_AUTH_DIALOG, 0, nullptr};
@@ -200,20 +200,18 @@ bool RefusePlayHelper::IsNeedToSendPlay(const std::string &device)
     return false;
 }
 
-// 记录本次 AVRCP 连接首条有效 PLAY 的时间偏移 T，满足条件时作为用户暂停确认的学习候选。
-void RefusePlayHelper::RecordFirstPlayOffset(const std::string &device)
+// 记录本次 AVRCP 连接中每一轮 PLAY 的候选：同一轮取最大值，暂停后由下一轮 PLAY 重新建立。
+void RefusePlayHelper::RecordPlayOffset(const std::string &device)
 {
+    BtChrUeManager::GetInstance()->WriteCommandUe(CHR_UE_SEND_MEDIA_CMD, RawAddress(device), AVRC_ID_PLAY,
+        UE_COMMON_SCENE_CASE1);
     TimeRecord timeRecord;
-    if (!mTimeRecordMap_.Find(device, timeRecord) || timeRecord.firstPlayRecorded ||
-        timeRecord.lastAvrcpConnectTime == DEFAULT_VALUE) {
+    int64_t currentTime = GetTimeStamp();
+    // 无连接记录或连接时间无效时不处理
+    if (!mTimeRecordMap_.Find(device, timeRecord) ||
+        timeRecord.lastAvrcpConnectTime == DEFAULT_VALUE || currentTime < timeRecord.lastAvrcpConnectTime) {
         return;
     }
-
-    // 消费首条 PLAY 标记
-    timeRecord.firstPlayRecorded = true;
-    mTimeRecordMap_.EnsureInsert(device, timeRecord);
-    int64_t currentTime = GetTimeStamp();
-    int64_t offset = currentTime - timeRecord.lastAvrcpConnectTime;
 
     std::shared_ptr<BluetoothDevice> remoteDevice =
         RemoteDeviceProperties::GetInstance()->GetBluetoothDeviceFromMap(RawAddress(device));
@@ -225,12 +223,13 @@ void RefusePlayHelper::RecordFirstPlayOffset(const std::string &device)
     // 用户已允许自动播放时不学习
     int allowValue = AUTO_PLAY_UNKNOWN;
     GetAutoPlayValue(device, allowValue);
-    if (allowValue == AUTO_PLAY_ALLLOW) {
-        HILOGI("skip learn play duration, user allow");
+    if (allowValue != AUTO_PLAY_NOT_ALLLOW) {
+        HILOGI("skip learn play duration, allowValue: %{public}d", allowValue);
         return;
     }
 
-    // 只接受 6s~20s，且必须大于当前窗口，避免把窗口学小
+    // 只接受 6s~12s 的候选，且必须大于当前窗口，避免把窗口学小
+    int64_t offset = currentTime - timeRecord.lastAvrcpConnectTime;
     if (offset < DEFAULT_CONNECT_AUTOPLAY_MAX_TIMEDIFF_MS || offset > MAX_ADAPTIVE_AUTOPLAY_DURATION_MS) {
         HILOGI("skip learn play duration, offset: %{public}lld", offset);
         return;
@@ -241,58 +240,53 @@ void RefusePlayHelper::RecordFirstPlayOffset(const std::string &device)
         return;
     }
 
-    // 写回前确认连接未被重连或清理，避免把旧候选带入新连接
-    TimeRecord latestRecord;
-    if (!mTimeRecordMap_.Find(device, latestRecord) || !latestRecord.firstPlayRecorded ||
-        latestRecord.lastAvrcpConnectTime != timeRecord.lastAvrcpConnectTime) {
-        return;
+    timeRecord.pendingPlayTime = currentTime;
+    if (offset > timeRecord.pendingPlayOffset) {
+        timeRecord.pendingPlayOffset = offset;
     }
-    latestRecord.pendingPlayTime = currentTime;
-    latestRecord.pendingPlayOffset = offset;
-    mTimeRecordMap_.EnsureInsert(device, latestRecord);
+
+    mTimeRecordMap_.EnsureInsert(device, timeRecord);
     HILOGI("pending learn auto play duration: offset: %{public}lld, allowValue: %{public}d, device: %{public}s",
-        offset, allowValue, GET_ENCRYPT_STR_ADDR(device));
+        timeRecord.pendingPlayOffset, allowValue, GET_ENCRYPT_STR_ADDR(device));
 }
 
-// 校验暂停事件是否可以确认首条 PLAY 候选：如果成功确认则返回更新拦截时间窗，否则返回 DEFAULT_VALUE。
-// 候选值在本次连接内保留，不因单次暂停清空；由 ClearRecord 在连接结束时清理。
+// 校验暂停事件是否可以确认本轮 PLAY 候选：成功则返回更新后的拦截时间窗，否则返回 DEFAULT_VALUE。
+// 每次暂停后清空本轮候选，由下一次 PLAY 重新建立；连接结束由 ClearRecord 清理。
 int64_t RefusePlayHelper::TryLearnFromUserPause(const std::string &device, TimeRecord &timeRecord, int64_t pauseTime)
 {
+    // 没有待确认的本轮 PLAY 候选
     if (timeRecord.pendingPlayTime == DEFAULT_VALUE || timeRecord.pendingPlayOffset == DEFAULT_VALUE) {
         return DEFAULT_VALUE;
     }
 
-    if (timeRecord.lastAvrcpConnectTime == DEFAULT_VALUE) {
+    int allowValue = AUTO_PLAY_UNKNOWN;
+    GetAutoPlayValue(device, allowValue);
+
+    if (timeRecord.lastAvrcpConnectTime == DEFAULT_VALUE || allowValue != AUTO_PLAY_NOT_ALLLOW) {
+        timeRecord.ResetPendingPlay();
         return DEFAULT_VALUE;
     }
 
-    // PAUSE确认窗从 AVRCP 连接时刻起算，持续 20s
+    // PAUSE确认窗从 AVRCP 连接时刻起算，持续 12s
     int64_t windowEnd = timeRecord.lastAvrcpConnectTime + MAX_ADAPTIVE_AUTOPLAY_DURATION_MS;
-    bool isAfterFirstPlay = pauseTime >= timeRecord.pendingPlayTime;
-    bool isWithinWindow = pauseTime <= windowEnd;
+    bool isAfterPlay = pauseTime >= timeRecord.pendingPlayTime;
+    bool isInWindow = pauseTime <= windowEnd;
     int64_t learnOffset = DEFAULT_VALUE;
-    if (!isAfterFirstPlay || !isWithinWindow) {
+    if (!isAfterPlay || !isInWindow) {
         HILOGI("skip learn after pause, pauseTime: %{public}lld, pendingPlayTime: %{public}lld, "
             "windowEnd: %{public}lld", pauseTime, timeRecord.pendingPlayTime, windowEnd);
-    } else {
-        int allowValue = AUTO_PLAY_UNKNOWN;
-        GetAutoPlayValue(device, allowValue);
-        if (allowValue == AUTO_PLAY_ALLLOW) {
-            HILOGI("user allow auto play, device: %{public}s", GET_ENCRYPT_STR_ADDR(device));
-            return DEFAULT_VALUE;
-        }
-
-        // 只有 T 大于该车当前窗口才学习，保证窗口只增不减
-        int64_t effectiveLearned = GetEffectiveAutoPlayDuration(device);
-        if (timeRecord.pendingPlayOffset > effectiveLearned) {
-            learnOffset = timeRecord.pendingPlayOffset;
-            HILOGI("confirm learn after pause: %{public}lld -> %{public}lld, device: %{public}s",
-                effectiveLearned, learnOffset, GET_ENCRYPT_STR_ADDR(device));
-        } else {
-            HILOGI("skip learn after pause, pendingOffset: %{public}lld, learned: %{public}lld",
-                timeRecord.pendingPlayOffset, effectiveLearned);
-        }
+        timeRecord.ResetPendingPlay();
+        return DEFAULT_VALUE;
+    } 
+    // 只有 T 大于该车当前窗口才学习，保证窗口只增不减
+    int64_t currentWindow = GetEffectiveAutoPlayDuration(device);
+    if (timeRecord.pendingPlayOffset > currentWindow) {
+        learnOffset = timeRecord.pendingPlayOffset;
+        HILOGI("confirm learn after pause: %{public}lld -> %{public}lld, device: %{public}s",
+            currentWindow, learnOffset, GET_ENCRYPT_STR_ADDR(device));
     }
+    // 本轮暂停已处理，清空候选，等待下一次 PLAY 重新建立
+    timeRecord.ResetPendingPlay();
     return learnOffset;
 }
 
@@ -448,50 +442,28 @@ void RefusePlayHelper::TryLearnAndSave(const std::string &device, TimeRecord &ti
     if (learnOffset == DEFAULT_VALUE) {
         return;
     }
-
-    if (!SaveLearnedAutoPlayDuration(device, static_cast<int>(learnOffset))) {
+    int learnedDuration = GetLearnedAutoPlayDuration(device);
+    int effectiveDuration = std::max(learnedDuration, static_cast<int>(learnOffset));
+    if (!SetLearnedAutoPlayDuration(device, effectiveDuration)) {
         HILOGE("save learned auto play duration failed, device: %{public}s", GET_ENCRYPT_STR_ADDR(device));
         return;
     }
-    HILOGI("save learned auto play duration: %{public}lld, device: %{public}s",
-        learnOffset, GET_ENCRYPT_STR_ADDR(device));
 }
 
-// 处理对端 AVRCP PAUSE
-void RefusePlayHelper::HandleRemotePause(const std::string &device)
-{
-    SavePauseTime(device);
-
-    TimeRecord timeRecord;
-    if (!mTimeRecordMap_.Find(device, timeRecord)) {
-        return;
-    }
-    TryLearnAndSave(device, timeRecord, timeRecord.lastPauseTime);
-}
-
-// 处理本机播放状态暂停
-void RefusePlayHelper::HandleLocalPause(const std::string &device)
+// 处理本机播放状态暂停：仅当存在本轮 PLAY 候选、暂停时间有效且 T 能延长窗口时更新配置。
+void RefusePlayHelper::HandlePauseEvent(const std::string &device)
 {
     if (device.empty()) {
         return;
     }
     TimeRecord timeRecord;
-    if (!mTimeRecordMap_.Find(device, timeRecord)) {
+    // 没有 PLAY 候选时不学习
+    if (!mTimeRecordMap_.Find(device, timeRecord) ||
+        timeRecord.pendingPlayTime == DEFAULT_VALUE || timeRecord.pendingPlayOffset == DEFAULT_VALUE) {
         return;
     }
 
     int64_t currentTime = GetTimeStamp();
-    if (timeRecord.lastPauseTime != DEFAULT_VALUE && currentTime >= timeRecord.lastPauseTime &&
-        currentTime - timeRecord.lastPauseTime < LOCAL_PAUSE_DEDUP_MS) {
-        HILOGI("skip local pause, recent remote pause, device: %{public}s", GET_ENCRYPT_STR_ADDR(device));
-        return;
-    }
-
-    // 没有首条 PLAY 候选时不学习
-    if (timeRecord.pendingPlayTime == DEFAULT_VALUE || timeRecord.pendingPlayOffset == DEFAULT_VALUE) {
-        return;
-    }
-
     TryLearnAndSave(device, timeRecord, currentTime);
 }
 

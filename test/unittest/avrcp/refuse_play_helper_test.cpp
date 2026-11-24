@@ -513,34 +513,33 @@ HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_GetEffectiveAutoPlayDuration
 }
 
 /**
- * @tc.name: RefusePlayHelperTest_RecordFirstPlayOffset_001
- * @tc.desc: RecordFirstPlayOffset
+ * @tc.name: RefusePlayHelperTest_RecordPlayOffset_001
+ * @tc.desc: RecordPlayOffset
  * @tc.type: FUNC
  */
-HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_RecordFirstPlayOffset_001, TestSize.Level1)
+HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_RecordPlayOffset_001, TestSize.Level1)
 {
-    HILOGI("RefusePlayHelperTest_RecordFirstPlayOffset_001 enter");
-    refusePlayHelper_->RecordFirstPlayOffset(device);
+    HILOGI("RefusePlayHelperTest_RecordPlayOffset_001 enter");
+    refusePlayHelper_->RecordPlayOffset(device);
     TimeRecord timeRecord;
     EXPECT_FALSE(refusePlayHelper_->mTimeRecordMap_.Find(device, timeRecord));
-    HILOGI("RefusePlayHelperTest_RecordFirstPlayOffset_001 end");
+    HILOGI("RefusePlayHelperTest_RecordPlayOffset_001 end");
 }
 
 /**
- * @tc.name: RefusePlayHelperTest_RecordFirstPlayOffset_002
- * @tc.desc: RecordFirstPlayOffset
+ * @tc.name: RefusePlayHelperTest_RecordPlayOffset_002
+ * @tc.desc: RecordPlayOffset
  * @tc.type: FUNC
  */
-HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_RecordFirstPlayOffset_002, TestSize.Level1)
+HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_RecordPlayOffset_002, TestSize.Level1)
 {
-    HILOGI("RefusePlayHelperTest_RecordFirstPlayOffset_002 enter");
+    HILOGI("RefusePlayHelperTest_RecordPlayOffset_002 enter");
     refusePlayHelper_->SetLastAvrcpConnectTime(device);
-    refusePlayHelper_->RecordFirstPlayOffset(device);
+    refusePlayHelper_->RecordPlayOffset(device);
     TimeRecord timeRecord;
     EXPECT_TRUE(refusePlayHelper_->mTimeRecordMap_.Find(device, timeRecord));
-    EXPECT_TRUE(timeRecord.firstPlayRecorded);
     EXPECT_EQ(timeRecord.pendingPlayOffset, DEFAULT_VALUE);
-    HILOGI("RefusePlayHelperTest_RecordFirstPlayOffset_002 end");
+    HILOGI("RefusePlayHelperTest_RecordPlayOffset_002 end");
 }
 
 /**
@@ -558,26 +557,6 @@ HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_TryLearnFromUserPause_001, T
     int64_t learnOffset = refusePlayHelper_->TryLearnFromUserPause(device, timeRecord, currentTime);
     EXPECT_EQ(learnOffset, DEFAULT_VALUE);
     HILOGI("RefusePlayHelperTest_TryLearnFromUserPause_001 end");
-}
-
-/**
- * @tc.name: RefusePlayHelperTest_TryLearnFromUserPause_002
- * @tc.desc: TryLearnFromUserPause
- * @tc.type: FUNC
- */
-HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_TryLearnFromUserPause_002, TestSize.Level1)
-{
-    HILOGI("RefusePlayHelperTest_TryLearnFromUserPause_002 enter");
-    int64_t currentTime =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
-        .count();
-    TimeRecord timeRecord;
-    timeRecord.lastAvrcpConnectTime = currentTime - 1000;
-    timeRecord.pendingPlayTime = currentTime - 500;
-    timeRecord.pendingPlayOffset = 8000;
-    int64_t learnOffset = refusePlayHelper_->TryLearnFromUserPause(device, timeRecord, currentTime);
-    EXPECT_EQ(learnOffset, 8000);
-    HILOGI("RefusePlayHelperTest_TryLearnFromUserPause_002 end");
 }
 
 /**
@@ -643,70 +622,37 @@ HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_TryLearnAndSave_002, TestSiz
 }
 
 /**
- * @tc.name: RefusePlayHelperTest_HandleRemotePause_001
- * @tc.desc: HandleRemotePause
+ * @tc.name: RefusePlayHelperTest_HandlePauseEvent_001
+ * @tc.desc: HandlePauseEvent
  * @tc.type: FUNC
  */
-HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_HandleRemotePause_001, TestSize.Level1)
+HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_HandlePauseEvent_001, TestSize.Level1)
 {
-    HILOGI("RefusePlayHelperTest_HandleRemotePause_001 enter");
-    refusePlayHelper_->HandleRemotePause(device);
-    TimeRecord timeRecord;
-    EXPECT_TRUE(refusePlayHelper_->mTimeRecordMap_.Find(device, timeRecord));
-    EXPECT_NE(timeRecord.lastPauseTime, DEFAULT_VALUE);
-    EXPECT_EQ(timeRecord.pendingPlayOffset, DEFAULT_VALUE);
-    HILOGI("RefusePlayHelperTest_HandleRemotePause_001 end");
-}
-
-/**
- * @tc.name: RefusePlayHelperTest_HandleRemotePause_002
- * @tc.desc: HandleRemotePause
- * @tc.type: FUNC
- */
-HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_HandleRemotePause_002, TestSize.Level1)
-{
-    HILOGI("RefusePlayHelperTest_HandleRemotePause_002 enter");
-    refusePlayHelper_->SetLastAvrcpConnectTime(device);
-    refusePlayHelper_->HandleRemotePause(device);
-    TimeRecord timeRecord;
-    EXPECT_TRUE(refusePlayHelper_->mTimeRecordMap_.Find(device, timeRecord));
-    EXPECT_NE(timeRecord.lastPauseTime, DEFAULT_VALUE);
-    EXPECT_EQ(timeRecord.pendingPlayOffset, DEFAULT_VALUE);
-    HILOGI("RefusePlayHelperTest_HandleRemotePause_002 end");
-}
-
-/**
- * @tc.name: RefusePlayHelperTest_HandleLocalPause_001
- * @tc.desc: HandleLocalPause
- * @tc.type: FUNC
- */
-HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_HandleLocalPause_001, TestSize.Level1)
-{
-    HILOGI("RefusePlayHelperTest_HandleLocalPause_001 enter");
-    refusePlayHelper_->HandleLocalPause(device);
+    HILOGI("RefusePlayHelperTest_HandlePauseEvent_001 enter");
+    refusePlayHelper_->HandlePauseEvent(device);
     TimeRecord timeRecord;
     EXPECT_FALSE(refusePlayHelper_->mTimeRecordMap_.Find(device, timeRecord));
-    HILOGI("RefusePlayHelperTest_HandleLocalPause_001 end");
+    HILOGI("RefusePlayHelperTest_HandlePauseEvent_001 end");
 }
 
 /**
- * @tc.name: RefusePlayHelperTest_HandleLocalPause_002
- * @tc.desc: HandleLocalPause
+ * @tc.name: RefusePlayHelperTest_HandlePauseEvent_002
+ * @tc.desc: HandlePauseEvent
  * @tc.type: FUNC
  */
-HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_HandleLocalPause_002, TestSize.Level1)
+HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_HandlePauseEvent_002, TestSize.Level1)
 {
-    HILOGI("RefusePlayHelperTest_HandleLocalPause_002 enter");
+    HILOGI("RefusePlayHelperTest_HandlePauseEvent_002 enter");
     refusePlayHelper_->SetLastAvrcpConnectTime(device);
-    refusePlayHelper_->HandleLocalPause(device);
+    refusePlayHelper_->HandlePauseEvent(device);
     TimeRecord timeRecord;
     EXPECT_TRUE(refusePlayHelper_->mTimeRecordMap_.Find(device, timeRecord));
-    EXPECT_EQ(timeRecord.lastPauseTime, DEFAULT_VALUE);
+    EXPECT_NE(timeRecord.lastPauseTime, DEFAULT_VALUE);
     EXPECT_EQ(timeRecord.pendingPlayOffset, DEFAULT_VALUE);
     // empty device is not processed
-    refusePlayHelper_->HandleLocalPause("");
+    refusePlayHelper_->HandlePauseEvent("");
     EXPECT_TRUE(refusePlayHelper_->mTimeRecordMap_.Find(device, timeRecord));
-    HILOGI("RefusePlayHelperTest_HandleLocalPause_002 end");
+    HILOGI("RefusePlayHelperTest_HandlePauseEvent_002 end");
 }
 }  // namespace bluetooth
 }  // namespace OHOS

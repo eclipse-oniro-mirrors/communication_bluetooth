@@ -163,16 +163,16 @@ HWTEST_F(AvrcpTgAvsessionMediaLoaderTest, AvrcpTgAvsessionMediaLoaderTest_Proces
 }
 
 /**
- * @tc.name: AvrcpTgAvsessionMediaLoaderTest_HandleRemotePauseToHelper_001
- * @tc.desc: HandleRemotePauseToHelper
+ * @tc.name: AvrcpTgAvsessionMediaLoaderTest_SavePauseTimeToHelper_001
+ * @tc.desc: SavePauseTimeToHelper
  * @tc.type: FUNC
  */
-HWTEST_F(AvrcpTgAvsessionMediaLoaderTest, AvrcpTgAvsessionMediaLoaderTest_HandleRemotePauseToHelper_001, TestSize.Level1)
+HWTEST_F(AvrcpTgAvsessionMediaLoaderTest, AvrcpTgAvsessionMediaLoaderTest_SavePauseTimeToHelper_001, TestSize.Level1)
 {
-    HILOGI("AvrcpTgAvsessionMediaLoaderTest_HandleRemotePauseToHelper_001 enter");
-    mediaLoader_->HandleRemotePauseToHelper();
+    HILOGI("AvrcpTgAvsessionMediaLoaderTest_SavePauseTimeToHelper_001 enter");
+    mediaLoader_->SavePauseTimeToHelper();
     EXPECT_EQ(mediaLoader_->mediaCallbacks_, nullptr);
-    HILOGI("AvrcpTgAvsessionMediaLoaderTest_HandleRemotePauseToHelper_001 end");
+    HILOGI("AvrcpTgAvsessionMediaLoaderTest_SavePauseTimeToHelper_001 end");
 }
 
 /**

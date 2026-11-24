@@ -197,16 +197,16 @@ HWTEST_F(AdapterDeviceConfigTest, Adapter_Device_Config_GetRestrictedDuration_te
 }
 
 /**
- * @tc.name: Adapter_Device_Config_SaveLearnedAutoPlayDuration_test_0100
- * @tc.desc: AdapterDeviceConfigTest:SaveLearnedAutoPlayDuration
+ * @tc.name: Adapter_Device_Config_SetLearnedAutoPlayDuration_test_0100
+ * @tc.desc: AdapterDeviceConfigTest:SetLearnedAutoPlayDuration
  * @tc.type: FUNC
  */
-HWTEST_F(AdapterDeviceConfigTest, Adapter_Device_Config_SaveLearnedAutoPlayDuration_test_0100, TestSize.Level1)
+HWTEST_F(AdapterDeviceConfigTest, Adapter_Device_Config_SetLearnedAutoPlayDuration_test_0100, TestSize.Level1)
 {
-    HILOGI("Adapter_Device_Config_SaveLearnedAutoPlayDuration_test_0100 enter");
+    HILOGI("Adapter_Device_Config_SetLearnedAutoPlayDuration_test_0100 enter");
     int32_t duration = 3000;
-    EXPECT_FALSE(SaveLearnedAutoPlayDuration(addr_, duration));
-    HILOGI("Adapter_Device_Config_SaveLearnedAutoPlayDuration_test_0100 end");
+    EXPECT_FALSE(SetLearnedAutoPlayDuration(addr_, duration));
+    HILOGI("Adapter_Device_Config_SetLearnedAutoPlayDuration_test_0100 end");
 }
 
 /**
@@ -217,8 +217,7 @@ HWTEST_F(AdapterDeviceConfigTest, Adapter_Device_Config_SaveLearnedAutoPlayDurat
 HWTEST_F(AdapterDeviceConfigTest, Adapter_Device_Config_GetLearnedAutoPlayDuration_test_0100, TestSize.Level1)
 {
     HILOGI("Adapter_Device_Config_GetLearnedAutoPlayDuration_test_0100 enter");
-    int32_t duration = 0;
-    EXPECT_FALSE(GetLearnedAutoPlayDuration(addr_, duration));
+    EXPECT_EQ(GetLearnedAutoPlayDuration(addr_), 0);
     HILOGI("Adapter_Device_Config_GetLearnedAutoPlayDuration_test_0100 end");
 }
 

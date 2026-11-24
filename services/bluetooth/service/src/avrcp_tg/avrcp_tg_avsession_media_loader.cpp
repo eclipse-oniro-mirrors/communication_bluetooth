@@ -89,8 +89,8 @@ void AvrcpTgAvsessionMediaLoader::SendKeyEvent(uint8_t key, KeyState state)
     CHECK_AND_RETURN_LOG(service != nullptr, "a2dp service nullptr");
     std::string activeDevice = service->GetActiveSinkDevice().GetAddress();
     if (key == AVRC_ID_PLAY) {
-        // 记录本次连接首条PLAY命令的偏移，学习值仅在延长时更新，下次连接生效
-        RefusePlayHelper::GetInstance()->RecordFirstPlayOffset(activeDevice);
+        // 记录本次连接PLAY命令的偏移，学习值仅在延长时更新，下次连接生效
+        RefusePlayHelper::GetInstance()->RecordPlayOffset(activeDevice);
         if (RefusePlayHelper::GetInstance()->IsRefusePlayAfterConnect(activeDevice)) {
             HILOGI("device: %{public}s refuse auto play", GET_ENCRYPT_STR_ADDR(activeDevice));
             PlaySilenceSound();
@@ -308,12 +308,12 @@ bool AvrcpTgAvsessionMediaLoader::NeedDropPlayAfterScoEnd(bool isPushed)
     return RefusePlayHelper::GetInstance()->NeedDropDueScoEnd(deviceAddr, isPushed);
 }
 
-void AvrcpTgAvsessionMediaLoader::HandleRemotePauseToHelper()
+void AvrcpTgAvsessionMediaLoader::SavePauseTimeToHelper()
 {
     A2dpService *service = GetServiceInstance(A2DP_ROLE_SOURCE);
     CHECK_AND_RETURN_LOG(service != nullptr, "a2dp service nullptr");
     std::string activeDevice = service->GetActiveSinkDevice().GetAddress();
-    RefusePlayHelper::GetInstance()->HandleRemotePause(activeDevice);
+    RefusePlayHelper::GetInstance()->SavePauseTime(activeDevice);
 }
 
 bool AvrcpTgAvsessionMediaLoader::NeedDropPause(bool isPushed)
@@ -350,7 +350,7 @@ bool AvrcpTgAvsessionMediaLoader::IsNeededDropKeyEvent(uint8_t key, KeyState sta
             return true;
         }
         if (isPushed) {
-            HandleRemotePauseToHelper();
+            SavePauseTimeToHelper();
         }
     }
     if (key == AVRC_ID_STOP && NeedDropPause(isPushed)) {

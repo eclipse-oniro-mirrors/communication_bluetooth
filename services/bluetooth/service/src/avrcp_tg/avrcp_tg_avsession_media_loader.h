@@ -104,7 +104,7 @@ private:
 #endif
     void ProcessPushedToPlayHelper(bool isPushed);
     bool NeedDropPlayAfterScoEnd(bool isPushed);
-    void HandleRemotePauseToHelper();
+    void SavePauseTimeToHelper();
     bool NeedDropPause(bool isPushed);
     bool IsNeededDropKeyEvent(uint8_t key, KeyState state);
     void ReportDropPlayPauseChr(int event);
