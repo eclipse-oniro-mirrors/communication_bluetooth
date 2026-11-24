@@ -492,6 +492,8 @@ int BluetoothGattClientServer::DeregisterApplication(int32_t appId)
 int BluetoothGattClientServer::Connect(int32_t appId, bool autoConnect)
 {
     HILOGI("appId: %{public}d, autoConnect: %{public}d", appId, autoConnect);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
     if (pimpl->clientService_ == nullptr) {
         HILOGE("request not support.");
