@@ -62,6 +62,7 @@ namespace bluetooth {
 const std::string SMS_MMS_DATASHARE_URI = "datashare:///com.ohos.smsmmsability";
 const std::string SMS_MMS_INFO_URI_STR = "datashare:///com.ohos.smsmmsability/sms_mms/sms_mms_info";
 const std::string SMS_MMS_SESSION_URI_STR = "datashare:///com.ohos.smsmmsability/sms_mms/session";
+const std::string SMS_MMS_INFO_DELETE_URI_STR = "datashare:///com.ohos.smsmmsability/sms_mms/mark_info_deleted";
 const std::string SMS_MMS_READSTATUS_URI_STR = "datashare:///com.ohos.smsmmsability/sms_mms/single_mark_unread";
 const std::string EVENT_TYPE_NEW = "NewMessage";
 const std::string EVENT_TYPE_DELETE = "MessageDeleted";
@@ -276,10 +277,14 @@ bool MapMseContentObserver::SetMessageStatusDeleted(int64_t handle)
         HILOGE("smsDataShareHelper_ is null");
         return false;
     }
+    HILOGI("bluetooth SetMessageStatusDeleted handle %{public}ld", handle);
     DataShare::DataSharePredicates predicates;
-    predicates.EqualTo("msg_id", handle);
-    Uri uri(SMS_MMS_INFO_URI_STR);
-    int32_t ret = smsDataShareHelper_->Delete(uri, predicates);
+    predicates.In("msg_id", std::vector<std::string>{std::to_string(handle)});
+    DataShare::DataShareValuesBucket valuesBucket;
+    DataShare::DataShareValueObject valueObj(GetTimeStamp());
+    valuesBucket.Put("delete_time", valueObj);
+    Uri uri(SMS_MMS_INFO_DELETE_URI_STR);
+    int32_t ret = smsDataShareHelper_->Update(uri, predicates, valuesBucket);
     if (ret == -1) {
         HILOGE("Delete fail");
         return false;
