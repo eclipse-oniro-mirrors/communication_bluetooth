@@ -570,9 +570,6 @@
     _ZTVN4OHOS9Bluetooth31BluetoothIOppTransferFileHolderE;
     _ZTVN4OHOS9Bluetooth32BluetoothIOppTransferInformationE;
     __cfi_check;
-    __emutls_v._ZZN4OHOS9Bluetooth19parcel_depth_detail12DepthCounterINS0_20BluetoothGattServiceEEERjvE5depth;
-    __emutls_v._ZZN4OHOS9Bluetooth19parcel_depth_detail12DepthCounterINS0_23BluetoothGattDescriptorEEERjvE5depth;
-    __emutls_v._ZZN4OHOS9Bluetooth19parcel_depth_detail12DepthCounterINS0_27BluetoothGattCharacteristicEEERjvE5depth;
     _fini;
     _init;
   local:
