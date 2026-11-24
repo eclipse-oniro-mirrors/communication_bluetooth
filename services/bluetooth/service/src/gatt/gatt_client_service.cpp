@@ -421,7 +421,7 @@ int GattClientService::Connect(int appId, bool autoConnect)
     if (IAdapterManager::GetInstance()->IsBluetoothRestricted()) {
         bool isOwnerApp = IAdapterManager::GetInstance()->IsBleOwnerMode() &&
             IAdapterManager::GetInstance()->IsBleOwnerModeApp(IPCSkeleton::GetCallingPid());
-        if (!isAllowed && !PermissionManager::IsSystemHap() && !isOwnerApp) {
+        if (!isAllowed && !Bluetooth::PermissionManager::IsSystemHap() && !isOwnerApp) {
             HILOGW("just allow native/system hap/owner app connect gatt");
             return Bluetooth::BT_ERR_RESTRICT_STATE;
         }
