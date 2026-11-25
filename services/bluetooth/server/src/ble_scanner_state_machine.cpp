@@ -936,14 +936,35 @@ std::list<BleScannerStateMachine::ScannerAppInfo>::iterator BleScannerStateMachi
     return maxIter;
 }
 
+namespace {
+bool HandleEmptyAppQueue(const std::list<BleScannerStateMachine::ScannerAppInfo> &appQueue,
+    BleScannerStateMachine::ScannerParameters &optimalParam)
+{
+    if (!appQueue.empty()) {
+        return false;
+    }
+    HILOGI("appQueue is empty.");
+    optimalParam.scanInterval = 0;
+    optimalParam.scanWindow = 0;
+    return true;
+}
+
+bool IsLegacyModeNeeded(const std::list<BleScannerStateMachine::ScannerAppInfo> &appQueue)
+{
+    for (const auto &app : appQueue) {
+        if (!app.params.legacy) {
+            return false;
+        }
+    }
+    return true;
+}
+}  // namespace
+
 std::list<BleScannerStateMachine::ScannerAppInfo>::iterator BleScannerStateMachine::GetOptimalParam(
     std::list<BleScannerStateMachine::ScannerAppInfo> &appQueue,
     BleScannerStateMachine::ScannerParameters &optimalParam)
 {
-    if (appQueue.empty()) {
-        HILOGI("appQueue is empty.");
-        optimalParam.scanInterval = 0;
-        optimalParam.scanWindow = 0;
+    if (HandleEmptyAppQueue(appQueue, optimalParam)) {
         return appQueue.end();
     }
     int minScanInterval = MAX_VALUE;
@@ -954,12 +975,7 @@ std::list<BleScannerStateMachine::ScannerAppInfo>::iterator BleScannerStateMachi
     optimalParam = maxIter->params;
     // Extended scan(legacy == false) is compatible with legacy scan, so it is used as long as
     // any scanning app requires it.
-    for (const auto &app : appQueue) {
-        if (!app.params.legacy) {
-            optimalParam.legacy = false;
-            break;
-        }
-    }
+    optimalParam.legacy = IsLegacyModeNeeded(appQueue);
 
     for (auto it = appQueue.begin(); it != appQueue.end(); ++it) {
         int clientWindow = it->params.scanWindow;
