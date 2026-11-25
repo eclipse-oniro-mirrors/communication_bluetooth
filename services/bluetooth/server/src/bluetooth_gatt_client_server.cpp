@@ -535,7 +535,7 @@ int BluetoothGattClientServer::DiscoveryServices(int32_t appId)
 int BluetoothGattClientServer::ReadCharacteristic(int32_t appId, const BluetoothGattCharacteristic &characteristic)
 {
     HILOGI("appId: %{public}d", appId);
-    const bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
+    bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
     int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller(caller);
     CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
@@ -577,14 +577,14 @@ int BluetoothGattClientServer::ReadCharacteristicByUuid(int32_t appId, const std
 int BluetoothGattClientServer::WriteCharacteristic(int32_t appId, BluetoothGattCharacteristic *characteristic,
     bool withoutRespond, bool isWithContext)
 {
-    const bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
-    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller(caller);
-    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
+    bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
     if (isWithContext && !caller.IsSystemHap()) {
         // WriteCharacteristicWithContext is a private solution for smartLock product and system HAPs.
         HILOGE("Non-system applications are not allowed to use system APIs.");
         return BT_ERR_SYSTEM_PERMISSION_FAILED;
     }
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller(caller);
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     Characteristic character(characteristic->handle_);
     character.length_ = characteristic->length_;
     character.value_ = std::move(characteristic->value_);
@@ -624,7 +624,7 @@ int BluetoothGattClientServer::SignedWriteCharacteristic(int32_t appId, Bluetoot
 int BluetoothGattClientServer::ReadDescriptor(int32_t appId, const BluetoothGattDescriptor &descriptor)
 {
     HILOGI("appId: %{public}d", appId);
-    const bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
+    bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
     int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller(caller);
     CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);
@@ -646,7 +646,7 @@ int BluetoothGattClientServer::ReadDescriptor(int32_t appId, const BluetoothGatt
 int BluetoothGattClientServer::WriteDescriptor(int32_t appId, BluetoothGattDescriptor *descriptor)
 {
     HILOGI("appId: %{public}d", appId);
-    const bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
+    bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
     int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller(caller);
     CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     Descriptor desc(descriptor->handle_);
@@ -714,7 +714,7 @@ int BluetoothGattClientServer::RequestConnectionPriority(int32_t appId, int32_t 
 int BluetoothGattClientServer::GetServices(int32_t appId, ::std::vector<BluetoothGattService> &service)
 {
     HILOGI("appId: %{public}d", appId);
-    const bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
+    bluetooth::CallerIdentity caller = bluetooth::CallerIdentity::Capture();
     int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller(caller);
     CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::lock_guard<std::mutex> lck(pimpl->registerMutex_);

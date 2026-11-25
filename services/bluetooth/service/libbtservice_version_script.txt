@@ -37,7 +37,6 @@
     "*ClassicConfig*";
     "*PermissionItem*";
     "*PermissionManager*";
-    "*CallerIdentity*";
     "*GetEncryptAddr*";
     "*StateMachine*";
     "*Timer*";

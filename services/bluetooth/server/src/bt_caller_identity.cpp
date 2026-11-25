@@ -27,22 +27,14 @@ CallerIdentity CallerIdentity::Capture()
     caller.pid = IPCSkeleton::GetCallingPid();
     caller.uid = IPCSkeleton::GetCallingUid();
     caller.tokenId = IPCSkeleton::GetCallingTokenID();
+    caller.fullTokenId = IPCSkeleton::GetCallingFullTokenID();
     return caller;
 }
 
-uint64_t CallerIdentity::GetFullTokenId() const
-{
-    if (fullTokenFlag_ < 0) {
-        fullTokenId_ = IPCSkeleton::GetCallingFullTokenID();
-        fullTokenFlag_ = 1;
-    }
-    return fullTokenId_;
-}
-
-bool CallerIdentity::IsSystemHap() const
+bool CallerIdentity::IsSystemHap()
 {
     if (systemHapFlag_ < 0) {
-        systemHapFlag_ = Bluetooth::PermissionManager::IsSystemHap(GetFullTokenId()) ? 1 : 0;
+        systemHapFlag_ = Bluetooth::PermissionManager::IsSystemHap(fullTokenId) ? 1 : 0;
     }
     return systemHapFlag_ == 1;
 }

@@ -80,6 +80,8 @@ bluetooth_server_sources = [
   "src/bluetooth_connection_server.cpp",
   "src/bluetooth_observer_application_container.cpp",
   "src/bluetooth_svc_cmd.cpp",
+  "src/bt_caller_identity.cpp",
+  "src/bt_state_check.cpp",
 ]
 if (bluetooth_hfp_hf_feature_switch) {
   bluetooth_server_sources += ["src/bluetooth_hfp_hf_server.cpp",]

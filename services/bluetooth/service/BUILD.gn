@@ -79,7 +79,6 @@ ServiceCommonSrc = [
   "src/common/cloud_device_manager.cpp",
   "src/common/system_ability_processer.cpp",
   "src/common/bluetooth_hw_interface_hook.cpp",
-  "src/common/bt_caller_identity.cpp",
 ]
 
 ServiceGattSrc = [

@@ -25,27 +25,26 @@ namespace bluetooth {
  * @brief 单次 IPC 请求内的调用方身份快照。
  *
  * 在 IPC 入口 Capture() 一次，沿同步调用链显式传递，避免重复读取 IPCSkeleton
- * 与 AccessTokenKit。pid/uid/tokenId 在 Capture 时固定；fullTokenId 与系统 HAP
+ * 与 AccessTokenKit。pid/uid/tokenId/fullTokenId 均在 Capture 时固定；系统 HAP
  * 判定按需计算并缓存，同一请求内最多查询一次。
  *
  * 使用约束：
  * 1. 仅在当前 binder 线程的同步链路内使用；
  * 2. 异步任务必须显式拷贝已读取的字段，禁止在工作线程内重新 Capture()；
- * 3. 跨请求不得复用（binder 线程会被复用，残留会串号）。
+ * 3. 跨请求不得复用（binder 线程会被复用，残留会串号）；
+ * 4. 对象内已固定全量令牌号，但仍不得跨线程判系统应用；异步链路请整体拷贝。
  */
 struct CallerIdentity {
     int32_t pid = 0;
     int32_t uid = 0;
     uint32_t tokenId = 0;
+    uint64_t fullTokenId = 0;
 
     static CallerIdentity Capture();
-    uint64_t GetFullTokenId() const;
-    bool IsSystemHap() const;
+    bool IsSystemHap();
 
 private:
-    mutable uint64_t fullTokenId_ = 0;
-    mutable int8_t fullTokenFlag_ = -1;
-    mutable int8_t systemHapFlag_ = -1;
+    int8_t systemHapFlag_ = -1;
 };
 
 } // namespace bluetooth
