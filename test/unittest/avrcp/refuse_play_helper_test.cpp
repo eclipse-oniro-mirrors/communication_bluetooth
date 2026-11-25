@@ -560,6 +560,26 @@ HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_TryLearnFromUserPause_001, T
 }
 
 /**
+ * @tc.name: RefusePlayHelperTest_TryLearnFromUserPause_002
+ * @tc.desc: TryLearnFromUserPause
+ * @tc.type: FUNC
+ */
+HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_TryLearnFromUserPause_002, TestSize.Level1)
+{
+    HILOGI("RefusePlayHelperTest_TryLearnFromUserPause_002 enter");
+    int64_t currentTime =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+        .count();
+    TimeRecord timeRecord;
+    timeRecord.lastAvrcpConnectTime = currentTime - 1000;
+    timeRecord.pendingPlayTime = currentTime - 500;
+    timeRecord.pendingPlayOffset = 8000;
+    int64_t learnOffset = refusePlayHelper_->TryLearnFromUserPause(device, timeRecord, currentTime);
+    EXPECT_EQ(learnOffset, 8000);
+    HILOGI("RefusePlayHelperTest_TryLearnFromUserPause_002 end");
+}
+
+/**
  * @tc.name: RefusePlayHelperTest_TryLearnFromUserPause_003
  * @tc.desc: TryLearnFromUserPause
  * @tc.type: FUNC
