@@ -163,6 +163,8 @@ void BleCentralManagerImpl::SetScanParametersCallback(uint8_t status)
 
 void BleCentralManagerImpl::SetScanParameters(uint16_t intervalMSecs, uint16_t windowMSecs, bool legacy, int phy)
 {
+    HILOGI("intervalMSecs: %{public}u, windowMSecs: %{public}u, legacy: %{public}d, phy: %{public}d",
+        intervalMSecs, windowMSecs, legacy, phy);
     int interval = intervalMSecs / BLE_SCAN_UNIT_TIME;
     int window = windowMSecs / BLE_SCAN_UNIT_TIME;
     if (btifBleScanner_) {

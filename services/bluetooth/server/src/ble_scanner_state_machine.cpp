@@ -60,13 +60,18 @@ bluetooth::BleScanSettingsImpl ConvertScanSetting(BleScannerMessage msg)
     bluetooth::BleScanSettingsImpl setting;
     setting.SetReportDelay(params.reportDelayMillis);
     setting.SetScanMode(params.scanMode);
-    setting.SetLegacy(params.legacy);
+    // The legacy mode must use the merged result of all scanning apps: as long as any app requests
+    // an extended scan(legacy == false), the stack must be started in extended scan mode.
+    setting.SetLegacy(msg.scanParams.legacy);
     setting.SetPhy(params.phy);
     setting.SetCallbackType(params.callbackType);
     setting.SetMatchTrackAdvType(params.matchTrackAdvType);
     setting.SetMatchMode(params.matchMode);
     setting.SetScanInterval(msg.scanParams.scanInterval);
     setting.SetScanWindow(msg.scanParams.scanWindow);
+    HILOGI("start scan, scanMode:%{public}d, legacy:%{public}d, phy:%{public}d, interval:%{public}d, "
+        "window:%{public}d", setting.GetScanMode(), setting.GetLegacy(), setting.GetPhy(),
+        setting.GetScanInterval(), setting.GetScanWindow());
     return setting;
 }
 
@@ -528,8 +533,9 @@ void BleScannerStartedState::Entry()
             bluetooth::SCAN_SUCCESS);
     }
     sm_.isStartByStateMachine_ = false;
-    HILOGI("current app:%{public}s, window:%{public}d, interval:%{public}d",
-        sm_.currentApp_->ToString().c_str(), sm_.optimalParam_.scanWindow, sm_.optimalParam_.scanInterval);
+    HILOGI("current app:%{public}s, window:%{public}d, interval:%{public}d, legacy:%{public}d",
+        sm_.currentApp_->ToString().c_str(), sm_.optimalParam_.scanWindow, sm_.optimalParam_.scanInterval,
+        sm_.optimalParam_.legacy);
     // If START_EVENT or STOP_EVENT trigger in this function, it will be Inner Event.
     sm_.isInnerEvent_ = true;
     HandlePriorityEvent();
@@ -569,7 +575,8 @@ bool BleScannerStartedState::HandleStartEvent(const BleScannerMessage &msg)
     BleScannerStateMachine::ScannerParameters optimalParam;
     sm_.GetOptimalParam(sm_.appQueue_, optimalParam);
     if (optimalParam.scanInterval == sm_.optimalParam_.scanInterval &&
-        optimalParam.scanWindow == sm_.optimalParam_.scanWindow) {
+        optimalParam.scanWindow == sm_.optimalParam_.scanWindow &&
+        optimalParam.legacy == sm_.optimalParam_.legacy) {
         HILOGI("Add app %{public}s", msg.appInfo.ToString().c_str());
         sm_.reportStartedEventFunc_(msg.appInfo.pid, msg.appInfo.uid, msg.appInfo.scannerId, bluetooth::SCAN_SUCCESS);
         HandlePriorityEvent();
@@ -615,7 +622,8 @@ bool BleScannerStartedState::HandleStopEvent(const BleScannerMessage &msg)
     BleScannerStateMachine::ScannerParameters optimalParam;
     GetOptimalParamInStopEvent(sm_.appQueue_, optimalParam);
     if (optimalParam.scanInterval == sm_.optimalParam_.scanInterval &&
-        optimalParam.scanWindow == sm_.optimalParam_.scanWindow) {
+        optimalParam.scanWindow == sm_.optimalParam_.scanWindow &&
+        optimalParam.legacy == sm_.optimalParam_.legacy) {
         HILOGI("Remove app %{public}s", msg.appInfo.ToString().c_str());
 #ifdef CONTEXTHUB_BLE_V3
         if (msg.appInfo.scannerId == sm_.ownedScannerId_) {
@@ -947,6 +955,15 @@ std::list<BleScannerStateMachine::ScannerAppInfo>::iterator BleScannerStateMachi
 
     auto maxIter = appQueue.begin();
     optimalParam = maxIter->params;
+    // Extended scan(legacy == false) is compatible with legacy scan, so it is used as long as
+    // any scanning app requires it.
+    optimalParam.legacy = true;
+    for (const auto &app : appQueue) {
+        if (!app.params.legacy) {
+            optimalParam.legacy = false;
+            break;
+        }
+    }
 
     for (auto it = appQueue.begin(); it != appQueue.end(); ++it) {
         int clientWindow = it->params.scanWindow;
@@ -1023,7 +1040,8 @@ std::string BleScannerStateMachine::ScannerAppInfo::ToString(void) const
     if (params.scanMode != -1) {
         s += ",scanMode:" + std::to_string(params.scanMode) +
              ",window:" + std::to_string(params.scanWindow) +
-             ",interval:" + std::to_string(params.scanInterval);
+             ",interval:" + std::to_string(params.scanInterval) +
+             ",legacy:" + std::to_string(params.legacy);
     }
     return s;
 }
