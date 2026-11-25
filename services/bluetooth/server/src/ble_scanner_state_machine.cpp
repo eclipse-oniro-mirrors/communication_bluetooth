@@ -69,9 +69,6 @@ bluetooth::BleScanSettingsImpl ConvertScanSetting(BleScannerMessage msg)
     setting.SetMatchMode(params.matchMode);
     setting.SetScanInterval(msg.scanParams.scanInterval);
     setting.SetScanWindow(msg.scanParams.scanWindow);
-    HILOGI("start scan, scanMode:%{public}d, legacy:%{public}d, phy:%{public}d, interval:%{public}d, "
-        "window:%{public}d", setting.GetScanMode(), setting.GetLegacy(), setting.GetPhy(),
-        setting.GetScanInterval(), setting.GetScanWindow());
     return setting;
 }
 
