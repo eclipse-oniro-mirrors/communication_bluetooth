@@ -457,7 +457,7 @@ void RefusePlayHelper::HandlePauseEvent(const std::string &device)
         return;
     }
     TimeRecord timeRecord;
-    // 没有 PLAY 候选时不学习
+    // 没有PLAY 候选时不学习
     if (!mTimeRecordMap_.Find(device, timeRecord) ||
         timeRecord.pendingPlayTime == DEFAULT_VALUE || timeRecord.pendingPlayOffset == DEFAULT_VALUE) {
         return;

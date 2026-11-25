@@ -607,8 +607,8 @@ void AvrcpMediaInterfaceImpl::impl::OnPlaybackStateChange(const AVSession::AVPla
         ConvertAvSessionLoopModeToStack(state, shuffleMode, repeatMode);
         appSettingsCallback_(shuffleMode, repeatMode);
     }
-    int32_t currentState = state.GetState();
     CHECK_AND_RETURN_LOG(audioManager_ != nullptr, "audioManager_ is null");
+    int32_t currentState = state.GetState();
     if (currentState == OHOS::AVSession::AVPlaybackState::PLAYBACK_STATE_PLAY) {
         audioManager_->DealWithNewPlayingStatus();
     } else if (currentState == OHOS::AVSession::AVPlaybackState::PLAYBACK_STATE_PAUSE &&
