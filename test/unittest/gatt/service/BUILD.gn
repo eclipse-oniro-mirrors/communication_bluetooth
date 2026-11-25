@@ -52,6 +52,7 @@ config("module_private_config") {
     "$SUBSYSTEM_DIR/bluetooth/config",
     "$PART_DIR/stack_interface/include",
     "$PART_DIR/stack_interface/include/hardware",
+    "$PART_DIR/stack_interface/include/stack/include",
     "$PART_DIR/stack_interface/include/types",
   ]
   defines = [
