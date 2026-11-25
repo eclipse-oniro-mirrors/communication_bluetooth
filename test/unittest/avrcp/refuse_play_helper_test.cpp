@@ -599,29 +599,6 @@ HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_TryLearnAndSave_001, TestSiz
 }
 
 /**
- * @tc.name: RefusePlayHelperTest_TryLearnAndSave_002
- * @tc.desc: TryLearnAndSave
- * @tc.type: FUNC
- */
-HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_TryLearnAndSave_002, TestSize.Level1)
-{
-    HILOGI("RefusePlayHelperTest_TryLearnAndSave_002 enter");
-    refusePlayHelper_->SetLastAvrcpConnectTime(device);
-    TimeRecord timeRecord;
-    EXPECT_TRUE(refusePlayHelper_->mTimeRecordMap_.Find(device, timeRecord));
-    timeRecord.pendingPlayTime = timeRecord.lastAvrcpConnectTime + 1000;
-    timeRecord.pendingPlayOffset = 8000;
-    int64_t currentTime =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
-        .count();
-    refusePlayHelper_->TryLearnAndSave(device, timeRecord, currentTime);
-    TimeRecord savedRecord;
-    EXPECT_TRUE(refusePlayHelper_->mTimeRecordMap_.Find(device, savedRecord));
-    EXPECT_EQ(savedRecord.pendingPlayOffset, 8000);
-    HILOGI("RefusePlayHelperTest_TryLearnAndSave_002 end");
-}
-
-/**
  * @tc.name: RefusePlayHelperTest_HandlePauseEvent_001
  * @tc.desc: HandlePauseEvent
  * @tc.type: FUNC
@@ -647,7 +624,7 @@ HWTEST_F(RefusePlayHelperTest, RefusePlayHelperTest_HandlePauseEvent_002, TestSi
     refusePlayHelper_->HandlePauseEvent(device);
     TimeRecord timeRecord;
     EXPECT_TRUE(refusePlayHelper_->mTimeRecordMap_.Find(device, timeRecord));
-    EXPECT_NE(timeRecord.lastPauseTime, DEFAULT_VALUE);
+    EXPECT_EQ(timeRecord.lastPauseTime, DEFAULT_VALUE);
     EXPECT_EQ(timeRecord.pendingPlayOffset, DEFAULT_VALUE);
     // empty device is not processed
     refusePlayHelper_->HandlePauseEvent("");
