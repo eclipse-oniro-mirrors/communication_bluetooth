@@ -954,7 +954,6 @@ std::list<BleScannerStateMachine::ScannerAppInfo>::iterator BleScannerStateMachi
     optimalParam = maxIter->params;
     // Extended scan(legacy == false) is compatible with legacy scan, so it is used as long as
     // any scanning app requires it.
-    optimalParam.legacy = true;
     for (const auto &app : appQueue) {
         if (!app.params.legacy) {
             optimalParam.legacy = false;
