@@ -10,12 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# Export list shared by the seven cj ffi libraries. Generated from the built
-# artifacts' dynamic symbol tables (llvm-nm -D --defined-only) and frozen with
-# explicit enumeration, no wildcards.
-# Exception to the anonymous-node convention: the 1.0 named node is kept
-# because these symbols carry @1.0 version tags (existing ABI metadata).
 
 1.0 {
   global:
