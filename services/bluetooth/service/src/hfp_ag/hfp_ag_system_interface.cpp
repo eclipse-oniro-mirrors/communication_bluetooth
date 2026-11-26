@@ -388,6 +388,10 @@ bool HfpAgSystemInterface::QueryCurrentCallsList()
         DelayedRefSingleton<BluetoothCallClient>::GetInstance().GetCurrentCallList(slotid);
     for (auto call : callList) {
         std::string number = call.accountNumber;
+        if (call.callType == CallType::TYPE_VOIP && number.empty()) {
+            number = "00000000000";
+            HILOGW("[HFP_SYSTEM_INTERFACE]VOIP call with empty number, filled with 00000000000");
+        }
         bool conferenceState = false;
         if (call.conferenceState != TelConferenceState::TEL_CONFERENCE_IDLE) {
             conferenceState = true;

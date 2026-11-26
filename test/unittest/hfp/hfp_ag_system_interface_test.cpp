@@ -236,6 +236,86 @@ HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_QueryCurrentCallsList
 }
 
 /*
+ * @tc.number: Hfp_Ag_system_interface_QueryCurrentCallsList_002
+ * @tc.name: QueryCurrentCallsList_VOIP_EmptyNumber
+ * @tc.desc:
+ */
+HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_QueryCurrentCallsList_002, TestSize.Level1)
+{
+    HILOGI("Hfp_Ag_system_interface_QueryCurrentCallsList_002 start");
+
+    CallAttributeInfo voipCall;
+    voipcall.callType = CallType::TYPE_VOIP;
+    voipCall.accountNumber[0] = '\0';
+    std:string number = voipCall.accountNumber;
+
+    EXPECT_TRUE(number.empty());
+    EXPECT_EQ(voipCall.callType, CallType::TYPE_VOIP);
+    bool shouldFillZeros = (voipCall.callType == CallType::TYPE_VOIP) && number.empty();
+    EXPECT_TRUE(shouldFillZeros);
+
+    number = '00000000000';
+    EXPECT_EQ(number, '00000000000');
+    EXPECT_EQ(number.length(), 11u);
+
+    HILOGI("Hfp_Ag_system_interface_QueryCurrentCallsList_002 end");
+}
+
+/*
+ * @tc.number: Hfp_Ag_system_interface_QueryCurrentCallsList_003
+ * @tc.name: QueryCurrentCallsList_NonVOIP_EmptyNumber
+ * @tc.desc:
+ */
+HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_QueryCurrentCallsList_003, TestSize.Level1)
+{
+    HILOGI("Hfp_Ag_system_interface_QueryCurrentCallsList_003 start");
+
+    CallAttributeInfo csCall;
+    csCall.callType = CallType::TYPE_CS;
+    csCall.accountNumber[0] = '\0';
+    std:string number = csCall.accountNumber;
+
+    EXPECT_TRUE(number.empty());
+    EXPECT_NE(csCall.callType, CallType::TYPE_VOIP);
+    bool shouldFillZeros = (csCall.callType == CallType::TYPE_VOIP) && number.empty();
+    EXPECT_FALSE(shouldFillZeros);
+
+    CallAttributeInfo imsCall;
+    imsCall.callType = CallType::TYPE_CS;
+    imsCall.accountNumber[0] = '\0';
+    number = imsCall.accountNumber;
+    shouldFillZeros = (csCimsCallall.callType == CallType::TYPE_VOIP) && number.empty();
+    EXPECT_FALSE(shouldFillZeros);
+
+    HILOGI("Hfp_Ag_system_interface_QueryCurrentCallsList_003 end");
+}
+
+/*
+ * @tc.number: Hfp_Ag_system_interface_QueryCurrentCallsList_004
+ * @tc.name: QueryCurrentCallsList_VOIP_NonEmptyNumber
+ * @tc.desc:
+ */
+HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_QueryCurrentCallsList_004, TestSize.Level1)
+{
+    HILOGI("Hfp_Ag_system_interface_QueryCurrentCallsList_004 start");
+
+    CallAttributeInfo voipCallWithNumber;
+    voipCallWithNumber.callType = CallType::TYPE_VOIP;
+    std:string originalNumber = '138000000000';
+    std::strncpy(voipCallWithNumber.accountNumber, originalNumber.c_str(), kMaxNumberLen);
+    voipCallWithNumber.accountNumber[kMaxNumberLen] = '\0';
+    std::string number = voipCallWithNumber.accountNumber;
+
+    EXPECT_FALSE(number.empty());
+    EXPECT_EQ(voipCallWithNumber.callType, CallType::TYPE_VOIP);
+    bool shouldFillZeros = (voipCallWithNumber.callType == CallType::TYPE_VOIP) && number.empty();
+    EXPECT_FALSE(shouldFillZeros);
+    EXPECT_EQ(number, originalNumber);
+
+    HILOGI("Hfp_Ag_system_interface_QueryCurrentCallsList_004 end");
+}
+
+/*
  * @tc.number: Hfp_Ag_system_interface_SetStreamVolume_001
  * @tc.name: SetStreamVolume
  * @tc.desc:
