@@ -36,7 +36,6 @@ namespace bluetooth {
 constexpr int64_t RESUME_PLAY_MAX_WAIT_TIME_MS = 30 * 1000;
 constexpr int64_t DROP_KEY_WITHIN_SCO_END_INTERVAL_MS = 6000;
 constexpr int64_t SCO_BEGIN_PAUSE_TIME = 2500; /* ms, between sco connectted and last avrcp pause time 2.5s */
-constexpr int64_t LOCAL_PAUSE_DEDUP_MS = 2000; /* ms, local pause after remote pause is treated as same action */
 constexpr int64_t AFTER_HANG_UP_SHOW_CAPSULE_TIME_DIFF_MS = 1500;
 const std::list<std::string> NOT_DROP_PAUSE_AFTER_SCO_DEVICES{ "BT_CITROEN", "BT_PEUGEOT" };
 const std::string CONTINENTAL_ADDRESS = "00:54:AF"; // CITROEN PEUGEOT
