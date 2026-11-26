@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <cstring>
+#include "securec.h"
 #include "hfp_ag_service.h"
 #include "hfp_ag_system_interface.h"
 #include "system_ability_definition.h"
@@ -302,8 +303,10 @@ HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_QueryCurrentCallsList
     CallAttributeInfo voipCallWithNumber;
     voipCallWithNumber.callType = CallType::TYPE_VOIP;
     std::string originalNumber = "138000000000";
-    std::strncpy(voipCallWithNumber.accountNumber, originalNumber.c_str(), kMaxNumberLen);
-    voipCallWithNumber.accountNumber[kMaxNumberLen] = '\0';
+    if (strncpy_s(voipCallWithNumber.accountNumber, sizeof(voipCallWithNumber.accountNumber),
+        originalNumber.c_str(), originalNumber.length()) != EOK) {
+        voipCallWithNumber.accountNumber[0] = '\0';
+    }
     std::string number = voipCallWithNumber.accountNumber;
 
     EXPECT_FALSE(number.empty());
