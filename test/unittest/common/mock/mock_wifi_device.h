@@ -42,7 +42,7 @@ public:
     MOCK_METHOD(OHOS::Wifi::ErrCode, AddDeviceConfig,
         (const Wifi::WifiDeviceConfig &config, int &result, bool isCandidate), (override));
     MOCK_METHOD(OHOS::Wifi::ErrCode, SetWifiRestrictedList,
-        (const std::vector<Wifi::WifiRestrictedInfo> &wifiRestrictedInfoList), (override));
+        (const std::vector<Wifi::WifiRestrictedInfo> &wifiRestrictedInfoList, int mode), (override));
     MOCK_METHOD(OHOS::Wifi::ErrCode, SetWifiTxPower, (int power), (override));
     MOCK_METHOD(OHOS::Wifi::ErrCode, UpdateDeviceConfig,
         (const Wifi::WifiDeviceConfig &config, int &result), (override));
