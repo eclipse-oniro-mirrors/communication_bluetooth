@@ -240,7 +240,6 @@ static void TestPbapPceStateMachine(FuzzedDataProvider &provider)
     sm.SetBusy(provider.ConsumeBool());
     sm.AbortDownloading();
     sm.ForceCloseObexClient();
-
     int32_t what = provider.ConsumeIntegralInRange<int32_t>(PBAP_PCE_STM_MSG_MIN, PBAP_PCE_STM_MSG_MAX);
     sm.ProcessMessage(utility::Message(what, provider.ConsumeIntegral<int32_t>()));
 
