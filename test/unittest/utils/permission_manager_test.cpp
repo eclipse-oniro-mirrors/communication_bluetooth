@@ -37,11 +37,13 @@ public:
         HILOGI("SetUpTestCase start");
         BluetoothAccessTokenMock::SetNativeTokenInfo();
         PermissionManager::callingNameCache_.Clear();
+        PermissionManager::apiVersionCache_.Clear();
         HILOGI("SetUpTestCase end");
     };
     void TearDown()
     {
         PermissionManager::callingNameCache_.Clear();
+        PermissionManager::apiVersionCache_.Clear();
     };
 };
 

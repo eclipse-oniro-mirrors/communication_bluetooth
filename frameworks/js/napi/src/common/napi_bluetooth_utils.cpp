@@ -18,7 +18,9 @@
 
 #include "napi_bluetooth_utils.h"
 #include <algorithm>
+#include <atomic>
 #include <functional>
+#include <mutex>
 #include <optional>
 #include "bluetooth_log.h"
 #include "bluetooth_utils.h"
@@ -1116,40 +1118,68 @@ napi_status NapiParseSetPhyValue(napi_env env, napi_value object, BlePhyInfo &ph
     return napi_ok;
 }
 
-int GetCurrentSdkVersion(void)
-{
-    int version = SDK_VERSION_20;  // default sdk version is api 20
+constexpr int SDK_VERSION_QUERY_FAILED = -1; // query result when the cross-process query fails
 
+static int QuerySdkVersionFromBundleManager(void)
+{
     auto systemAbilityManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (!systemAbilityManager) {
         HILOGE("fail to get system ability mgr.");
-        return version;
+        return SDK_VERSION_QUERY_FAILED;
     }
     auto remoteObject = systemAbilityManager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     if (!remoteObject) {
         HILOGE("fail to get bundle manager proxy.");
-        return version;
+        return SDK_VERSION_QUERY_FAILED;
     }
     sptr<AppExecFwk::IBundleMgr> iBundleMgr = iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
     if (iBundleMgr == nullptr) {
         HILOGE("Failed to get bundle manager proxy.");
-        return version;
+        return SDK_VERSION_QUERY_FAILED;
     }
     AppExecFwk::BundleInfo bundleInfo;
     auto flags = AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_APPLICATION;
     auto ret = iBundleMgr->GetBundleInfoForSelf(static_cast<int32_t>(flags), bundleInfo);
     if (ret != ERR_OK) {
         HILOGE("GetBundleInfoForSelf: get fail.");
-        return version;
+        return SDK_VERSION_QUERY_FAILED;
     }
+    return static_cast<int>(bundleInfo.targetVersion % 100); // %100 to get the real version
+}
 
-    version = static_cast<int>(bundleInfo.targetVersion % 100); // %100 to get the real version
-    return version;
+int GetCurrentSdkVersion(void)
+{
+    // The queried target sdk version is fixed at hap install time: it changes only when the hap
+    // is upgraded, which kills and restarts the app process, so within one process lifetime the
+    // value is immutable and a single query per process suffices. The cache is published only
+    // when the query succeeds, so a failed query (e.g. bundle manager not ready yet) is retried
+    // on the next call. The cross-process query runs outside the lock, the lock only protects
+    // publishing the result.
+    static std::atomic<bool> sdkVersionInited(false);
+    static std::atomic<int> sdkVersion(SDK_VERSION_20);  // default sdk version is api 20
+    if (sdkVersionInited.load(std::memory_order_acquire)) {
+        return sdkVersion.load(std::memory_order_relaxed);
+    }
+    int queriedVersion = QuerySdkVersionFromBundleManager();
+    if (queriedVersion == SDK_VERSION_QUERY_FAILED) {
+        // Failed this time; if another thread has published the result meanwhile, use it.
+        if (sdkVersionInited.load(std::memory_order_acquire)) {
+            return sdkVersion.load(std::memory_order_relaxed);
+        }
+        return SDK_VERSION_20;
+    }
+    static std::mutex sdkVersionMutex;
+    std::lock_guard<std::mutex> lock(sdkVersionMutex);
+    if (!sdkVersionInited.load(std::memory_order_relaxed)) {
+        sdkVersion.store(queriedVersion, std::memory_order_relaxed);
+        sdkVersionInited.store(true, std::memory_order_release);
+    }
+    return sdkVersion.load(std::memory_order_relaxed);
 }
 
 int GetSDKAdaptedStatusCode(int status)
 {
-    std::set<int> statusCodeForNewSdk = {
+    static const std::set<int> statusCodeForNewSdk = {
         BT_ERR_MAX_RESOURCES,
         BT_ERR_OPERATION_BUSY,
         BT_ERR_GATT_CONNECTION_NOT_ESTABILISHED,

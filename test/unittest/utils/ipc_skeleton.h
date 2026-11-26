@@ -28,7 +28,7 @@ public:
 
     static int GetCallingTokenID()
     {
-        return 0;
+        return callingTokenId_;
     }
 
     static int GetCallingUid()
@@ -46,10 +46,17 @@ public:
         callingPid_ = pid;
     }
 
+    static void SetCallingTokenId(int tokenId)
+    {
+        callingTokenId_ = tokenId;
+    }
+
 private:
     static inline int32_t callingPid_ = 0;
     // Test seam: override the calling uid seen by code compiled against this stub. Default 0.
     inline static int callingUid_ = 0;
+    // Test seam: override the calling token id seen by code compiled against this stub. Default 0.
+    inline static int callingTokenId_ = 0;
 };
 
 } // namespace OHOS
