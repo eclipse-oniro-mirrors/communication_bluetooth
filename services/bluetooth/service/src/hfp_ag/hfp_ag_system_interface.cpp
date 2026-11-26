@@ -396,6 +396,16 @@ static int GetCallType(const CallAttributeInfo &call)
     }
     return (int)call.callType;
 }
+
+std::string HfpAgSystemInterface::GetCallNumber(const CallAttributeInfo &call)
+{
+    std::string number = call.accountNumber;
+    if (call.callType == CallType::TYPE_VOIP && number.empty()) {
+        number = VOIP_EMPTY_NUMBER_PLACEHOLDER;
+        HILOGW("[HFP_SYSTEM_INTERFACE]VOIP call with empty number, filled with 00000000000");
+    }
+    return number;
+}
 #endif
 
 bool HfpAgSystemInterface::QueryCurrentCallsList()
@@ -411,11 +421,7 @@ bool HfpAgSystemInterface::QueryCurrentCallsList()
     std::vector<CallAttributeInfo> callList =
         DelayedRefSingleton<BluetoothCallClient>::GetInstance().GetCurrentCallList(slotid);
     for (auto call : callList) {
-        std::string number = call.accountNumber;
-        if (call.callType == CallType::TYPE_VOIP && number.empty()) {
-            number = VOIP_EMPTY_NUMBER_PLACEHOLDER;
-            HILOGW("[HFP_SYSTEM_INTERFACE]VOIP call with empty number, filled with 00000000000");
-        }
+        std::string number = GetCallNumber(call);
         bool conferenceState = call.conferenceState != TelConferenceState::TEL_CONFERENCE_IDLE;
         int dire = GetCallDirection(call);
         int calltype = GetCallType(call);

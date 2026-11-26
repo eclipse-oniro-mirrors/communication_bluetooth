@@ -117,6 +117,17 @@ public:
      */
     bool QueryCurrentCallsList();
 
+#ifdef BLUETOOTH_HFP_AG_ENABLE
+    /**
+     * @brief Get the phone number of the call, filling the all-zero placeholder
+     *        for a VOIP call whose number is empty.
+     *
+     * @param call The current call attribute.
+     * @return Returns the phone number of the call.
+     */
+    static std::string GetCallNumber(const Telephony::CallAttributeInfo &call);
+#endif
+
     /**
      * @brief Receives the command of HF and asks the telecom to respone the current call state.
      */
