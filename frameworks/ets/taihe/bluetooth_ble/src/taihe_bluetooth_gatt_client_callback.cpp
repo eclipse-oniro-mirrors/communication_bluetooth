@@ -17,6 +17,7 @@
 
 #include "bluetooth_log.h"
 #include "bluetooth_errorcode.h"
+#include "bluetooth_utils.h"
 #include "taihe_bluetooth_ble_utils.h"
 #include "taihe_bluetooth_gatt_client.h"
 
@@ -86,14 +87,14 @@ void TaiheGattClientCallback::OnDescriptorReadResult(const GattDescriptor &descr
 
 void TaiheGattClientCallback::OnConnectionStateChanged(int connectionState, int ret)
 {
-    HILOGI("connectionState:%{public}d, ret:%{public}d", connectionState, ret);
+    HILOGI("connectionState:%{public}s, ret:%{public}d", GetProfileConnStateName(connectionState).c_str(), ret);
 }
 
 void TaiheGattClientCallback::OnConnectionStateChangedWithMessage(
     int connectionState, int ret, GattDisconnectParam disconnectParam)
 {
-    HILOGI("connectionState:%{public}d, ret:%{public}d, reason:%{public}d",
-        connectionState, ret, disconnectParam.disconnectReason_);
+    HILOGI("connectionState:%{public}s, ret:%{public}d, reason:%{public}d",
+        GetProfileConnStateName(connectionState).c_str(), ret, disconnectParam.disconnectReason_);
     ::ohos::bluetooth::ble::BLEConnectionChangeState state{
         taihe::string(deviceAddr_),
         ::ohos::bluetooth::constant::ProfileConnectionState::from_value(

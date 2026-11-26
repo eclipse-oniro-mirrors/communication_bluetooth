@@ -86,7 +86,8 @@ void TaiheGattServerCallback::OnCharacteristicWriteRequest(const BluetoothRemote
 
 void TaiheGattServerCallback::OnConnectionStateUpdate(const BluetoothRemoteDevice &device, int state)
 {
-    HILOGI("enter, state: %{public}d, remote device address: %{public}s", state, GET_ENCRYPT_ADDR(device));
+    HILOGI("enter, state: %{public}s, remote device address: %{public}s",
+        GetProfileConnStateName(state).c_str(), GET_ENCRYPT_ADDR(device));
     std::lock_guard<std::mutex> lock(GattServerImpl::deviceListMutex_);
     if (state == static_cast<int>(BTConnectState::CONNECTED)) {
         HILOGI("connected");
@@ -118,8 +119,8 @@ void TaiheGattServerCallback::OnConnectionStateUpdate(const BluetoothRemoteDevic
 void TaiheGattServerCallback::OnConnectionStateUpdateWithMessage(const BluetoothRemoteDevice &device,
     int state, GattDisconnectParam disconnectParam)
 {
-    HILOGI("state: %{public}d, reason: %{public}d, remote device address: %{public}s",
-        state, disconnectParam.disconnectReason_, GET_ENCRYPT_ADDR(device));
+    HILOGI("state: %{public}s, reason: %{public}d, remote device address: %{public}s",
+        GetProfileConnStateName(state).c_str(), disconnectParam.disconnectReason_, GET_ENCRYPT_ADDR(device));
     OnConnectionStateUpdate(device, state);
     ::ohos::bluetooth::ble::BLEConnectionChangeState changeState{
         taihe::string(device.GetDeviceAddr()),

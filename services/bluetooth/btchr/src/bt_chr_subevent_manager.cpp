@@ -234,7 +234,7 @@ static cJSON* GetDefaultDeviceInfoJsonValue(const std::string& peerAddr)
     cJSON_AddStringToObject(deviceObj, "DEVICENAME", "");
     cJSON_AddStringToObject(deviceObj, "DEVICEADDR", GetEncryptAddr(peerAddr).c_str());
     cJSON_AddNumberToObject(deviceObj, "BTDEVICERSSI", CHR_DEVICE_RSSI_DEFAULT_VALUE);
-    cJSON_AddNumberToObject(deviceObj, "LIKETYPE", CHR_DEFAULT_VALUE);
+    cJSON_AddNumberToObject(deviceObj, "LINKTYPE", CHR_DEFAULT_VALUE);
     cJSON_AddNumberToObject(deviceObj, "NEEDA2DP", 0);
     cJSON_AddNumberToObject(deviceObj, "A2DPSTATUS", CHR_DEFAULT_VALUE);
     cJSON_AddNumberToObject(deviceObj, "NEEDHFP", 0);
@@ -254,7 +254,7 @@ static cJSON* GetDeviceInfoJsonValue(const std::string& peerAddr, BtChrDeviceInf
     cJSON_AddStringToObject(deviceObj, "DEVICENAME", deviceInfo.btDeviceName.c_str());
     cJSON_AddStringToObject(deviceObj, "DEVICEADDR", GetEncryptAddr(peerAddr).c_str());
     cJSON_AddNumberToObject(deviceObj, "BTDEVICERSSI", deviceInfo.btDeviceRssi);
-    cJSON_AddNumberToObject(deviceObj, "LIKETYPE", deviceInfo.linkType);
+    cJSON_AddNumberToObject(deviceObj, "LINKTYPE", deviceInfo.linkType);
     cJSON_AddNumberToObject(deviceObj, "NEEDA2DP", deviceInfo.needA2dp);
     cJSON_AddNumberToObject(deviceObj, "A2DPSTATUS", deviceInfo.a2dpStatus);
     cJSON_AddNumberToObject(deviceObj, "NEEDHFP", deviceInfo.needHfp);

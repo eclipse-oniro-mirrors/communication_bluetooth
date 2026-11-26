@@ -280,5 +280,11 @@ group("unittest") {
       "server:unittest",
       "service:unittest",
     ]
+  } else if (defined(target_platform) && target_platform == "car") {
+    deps += [
+      "service:btfw_avrcp_tg_serv_avsession_media_test",
+      "service:btfw_avrcp_tg_serv_avsession_media_loader_test",
+      "service:btfw_avrcp_tg_serv_volume_test",
+    ]
   }
 }

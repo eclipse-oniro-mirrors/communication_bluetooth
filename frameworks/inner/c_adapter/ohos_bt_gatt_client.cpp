@@ -133,8 +133,8 @@ public:
             return;
         }
 
-        HILOGD("clientId: %{public}d, connectionState: %{public}d, ret: %{public}d",
-            clientId_, connectionState, ret);
+        HILOGD("clientId: %{public}d, connectionState: %{public}s, ret: %{public}d",
+            clientId_, GetProfileConnStateName(connectionState).c_str(), ret);
         if (connectionState == static_cast<int>(BTConnectState::CONNECTED)) {
             HILOGI("GattcOnConnectionStateChanged Connected, clientId: %{public}d", clientId_);
         }

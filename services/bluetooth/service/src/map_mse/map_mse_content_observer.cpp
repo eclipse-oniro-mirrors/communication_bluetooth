@@ -203,6 +203,7 @@ void MapMseContentObserver::HandleSmsMessageListChanged()
     int32_t opRet = resultSet->GoToFirstRow();
     if (opRet != DataShare::E_OK) {
         HILOGE("GoToFirstRow error may no message. error code %{public}d", opRet);
+        resultSet->Close();
         return;
     }
     while (opRet == DataShare::E_OK) {
@@ -224,6 +225,7 @@ void MapMseContentObserver::HandleSmsMessageListChanged()
     HandleListChangeForDeleteMessage(currMessageList);
 
     smsMessageCollection_ = std::move(currMessageList);
+    resultSet->Close();
 }
 
 void MapMseContentObserver::HandleSmsSendResult(const ISendShortMessageCallback::SmsSendResult result)
@@ -326,19 +328,19 @@ void MapMseContentObserver::UnSubscribeSmsEvent()
 {
     HITRACE_METER(BT_TRACE_TAG);
     HILOGI("UnSubscribeSmsEvent");
-    sptr<ISystemAbilityManager> saManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (saManager == nullptr) {
-        HILOGE("BluetoothDataShareHelperUtils GetSystemAbilityManager failed.");
-        return;
-    }
-    sptr<IRemoteObject> remoteObj = saManager->GetSystemAbility(COMM_NET_CONN_MANAGER_SYS_ABILITY_ID);
-    if (remoteObj == nullptr) {
-        HILOGE("BluetoothDataShareHelperUtils GetSystemAbility Service Failed.");
-        return;
-    }
-    if (smsDataShareHelper_) {
+    if (smsDataShareHelper_ != nullptr && mapDataShareObserver_ != nullptr) {
         smsDataShareHelper_->UnregisterObserverExt(Uri(SMS_MMS_INFO_URI_STR), mapDataShareObserver_);
         mapDataShareObserver_ = nullptr;
+    }
+}
+
+MapMseContentObserver::~MapMseContentObserver()
+{
+    UnSubscribeSmsEvent();
+    if (smsDataShareHelper_ != nullptr) {
+        bool result = smsDataShareHelper_->Release();
+        smsDataShareHelper_ = nullptr;
+        HILOGI("release sms data share helper result is %{public}d", result);
     }
 }
 
@@ -358,6 +360,7 @@ void MapMseContentObserver::InitMessageList()
     int32_t opRet = resultSet->GoToFirstRow();
     if (opRet != DataShare::E_OK) {
         HILOGE("GoToFirstRow error. error code is %{public}d", opRet);
+        resultSet->Close();
         return;
     }
     while (opRet == DataShare::E_OK) {
@@ -369,6 +372,7 @@ void MapMseContentObserver::InitMessageList()
         smsMessageCollection_[handle] = msg;
         opRet = resultSet->GoToNextRow();
     }
+    resultSet->Close();
 }
 
 std::shared_ptr<DataShare::DataShareResultSet> MapMseContentObserver::QueryMessages()
@@ -472,6 +476,7 @@ int64_t MapMseContentObserver::GetSendMessageHandle()
     int32_t opRet = resultSet->GoToFirstRow();
     if (opRet != DataShare::E_OK) {
         HILOGE("GoToFirstRow error. error code is %{public}d", opRet);
+        resultSet->Close();
         return -1;
     }
     std::map<int64_t, Message> currMessageList;
@@ -481,11 +486,13 @@ int64_t MapMseContentObserver::GetSendMessageHandle()
         if (!smsMessageCollection_.count(handle)) {
             if (sent) {
                 smsMessageSentHandle_ = handle;
+                resultSet->Close();
                 return handle;
             }
         }
         opRet = resultSet->GoToNextRow();
     }
+    resultSet->Close();
     return -1;
 }
 

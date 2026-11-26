@@ -274,6 +274,7 @@ std::string PbabPseDataShareUtils::ComposeCallLogVcard(int32_t contentType, int3
         callLogVard += CreateOneCallLog(vcardType, result);
         opRet = result->GoToNextRow();
     }
+    result->Close();
 
     return callLogVard;
 }
@@ -471,6 +472,7 @@ int32_t PbabPseDataShareUtils::GetQueryResultCount(int32_t queryTableType, std::
         retCount++;
         opRet = result->GoToNextRow();
     }
+    result->Close();
     return retCount;
 }
 
@@ -478,7 +480,11 @@ void PbabPseDataShareUtils::GenerateCallLogParamByType(int32_t contentType, Data
 {
     HITRACE_METER(BT_TRACE_TAG);
     if (contentType == INCOMING_CALL_HISTORY) {
-        predicates.EqualTo(CALL_DIRECTION, INCOMING_TYPE);
+        // ich 与 mch 必须互斥：主流手机 PSE 按通话类型（已接/未接各自独立）返回，车机等
+        // PCE 默认按目录入库且不做跨目录去重。未接来电（direction=INCOMING，answer_state=
+        // MISSED）若同时命中 ich，会与本机 mch 拉取的同一记录重复展示，故 ICH 排除未接来电
+        predicates.EqualTo(CALL_DIRECTION, INCOMING_TYPE)->And()
+            ->NotEqualTo(ANSWER_STATE, CALL_ANSWER_MISSED);
     } else if (contentType == OUTGOING_CALL_HISTORY) {
         predicates.EqualTo(CALL_DIRECTION, OUTGOING_TYPE);
     } else if (contentType == MISSED_CALL_HISTORY) {
@@ -514,6 +520,7 @@ void PbabPseDataShareUtils::GetCallHistoryList(std::vector<std::string> &names, 
         GetNameListBySet(names, resultSet);
         operationResult = resultSet->GoToNextRow();
     }
+    resultSet->Close();
 }
 
 void PbabPseDataShareUtils::GetNameListBySet(std::vector<std::string> &names,
@@ -580,6 +587,7 @@ void PbabPseDataShareUtils::GetContactNameList(std::vector<std::string> &names, 
         names.push_back(name);
         operationResult = resultSet->GoToNextRow();
     }
+    resultSet->Close();
 }
 
 void PbabPseDataShareUtils::GetContactNamesByNumber(const std::string &number, std::vector<std::string> &names)
@@ -624,12 +632,14 @@ void PbabPseDataShareUtils::QueryRawContactIdsByNumber(const std::string &number
     int32_t goToRet = resultSet->GoToFirstRow();
     if (goToRet != DataShare::E_OK) {
         HILOGE("GoToFirstRow failed, ret: %{public}d", goToRet);
+        resultSet->Close();
         return;
     }
     int32_t rawContactId;
     if (GetValue(resultSet, RAW_CONTACT_ID, rawContactId) == DataShare::E_OK) {
         rawContactIds.push_back(rawContactId);
     }
+    resultSet->Close();
 }
 
 void PbabPseDataShareUtils::QueryNameByRawContactId(int32_t rawContactId, std::vector<std::string> &names)
@@ -654,6 +664,7 @@ void PbabPseDataShareUtils::QueryNameByRawContactId(int32_t rawContactId, std::v
         name += "," + std::to_string(rawContactId);
         names.push_back(name);
     }
+    resultSet->Close();
 }
 }  // namespace Bluetooth
 }  // namespace OHOS

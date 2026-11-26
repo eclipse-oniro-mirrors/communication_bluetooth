@@ -236,22 +236,14 @@ public:
     /**
      * @brief Cancel pair operation.
      *
-     * @return Returns <b>true</b> if the operation is successful;
-     *         returns <b>false</b> if the operation fails.
+     * Only the application that initiated the pairing (system applications are exempt) can cancel
+     * an ongoing pairing. The pairing-state check and the pairing-initiator check are enforced by
+     * the remote service.
+     *
+     * @return Returns the operation result code, see {@link BtErrCode}.
      * @since 6
      */
     int CancelPairing();
-
-    /**
-     * @brief Cancel the pairing initiated by the calling application itself.
-     *
-     * Only the application that initiated the pairing (or a system application) can cancel it.
-     * The pairing-state check and the pairing-initiator check are enforced by the remote service.
-     *
-     * @return Returns the operation result code, see {@link BtErrCode}.
-     * @since 20
-     */
-    int CancelPairingByInitiator();
 
     /**
      * @brief Check if device was bonded from local.

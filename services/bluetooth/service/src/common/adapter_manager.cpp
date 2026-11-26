@@ -982,6 +982,11 @@ int32_t AdapterManager::Enable(BTTransport transport, bool isAsync, std::string 
         PromptUnloadBluetoothSystemAbility();
         return BT_ERR_INTERNAL_ERROR;
     }
+    if (IsBtProhibitedByEdm()) {
+        HILOGW("[ADAPTER_MANAGER]bluetooth is prohibited by EDM.");
+        PromptUnloadBluetoothSystemAbility();
+        return BT_ERR_PROHIBITED_BY_EDM;
+    }
     callingName = pimpl->AttemptReplaceThirdpartyAppName(callingName);
     bool isSystemHap = PermissionManager::IsSystemHap();
     HILOGI("[ADAPTER_MANAGER]start transport is %{public}d, callingName(%{public}s), isSystemHap=%{public}d",
@@ -2084,5 +2089,11 @@ void AdapterManager::SetNeedReconnectActiveDevice() const
     PowerMgrHelper::GetInstance()->SetNeedReconnectActiveDevice();
 }
 #endif
+
+bool AdapterManager::IsBtProhibitedByEdm(void) const
+{
+    constexpr const char* bluetoothEdmKey = "persist.edm.prohibit_bluetooth";
+    return system::GetParameter(bluetoothEdmKey, "false") == "true";
+}
 }  // namespace bluetooth
 }  // namespace OHOS

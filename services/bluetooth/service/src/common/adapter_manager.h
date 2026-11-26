@@ -471,6 +471,7 @@ private:
         bool isUserTriggered) const;
     int32_t DisableInner(BTTransport transport, bool isAsync, std::string callingName) const;
     static void SaveConnectionTime(const RawAddress &device);
+    bool IsBtProhibitedByEdm(void) const;
 
     static std::shared_ptr<utility::Timer> UnloadSaTimeout_;
     mutable std::mutex unloadSaTimeoutMutex_;

@@ -414,6 +414,7 @@ void GattServerImpl::OffCharacteristicWrite(
         ::ohos::bluetooth::constant::ProfileConnectionState::from_value(0));
     int state = -1;
     int ret = server_->GetConnectedState(devId, state);
+    HILOGI("ret: %{public}d, state: %{public}s", ret, GetProfileConnStateName(state).c_str());
     TAIHE_BT_HA_ASSERT_RETURN_VERIFY(ret == BT_NO_ERROR, ret,
         ::ohos::bluetooth::constant::ProfileConnectionState::from_value(0));
 

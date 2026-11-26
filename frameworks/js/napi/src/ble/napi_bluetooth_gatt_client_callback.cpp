@@ -24,6 +24,7 @@
 #include "napi_bluetooth_gatt_client_callback.h"
 #include "napi_event_subscribe_module.h"
 #include "bluetooth_errorcode.h"
+#include "bluetooth_utils.h"
 
 namespace OHOS {
 namespace Bluetooth {
@@ -67,8 +68,9 @@ void NapiGattClientCallback::OnDescriptorReadResult(const GattDescriptor &descri
 void NapiGattClientCallback::OnConnectionStateChangedWithMessage(
     int connectionState, int ret, GattDisconnectParam disconnectParam)
 {
-    HILOGI("connectionState:%{public}d, disconnectReason:%{public}d, ret:%{public}d, msg:%{public}s",
-        connectionState, disconnectParam.disconnectReason_, ret, disconnectParam.reasonMessage_.c_str());
+    HILOGI("connectionState:%{public}s, disconnectReason:%{public}d, ret:%{public}d, msg:%{public}s",
+        GetProfileConnStateName(connectionState).c_str(), disconnectParam.disconnectReason_, ret,
+        disconnectParam.reasonMessage_.c_str());
     if (connectionState == static_cast<int>(BTConnectState::DISCONNECTED)) {
         auto nativeObject = std::make_shared<NapiNativeBleConnectionStateChangeParam>(
             deviceAddr_, connectionState, 0, true, disconnectParam);

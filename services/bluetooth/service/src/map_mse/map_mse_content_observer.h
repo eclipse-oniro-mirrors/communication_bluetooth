@@ -116,7 +116,7 @@ public:
         SubscribeSmsEvent();
         InitMessageList();
     }
-    ~MapMseContentObserver() { UnSubscribeSmsEvent(); };
+    ~MapMseContentObserver();
 
     int32_t SetNotificationRegistration(int32_t masId, std::shared_ptr<MapMseAppParams> &params);
     int32_t SetMessageStatus(const std::string &handle, std::shared_ptr<MapMseAppParams> &params);

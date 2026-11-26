@@ -27,7 +27,7 @@ constexpr const char *SET_HW_DEVICE_FEATURE = "AT+SETDEVICEFEATURE";
 constexpr int HW_ACCOUNT_HASH_LEN = 32;
 
 /* hiecho message type for the account hash report. */
-constexpr uint8_t HW_ACCOUNT_HASH = 0x27;
+constexpr uint8_t HW_ACCOUNT_HASH = 0x2C;
 
 /* Length of the device control request payload. */
 constexpr int DEVICE_CTRL_REQ_LEN = 8;
