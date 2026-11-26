@@ -372,34 +372,28 @@ bool GetRestrictedDuration(const std::string &address, int &duration)
     return true;
 }
 
-bool SaveLearnedAutoPlayDuration(const std::string &address, int duration)
+bool SetLearnedAutoPlayDuration(const std::string &address, int duration)
 {
     IAdapterDeviceConfig *config = AdapterDeviceConfig::GetInstance();
     CHECK_AND_RETURN_LOG_RET(config, false, "config is nullptr");
 
-    int currentDuration = 0;
-    if (!config->GetValue(SECTION_BREDR_PAIRED_LIST, address, LEARNED_AUTO_PLAY_DURATION, currentDuration)) {
-        HILOGE("Get learned duration failed!");
-    }
-    int effectiveDuration = std::max(currentDuration, duration);
-    if (effectiveDuration > currentDuration &&
-        !config->SetValue(SECTION_BREDR_PAIRED_LIST, address, LEARNED_AUTO_PLAY_DURATION, effectiveDuration)) {
+    if (!config->SetValue(SECTION_BREDR_PAIRED_LIST, address, LEARNED_AUTO_PLAY_DURATION, duration)) {
         HILOGE("Set learned duration failed!");
         return false;
     }
     return true;
 }
 
-bool GetLearnedAutoPlayDuration(const std::string &address, int &duration)
+int GetLearnedAutoPlayDuration(const std::string &address)
 {
     IAdapterDeviceConfig *config = AdapterDeviceConfig::GetInstance();
-    CHECK_AND_RETURN_LOG_RET(config, false, "config is nullptr");
+    CHECK_AND_RETURN_LOG_RET(config, DEFAULT_DURATION, "config is nullptr");
 
+    int duration = DEFAULT_DURATION;
     if (!config->GetValue(SECTION_BREDR_PAIRED_LIST, address, LEARNED_AUTO_PLAY_DURATION, duration)) {
         HILOGE("Get learned duration failed!");
-        return false;
     }
-    return true;
+    return duration;
 }
 
 bool SetHfpAgVgsSupport(const std::string &address, bool vgsSupport)

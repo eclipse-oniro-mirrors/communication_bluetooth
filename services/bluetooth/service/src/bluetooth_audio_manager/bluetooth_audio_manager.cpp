@@ -705,13 +705,6 @@ void BluetoothAudioManager::DealWithPauseStatus()
         return;
     }
 
-    // 过滤佩戴检测的条件
-    PauseRecord pauseRecord;
-    if (mPauseRecordMap.Find(activeDevice, pauseRecord)) {
-        HILOGI("skip local pause for wear detection");
-        return;
-    }
-
     // 过滤通话的条件
     HfpAgService *hfp = HfpAgService::GetService();
     CHECK_AND_RETURN_LOG(hfp != nullptr, "hfp service nullptr");
@@ -721,7 +714,7 @@ void BluetoothAudioManager::DealWithPauseStatus()
         return;
     }
 
-    RefusePlayHelper::GetInstance()->HandleLocalPause(activeDevice);
+    RefusePlayHelper::GetInstance()->HandlePauseEvent(activeDevice);
 }
 
 void BluetoothAudioManager::SetProfileStatus(std::string addr, uint8_t a2dpState, uint8_t hfpState)

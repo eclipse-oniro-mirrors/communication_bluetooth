@@ -43,6 +43,7 @@ constexpr const char *LEARNED_AUTO_PLAY_DURATION = "LearnedAutoPlayDuration";
 constexpr const char *PROPERTY_HFP_AG_VGS_SUPPORT = "HfpAgVgsSupport";
 constexpr const int32_t ACCESS_UNKNOWN = 0;
 constexpr const int32_t ACCESS_ALLOWED = 1;
+constexpr const int32_t DEFAULT_DURATION = 0;
 enum class BTShareType : int32_t {
     SHARE_NAME_AND_PHONE_NUMBER = 0,
     SHARE_ALL = 1,
@@ -451,8 +452,8 @@ bool SaveAutoPlayValue(const std::string &address, int autoPlayValue);
 bool GetAutoPlayValue(const std::string &address, int &autoPlayValue);
 bool SetRestrictedDuration(const std::string &address, int duration);
 bool GetRestrictedDuration(const std::string &address, int &duration);
-bool SaveLearnedAutoPlayDuration(const std::string &address, int duration);
-bool GetLearnedAutoPlayDuration(const std::string &address, int &duration);
+bool SetLearnedAutoPlayDuration(const std::string &address, int duration);
+int GetLearnedAutoPlayDuration(const std::string &address);
 bool SetHfpAgVgsSupport(const std::string &address, bool vgsSupport);
 bool GetHfpAgVgsSupport(const std::string &address, bool &vgsSupport);
 

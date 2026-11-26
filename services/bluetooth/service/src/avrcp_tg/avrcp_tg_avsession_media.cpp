@@ -607,15 +607,14 @@ void AvrcpMediaInterfaceImpl::impl::OnPlaybackStateChange(const AVSession::AVPla
         ConvertAvSessionLoopModeToStack(state, shuffleMode, repeatMode);
         appSettingsCallback_(shuffleMode, repeatMode);
     }
+    CHECK_AND_RETURN_LOG(audioManager_ != nullptr, "audioManager_ is null");
     int32_t currentState = state.GetState();
-    if (audioManager_) {
-        if (currentState == OHOS::AVSession::AVPlaybackState::PLAYBACK_STATE_PLAY) {
-            audioManager_->DealWithNewPlayingStatus();
-        } else if (currentState == OHOS::AVSession::AVPlaybackState::PLAYBACK_STATE_PAUSE &&
-            lastAudioManagerState_ != OHOS::AVSession::AVPlaybackState::PLAYBACK_STATE_PAUSE) {
-            // 播放状态变更为pause时，处理pause
-            audioManager_->DealWithPauseStatus();
-        }
+    if (currentState == OHOS::AVSession::AVPlaybackState::PLAYBACK_STATE_PLAY) {
+        audioManager_->DealWithNewPlayingStatus();
+    } else if (currentState == OHOS::AVSession::AVPlaybackState::PLAYBACK_STATE_PAUSE &&
+        lastAudioManagerState_ != OHOS::AVSession::AVPlaybackState::PLAYBACK_STATE_PAUSE) {
+        // 播放状态变更为pause时，处理pause
+        audioManager_->DealWithPauseStatus();
     }
     lastAudioManagerState_ = currentState;
 }
