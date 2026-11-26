@@ -164,6 +164,9 @@ int32_t ConnectionImpl::GetBtConnectionState(int32_t* errCode)
     BluetoothHost* host = &BluetoothHost::GetDefaultHost();
     int state = static_cast<int>(BTConnectState::DISCONNECTED);
     *errCode = host->GetBtConnectionState(state);
+    if (*errCode != BT_NO_ERROR) {
+        return static_cast<int32_t>(Bluetooth::ProfileConnectionState::STATE_DISCONNECTED);
+    }
     int status = Bluetooth::GetProfileConnectionState(state);
     return status;
 }
