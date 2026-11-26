@@ -1042,8 +1042,6 @@ void BluetoothBleCentralManagerServer::AdjustScanModeForLowLatencyScan(BleScanSe
 int BluetoothBleCentralManagerServer::StartScan(int32_t scannerId, const BluetoothBleScanSettings &settings,
     const std::vector<BluetoothBleScanFilter> &filters, bool isNewApi)
 {
-    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
-    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     HITRACE_METER(BT_TRACE_TAG);
     int32_t pid = IPCSkeleton::GetCallingPid();
     int32_t uid = IPCSkeleton::GetCallingUid();
@@ -1052,6 +1050,8 @@ int BluetoothBleCentralManagerServer::StartScan(int32_t scannerId, const Bluetoo
         callingName.c_str(), pid, uid, scannerId, settings.GetReportMode());
 
     CHECK_AND_RETURN_LOG_RET(CheckBleScanPermission(), BT_ERR_PERMISSION_FAILED, "CheckBleScanPermission failed");
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     CHECK_AND_RETURN_LOG_RET(scannerId != BLE_SCAN_INVALID_ID, BT_ERR_INTERNAL_ERROR, "Invalid scannerId");
     BleScanSettingsImpl settingsImpl;
     SetScanSettingsInfo(settingsImpl, settings);
@@ -1532,8 +1532,6 @@ int BluetoothBleCentralManagerServer::RemoveLpDeviceParam(const bluetooth::Uuid 
 int BluetoothBleCentralManagerServer::ChangeScanParams(int32_t scannerId, const BluetoothBleScanSettings &settings,
     const std::vector<BluetoothBleScanFilter> &filters, uint32_t filterAction)
 {
-    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
-    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     HITRACE_METER(BT_TRACE_TAG);
     int32_t pid = IPCSkeleton::GetCallingPid();
     int32_t uid = IPCSkeleton::GetCallingUid();
@@ -1543,6 +1541,8 @@ int BluetoothBleCentralManagerServer::ChangeScanParams(int32_t scannerId, const 
         HILOGE("CheckBleScanPermission failed");
         return BT_ERR_PERMISSION_FAILED;
     }
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
 
     auto oldScanSetting = pimpl->applications->GetScanSetting(scannerId);
     if ((oldScanSetting.GetCallbackType() != settings.GetCallbackType() ||
@@ -1568,8 +1568,6 @@ int BluetoothBleCentralManagerServer::ChangeScanParams(int32_t scannerId, const 
 
 int BluetoothBleCentralManagerServer::FlushBatchScanResults(int32_t scannerId)
 {
-    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
-    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     HITRACE_METER(BT_TRACE_TAG);
     int32_t pid = IPCSkeleton::GetCallingPid();
     int32_t uid = IPCSkeleton::GetCallingUid();
@@ -1580,6 +1578,8 @@ int BluetoothBleCentralManagerServer::FlushBatchScanResults(int32_t scannerId)
         HILOGE("CheckBleScanPermission failed");
         return BT_ERR_PERMISSION_FAILED;
     }
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     CHECK_AND_RETURN_LOG_RET(scannerId != BLE_SCAN_INVALID_ID, BT_ERR_INTERNAL_ERROR, "Invalid scannerId");
     bool isValid = pimpl->applications->IsValidScannerId(pid, uid, scannerId);
     CHECK_AND_RETURN_LOG_RET(isValid, BT_ERR_INTERNAL_ERROR, "Unknown scannerId");

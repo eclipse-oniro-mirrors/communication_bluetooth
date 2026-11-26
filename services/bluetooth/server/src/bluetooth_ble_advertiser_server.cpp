@@ -390,8 +390,6 @@ int BluetoothBleAdvertiserServer::StartAdvertising(const BluetoothBleAdvertiserS
     const BluetoothBleAdvertiserData &advData, const BluetoothBleAdvertiserData &scanResponse, int32_t advHandle,
     uint16_t duration, bool isRawData)
 {
-    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
-    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     if (advData.HasAdvertiseName() || scanResponse.HasAdvertiseName()) {
         bool hasAdvNamePerm = PermissionManager::VerifyPermission(MANAGE_BLUETOOTH_ADVERTISER_NAME);
         if (!hasAdvNamePerm) {
@@ -400,6 +398,8 @@ int BluetoothBleAdvertiserServer::StartAdvertising(const BluetoothBleAdvertiserS
         }
     }
 
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     std::string callingName = PermissionManager::GetCallingName();
     std::string logKey = "(StartAdvertising)callingName:" + callingName;
     HILOGI_ACCUMULATE(logKey, "interval:%d, advHandle:%d", settings.GetInterval(), advHandle);
