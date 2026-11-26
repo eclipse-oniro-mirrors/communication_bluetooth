@@ -105,7 +105,7 @@ ohos_unittest("btchr_dft_exception_test") {
 ohos_unittest("btchr_pkgname_manager_test") {
   module_out_path = module_output_path
   sources = [ "bt_chr_pkgname_manager_test.cpp"]
- 
+
   configs = [ ":module_private_config" ]
   include_dirs = [ "$PART_DIR/btchr/include" ]
   deps = [
@@ -114,7 +114,7 @@ ohos_unittest("btchr_pkgname_manager_test") {
     "${bluetooth_unittest_utils_path}:unittest_utils_static",
     "$PART_DIR/btchr:btchr",
   ]
- 
+
   external_deps = [
     "c_utils:utils",
     "googletest:gmock_main",
@@ -123,7 +123,42 @@ ohos_unittest("btchr_pkgname_manager_test") {
     "hisysevent:libhisysevent",
     "hilog:libhilog",
   ]
- 
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
+ohos_unittest("btchr_airtime_test") {
+  module_out_path = module_output_path
+  sources = [
+    "bt_chr_airtime_test.cpp",
+    "$PART_DIR/btchr/src/bt_chr_airtime.cpp",
+  ]
+
+  configs = [ ":module_private_config" ]
+  include_dirs = [
+    "$PART_DIR/btchr/include",
+    "$PART_DIR/common/include",
+    "$PART_DIR/service/src/base",
+  ]
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+    "$PART_DIR/common:btservice_common",
+  ]
+
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "eventhandler:libeventhandler",
+    "hisysevent:libhisysevent",
+    "hilog:libhilog",
+  ]
+
   if (bluetooth_ffrt_enable) {
     external_deps += [ "ffrt:libffrt" ]
   }
@@ -339,6 +374,7 @@ group("unittest") {
       ":btchr_hci_process_data_test",
       ":hwbt_chr_switch_test",
       ":btchr_pkgname_manager_test",
+      ":btchr_airtime_test",
     ]
   }
 }

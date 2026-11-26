@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "bt_chr_ue_manager.h"
+#include "bt_chr_airtime.h"
 #include "common_util.h"
 #include "igatt_api.h"
 #include "gatt_data.h"
@@ -752,8 +753,10 @@ void GattServerApplication::Connect(const RawAddress &addr, bool isDirect)
 {
     HILOGI("serverIf: %{public}d, addr: %{public}s", serverIf_, GET_ENCRYPT_ADDR(addr));
     if (btIfGattServer_) {
-        std::string callingName = PermissionManager::GetCallingName();
+        // 按应用 tokenId 反查包名，避免在 GATT 工作线程取到错误的调用方身份
+        std::string callingName = PermissionManager::GetCallingName(tokenId_);
         BtChrUeManager::GetInstance()->WriteCommonUe(CHR_UE_BLE_SERVER_CONN, addr.GetAddress(), serverIf_, callingName);
+        BtChr2g4BleGattPkgNameSet(addr.GetAddress(), callingName);
         int ret = btIfGattServer_->connect(serverIf_, ServiceUtil::AddrToStack(addr), isDirect, GATT_TRANSPORT_LE);
         CHECK_AND_RETURN_LOG(ret == BT_STATUS_SUCCESS, "failed, ret: %{public}d", ret);
     }

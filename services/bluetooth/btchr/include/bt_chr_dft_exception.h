@@ -210,6 +210,30 @@ enum HfpScoBuildFailSubErrCode {
     SUBERR_HFP_AG_SCO_FAIL_TIMEOUT = 0x107,
 };
 
+// 956070020
+enum PbapPceConnFailReason {
+    PBAP_PCE_CONN_FAIL_NONE = 0,
+    PBAP_PCE_CONN_FAIL_SDP = 1,
+    PBAP_PCE_CONN_FAIL_TIMEOUT,
+    PBAP_PCE_CONN_FAIL_REJECT,
+    PBAP_PCE_CONN_FAIL_UNAVAILABLE,
+    PBAP_PCE_CONN_FAIL_TRANSPORT,
+};
+
+// 956070020 sync fail reason
+enum PbapPceSyncFailReason {
+    PBAP_PCE_SYNC_FAIL_NONE = 0,
+    PBAP_PCE_SYNC_FAIL_OBEX_ERR = 1,
+    PBAP_PCE_SYNC_FAIL_DISCONNECT,
+    PBAP_PCE_SYNC_FAIL_DB_TIMEOUT,
+};
+
+// 953070020 contacts_syn_status_record
+enum PbapPceChrResult {
+    PBAP_PCE_CHR_RESULT_FAIL = 0,
+    PBAP_PCE_CHR_RESULT_SUCCESS,
+};
+
 // 913000050 SubErrCode
 enum DisconnectSubErrCode {
     FIRST_UNPAIRED_BR_LINK_CHR = 665,

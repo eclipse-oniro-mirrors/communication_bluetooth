@@ -39,6 +39,7 @@ ohos_fuzztest("PbapPceServiceFuzzTest") {
     "$PART_DIR/service/src/common",
     "$PART_DIR/service/src/pbap_pce",
     "$PART_DIR/service/src/permission",
+    "$PART_DIR/btchr/include",
     "$bluetooth_mock_path",
   ]
 

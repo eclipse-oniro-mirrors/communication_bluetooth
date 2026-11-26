@@ -95,7 +95,6 @@ HWTEST_F(BtChrBaseTest, Test_BtChrEventWriteInt_001, TestSize.Level1)
     HILOGI("Test_BtChrEventWriteInt_001 end");
 }
 
-
 /**
  * @tc.name: Test_BtChrEventWriteStr_001
  * @tc.desc: Verify the BtChrEventWriteStr function.
@@ -105,7 +104,7 @@ HWTEST_F(BtChrBaseTest, Test_BtChrEventWriteStr_001, TestSize.Level1)
 {
     HILOGI("Test_BtChrEventWriteStr_001 enter");
     std::string peerAddr = "74:0a:12:d4:56:d5";
-    BtChrEventWriteStr(CHR_HFP_RFCOMM_EXCEPTION, peerAddr, "SCENCEINFO", "scence info test");
+    BtChrEventWriteStr(CHR_HFP_RFCOMM_EXCEPTION, peerAddr, "SCENEINFO", "scence info test");
     EXPECT_NE(GetCurrentTime(), "");
     HILOGI("Test_BtChrEventWriteStr_001 end");
 }
@@ -142,7 +141,7 @@ HWTEST_F(BtChrBaseTest, Test_BtChrBaseReleaseAll_001, TestSize.Level1)
     BtChrBaseReleaseAll(notClearAddrs);
 
     BtChrEventWriteTime(CHR_USER_DISCONNECT, peerAddr, "ACLCONNECTIONTIME");
-    BtChrEventWriteStr(CHR_HFP_RFCOMM_EXCEPTION, peerAddr1, "SCENCEINFO", "scence info test");
+    BtChrEventWriteStr(CHR_HFP_RFCOMM_EXCEPTION, peerAddr1, "SCENEINFO", "scence info test");
     BtChrBaseReleaseAll(notClearAddrs);
     EXPECT_NE(GetCurrentTime(), "");
     HILOGI("Test_BtChrBaseReleaseAll_001 end");

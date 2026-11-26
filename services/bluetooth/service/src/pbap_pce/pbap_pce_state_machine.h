@@ -241,6 +241,17 @@ public:
      */
     void ClearConnectFailed();
 
+    // CONTACTS_SYN_STATUS_RECORD 通讯录同步打点（本模块内采集并上报）
+    void SetConnectFailReason(int reason);
+    int GetConnectFailReason() const;
+    void RecordContactsConnecting();
+    void MarkChrConnConnected();
+    void RecordContactsConnectFailed(int reason);
+    void MarkChrSyncStart();
+    void MarkChrSyncFinish(bool failed, int failReason);
+    void RecordContactsSyncFinish(bool failed, int failReason);
+    void ReportContactsSynUeEvent(bool connectFailed, int connectFailReason);
+
 private:
     RawAddress device_;                                           // remote device
     PbapPceServiceImpl *pceService_ {nullptr};                        // pce service
@@ -262,6 +273,15 @@ private:
     std::atomic_bool powerStatusBusy_ {false};              // powerStatusBusy_
     std::atomic_int targetState_ {0};                       // target State
     bool connectFailed_ {false};                            // connect attempt failed flag
+    int connectFailReason_;                                 // PbapPceConnFailReason of last failed attempt
+    // CONTACTS_SYN_STATUS_RECORD 打点数据（time 为 CLOCK_BOOTTIME ms，上报时经 ChrTS 转换）
+    int64_t chrConnConnectingTime_ {0};
+    int64_t chrConnConnectedTime_ {0};
+    int64_t chrSyncStartTime_ {0};
+    int64_t chrSyncEndTime_ {0};
+    bool chrSyncStarted_ {false};
+    bool chrSyncFailed_ {false};
+    int chrSyncFailReason_;
     BT_DISALLOW_COPY_AND_ASSIGN(PbapPceStateMachine);
 };
 
@@ -293,7 +313,7 @@ public:
     virtual ~PceBaseState() = default;
 
 protected:
-    PbapPceStateMachine &stm_;
+    PbapPceStateMachine &stateMachine_;
     std::shared_ptr<IPbapPceObserver> observer_;
 };
 
@@ -504,6 +524,7 @@ private:
     void ReqPullPhoneBook(const utility::Message &msg) const;
     void ProcessReqDownload(const utility::Message &msg);
     void ProcessDownloadComplete(const utility::Message &msg);
+    void ProcessDownloadFailed(const utility::Message &msg);
 };
 
 /**

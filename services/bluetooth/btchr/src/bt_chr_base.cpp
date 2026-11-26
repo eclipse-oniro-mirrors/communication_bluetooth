@@ -219,7 +219,7 @@ void BtChrEventWriteParams(const std::string& eventName, const std::string& peer
     std::string addr = GetLowercaseAddr(peerAddr);
     std::string eventKey(eventName);
     eventKey.append(EVENT_KEY_SPLICE_MARK).append(addr);
-    
+
     std::vector<BtChrEventParam> cacheParams;
     if (g_btChrEventMap.Find(eventKey, cacheParams)) {
         for (BtChrEventParam param : params) {
@@ -268,7 +268,7 @@ void BtChrEventWrite(const std::string& eventName, const std::string& peerAddr, 
     }
     std::string eventKey(eventName);
     eventKey.append(EVENT_KEY_SPLICE_MARK).append(addr);
-    
+
     auto dataIter = g_chrEventComDataMap.find(eventName);
     if (dataIter == g_chrEventComDataMap.end()) {
         HILOGE("commonData is null, eventKey: %{public}s", GET_ENCRYPT_EVENTKEY(eventKey));
@@ -366,7 +366,7 @@ void BtChrStaticticsEventWrite(uint8_t eventType, const std::string& eventValue)
     HiSysEventWrite(OHOS::HiviewDFX::HiSysEvent::Domain::BT_SERVICE, CHR_BT_STATISTICS_ATOMIC_EVENT,
         HiviewDFX::HiSysEvent::EventType::STATISTIC, "EVENT_TYPE", eventType, "EVENT_VALUE", eventValue);
 }
- 
+
 void BtChrResetEventWrite(uint8_t eventType, const std::string& eventValue)
 {
     HITRACE_METER(BT_TRACE_TAG);

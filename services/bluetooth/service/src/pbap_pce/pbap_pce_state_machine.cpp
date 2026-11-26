@@ -17,12 +17,66 @@
 #endif
 
 #include "pbap_pce_state_machine.h"
+#include <cstdint>
+#include <ctime>
+#include <sys/time.h>
 #include <vector>
 #include "bt_def.h"
+#include "bt_chr_base.h"
+#include "bt_chr_subevent_manager.h"
+#include "bt_chr_dft_exception.h"
 #include "pbap_pce_app_params.h"
 #include "pbap_pce_service_impl.h"
 #include "power_manager.h"
+#include "securec.h"
 #include "thread_util.h"
+
+namespace {
+constexpr int64_t CHR_MS_PER_SEC = 1000;
+constexpr int64_t CHR_NS_PER_MS = 1000000;
+constexpr int64_t CHR_US_PER_MS = 1000;
+
+int64_t NowBoottimeMs()
+{
+    struct timespec ts = {};
+    if (clock_gettime(CLOCK_BOOTTIME, &ts) != 0) {
+        PBAP_PCE_LOG_ERROR("%{public}s clock_gettime failed", __PRETTY_FUNCTION__);
+        return 0;
+    }
+    return static_cast<int64_t>(ts.tv_sec) * CHR_MS_PER_SEC + ts.tv_nsec / CHR_NS_PER_MS;
+}
+
+std::string ChrTS(int64_t bootMs)
+{
+    if (bootMs <= 0) {
+        return "";
+    }
+    struct timeval tv = {};
+    if (gettimeofday(&tv, nullptr) != 0) {
+        return "";
+    }
+    int64_t wallMs = bootMs + static_cast<int64_t>(tv.tv_sec) * CHR_MS_PER_SEC +
+        tv.tv_usec / CHR_US_PER_MS - NowBoottimeMs();
+    if (wallMs < 0) {
+        return "";
+    }
+    time_t sec = static_cast<time_t>(wallMs / CHR_MS_PER_SEC);
+    struct tm localTime = {};
+    if (localtime_r(&sec, &localTime) == nullptr) {
+        return "";
+    }
+    char timeBuf[24] = {};
+    if (strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %H:%M:%S", &localTime) == 0) {
+        return "";
+    }
+    char result[32] = {};
+    int32_t ms = static_cast<int32_t>(wallMs % CHR_MS_PER_SEC);
+    if (snprintf_s(result, sizeof(result), sizeof(result) - 1, "%s.%03d", timeBuf, ms) < 0) {
+        return "";
+    }
+    return result;
+}
+}  // namespace
 
 // 合并为单文件后，各状态日志格式串加状态名前缀，便于按状态过滤
 #define PCE_DISCONNECTED_LOG_DEBUG(fmt, ...) PBAP_PCE_LOG_DEBUG("[Disconnected]" fmt, ##__VA_ARGS__)
@@ -50,7 +104,9 @@ PbapPceStateMachine::PbapPceStateMachine(const RawAddress &dev, PbapPceServiceIm
       pceService_(&pceService),
       pbapPceSdp_(pbapPceSdp),
       observer_(std::move(observer)),
-      targetState_(PCE_TARGET_STATE_UNKNOWN)
+      targetState_(PCE_TARGET_STATE_UNKNOWN),
+      connectFailReason_(PBAP_PCE_CONN_FAIL_NONE),
+      chrSyncFailReason_(PBAP_PCE_SYNC_FAIL_NONE)
 {
     std::unique_ptr<State> disconnected =
         std::make_unique<PceDisconnectedState>(PCE_DISCONNECTED_STATE, *this, observer_);
@@ -252,6 +308,106 @@ void PbapPceStateMachine::ClearConnectFailed()
 {
     PBAP_PCE_LOG_INFO("%{public}s connectFailed_ cleared", __PRETTY_FUNCTION__);
     connectFailed_ = false;
+    connectFailReason_ = PBAP_PCE_CONN_FAIL_NONE;
+}
+
+void PbapPceStateMachine::SetConnectFailReason(int reason)
+{
+    connectFailReason_ = reason;
+}
+
+int PbapPceStateMachine::GetConnectFailReason() const
+{
+    return connectFailReason_;
+}
+
+void PbapPceStateMachine::RecordContactsConnecting()
+{
+    chrConnConnectingTime_ = NowBoottimeMs();
+    chrConnConnectedTime_ = 0;
+    chrSyncStartTime_ = 0;
+    chrSyncEndTime_ = 0;
+    chrSyncStarted_ = false;
+    chrSyncFailed_ = false;
+    chrSyncFailReason_ = PBAP_PCE_SYNC_FAIL_NONE;
+}
+
+void PbapPceStateMachine::MarkChrConnConnected()
+{
+    if (chrConnConnectingTime_ == 0) {
+        chrConnConnectingTime_ = NowBoottimeMs();
+    }
+    chrConnConnectedTime_ = NowBoottimeMs();
+}
+
+void PbapPceStateMachine::RecordContactsConnectFailed(int reason)
+{
+    SetConnectFailReason(reason);
+}
+
+void PbapPceStateMachine::MarkChrSyncStart()
+{
+    chrSyncStarted_ = true;
+    chrSyncFailed_ = false;
+    chrSyncFailReason_ = PBAP_PCE_SYNC_FAIL_NONE;
+    chrSyncStartTime_ = NowBoottimeMs();
+    chrSyncEndTime_ = 0;
+}
+
+void PbapPceStateMachine::MarkChrSyncFinish(bool failed, int failReason)
+{
+    chrSyncFailed_ = failed;
+    chrSyncFailReason_ = failed ? failReason : PBAP_PCE_SYNC_FAIL_NONE;
+    chrSyncEndTime_ = NowBoottimeMs();
+}
+
+void PbapPceStateMachine::RecordContactsSyncFinish(bool failed, int failReason)
+{
+    MarkChrSyncFinish(failed, failReason);
+}
+
+void PbapPceStateMachine::ReportContactsSynUeEvent(bool connectFailed, int connectFailReason)
+{
+    if (chrConnConnectingTime_ == 0) {
+        return;
+    }
+    PBAP_PCE_LOG_INFO("%{public}s addr=%{public}s connectFailed=%{public}d connectFailReason=%{public}d "
+        "syncStarted=%{public}d syncFailed=%{public}d", __PRETTY_FUNCTION__,
+        GetEncryptAddr(device_.GetAddress()).c_str(), static_cast<int>(connectFailed),
+        connectFailReason, static_cast<int>(chrSyncStarted_), static_cast<int>(chrSyncFailed_));
+    std::vector<BtChrEventParam> params;
+    params.emplace_back("PBAPCLIENTCONNECTING", ChrTS(chrConnConnectingTime_));
+    params.emplace_back("PBAPCLIENTCONNECTED", ChrTS(chrConnConnectedTime_));
+    params.emplace_back("SYNCSTARTTIME", ChrTS(chrSyncStartTime_));
+    params.emplace_back("SYNCENDTIME", ChrTS(chrSyncEndTime_));
+    params.emplace_back("PBAPCLIENTDISCONNECTED", ChrTS(NowBoottimeMs()));
+    params.emplace_back("CONNRESULT", static_cast<int32_t>(connectFailed ?
+        PBAP_PCE_CHR_RESULT_FAIL : PBAP_PCE_CHR_RESULT_SUCCESS));
+    params.emplace_back("CONNFAILREASON", static_cast<int32_t>(connectFailed ?
+        connectFailReason : PBAP_PCE_CONN_FAIL_NONE));
+    if (chrSyncStarted_) {
+        bool syncOk = !chrSyncFailed_ && chrSyncEndTime_ > 0;
+        if (syncOk) {
+            params.emplace_back("SYNCRESULT", static_cast<int32_t>(PBAP_PCE_CHR_RESULT_SUCCESS));
+            params.emplace_back("SYNCFAILREASON", static_cast<int32_t>(PBAP_PCE_SYNC_FAIL_NONE));
+        } else {
+            int failReason = chrSyncFailed_ ? chrSyncFailReason_ : PBAP_PCE_SYNC_FAIL_DISCONNECT;
+            if (failReason <= 0) {
+                failReason = PBAP_PCE_SYNC_FAIL_OBEX_ERR;
+            }
+            params.emplace_back("SYNCRESULT", static_cast<int32_t>(PBAP_PCE_CHR_RESULT_FAIL));
+            params.emplace_back("SYNCFAILREASON", static_cast<int32_t>(failReason));
+        }
+    }
+    params.emplace_back("BTCOMMON", BtChrGetBtCommonJsonStr(device_.GetAddress()));
+    BtChrUeEventWrite(CHR_UE_CONTACTS_SYN_STATUS_RECORD, params);
+    chrConnConnectingTime_ = 0;
+    chrConnConnectedTime_ = 0;
+    chrSyncStartTime_ = 0;
+    chrSyncEndTime_ = 0;
+    chrSyncStarted_ = false;
+    chrSyncFailed_ = false;
+    chrSyncFailReason_ = PBAP_PCE_SYNC_FAIL_NONE;
 }
 
 const RawAddress &PbapPceStateMachine::GetDevice() const
@@ -343,7 +499,7 @@ PceBaseState::PceBaseState(
     const std::string &name,
     PbapPceStateMachine &sm,
     std::shared_ptr<IPbapPceObserver> observer)
-    : State(name, sm), stm_(sm), observer_(std::move(observer))
+    : State(name, sm), stateMachine_(sm), observer_(std::move(observer))
 {}
 
 // ---------------------------------------------------------------------------
@@ -357,24 +513,25 @@ PceDisconnectedState::PceDisconnectedState(
 void PceDisconnectedState::Entry()
 {
     PCE_DISCONNECTED_LOG_INFO("%{public}s, observer->OnServiceConnectionStateChanged", __PRETTY_FUNCTION__);
-    auto &device = stm_.GetDevice();
+    auto &device = stateMachine_.GetDevice();
     IPowerManager::GetInstance()->StatusUpdate(RequestStatus::CONNECT_OFF, PROFILE_NAME_PBAP_PCE, device);
+    stateMachine_.ReportContactsSynUeEvent(stateMachine_.IsConnectFailed(), stateMachine_.GetConnectFailReason());
     if (observer_) {
         observer_->OnConnectionStateChanged(device, static_cast<int>(BTConnectState::DISCONNECTED), 0);
     }
     // 连接尝试失败（对端拒绝/超时/SDP失败等）时，在 DISCONNECTED 通知之后将同步状态
     // 置为 DOWNLOAD_ERROR 并通知应用层。必须在 OnConnectionStateChanged(DISCONNECTED)
     // 之后执行，否则会被连接状态回调覆盖。该状态保持到下次发起连接或连接成功后被覆盖。
-    if (stm_.IsConnectFailed()) {
-        stm_.ClearConnectFailed();
+    if (stateMachine_.IsConnectFailed()) {
+        stateMachine_.ClearConnectFailed();
         if (observer_) {
             observer_->OnSyncStateChange(device, static_cast<int>(PBAP_PCE_PHONEBOOK_STATE_DOWNLOAD_ERROR));
         }
     }
     // 清理 obex client 引用，确保重连时 CreatePceObexClient 新建对象。
     // ffrt 下载线程持有的 shared_ptr 仍保持 obexClient 存活，直到其 lambda 退出。
-    stm_.ResetObexClient();
-    stm_.TransitTargetState();
+    stateMachine_.ResetObexClient();
+    stateMachine_.TransitTargetState();
 }
 
 void PceDisconnectedState::Exit()
@@ -387,15 +544,15 @@ bool PceDisconnectedState::Dispatch(const utility::Message &msg)
         case PCE_REQ_SET_TARGET_STATE:
             PCE_DISCONNECTED_LOG_DEBUG("%{public}s handling PCE_REQ_SET_TARGET_STATE, arg1=%{public}d",
                 __PRETTY_FUNCTION__, msg.arg1_);
-            stm_.SetTargetState(msg.arg1_);
+            stateMachine_.SetTargetState(msg.arg1_);
             break;
         case PCE_REQ_TRANSIT_TARGET_STATE:
             PCE_DISCONNECTED_LOG_DEBUG("%{public}s handling PCE_REQ_TRANSIT_TARGET_STATE", __PRETTY_FUNCTION__);
-            stm_.TransitTargetState();
+            stateMachine_.TransitTargetState();
             break;
         default:
             PCE_DISCONNECTED_LOG_WARN("%{public}s unhandled msg.what_=[%{public}d]", __PRETTY_FUNCTION__, msg.what_);
-            stm_.TryReleasePbapMsg(msg);
+            stateMachine_.TryReleasePbapMsg(msg);
             break;
     }
     return true;
@@ -419,20 +576,22 @@ PceConnectingState::PceConnectingState(
 void PceConnectingState::Entry()
 {
     PCE_CONNECTING_LOG_INFO("observer_ -> CONNECTING");
-    auto device = stm_.GetDevice();
+    stateMachine_.RecordContactsConnecting();
+    auto device = stateMachine_.GetDevice();
     if (observer_) {
         observer_->OnConnectionStateChanged(device, static_cast<int>(BTConnectState::CONNECTING), 0);
     } else {
         PCE_CONNECTING_LOG_ERROR("%{public}s observer_ is null!", __PRETTY_FUNCTION__);
     }
     PCE_CONNECTING_LOG_INFO("%{public}s calling SdpSearch, addr=%{public}s", __PRETTY_FUNCTION__,
-        GetEncryptAddr(stm_.GetDevice().GetAddress()).c_str());
-    int retVal = stm_.GetSdp().SdpSearch(stm_.GetDevice().GetAddress());
+        GetEncryptAddr(stateMachine_.GetDevice().GetAddress()).c_str());
+    int retVal = stateMachine_.GetSdp().SdpSearch(stateMachine_.GetDevice().GetAddress());
     PCE_CONNECTING_LOG_INFO("%{public}s SdpSearch returned=%{public}d", __PRETTY_FUNCTION__, retVal);
     if (retVal != Bluetooth::BT_NO_ERROR) {
         PCE_CONNECTING_LOG_ERROR("%{public}s end, pce client Call SDP_ServiceSearchAttribute Error",
             __PRETTY_FUNCTION__);
-        stm_.MarkConnectFailed();
+        stateMachine_.SetConnectFailReason(PBAP_PCE_CONN_FAIL_SDP);
+        stateMachine_.MarkConnectFailed();
         Transition(PCE_DISCONNECTING_STATE);
         // 已流转离开本状态：不得再创建/启动本状态的连接超时定时器（否则定时器
         // 无人 Stop，到期后跨线程二次流转状态机）
@@ -443,7 +602,7 @@ void PceConnectingState::Entry()
     // PbapThread 串行处理，避免 timer 线程直接 Transition 与 PbapThread 并发操作
     // 状态栈。若消息到达时已离开 CONNECTING 状态，由新状态的 Dispatch 安全忽略
     //（PCE_CONNECT_TIMEOUT 分支仅存在于 ConnectingState）。
-    auto weakSm = stm_.weak_from_this();
+    auto weakSm = stateMachine_.weak_from_this();
     connectTimer_ = std::make_shared<utility::Timer>([weakSm]() {
         DoInPbapThread([weakSm]() {
             auto sm = weakSm.lock();
@@ -466,14 +625,14 @@ void PceConnectingState::Exit()
 int PceConnectingState::CreateObexClient(const PbapPceHeaderSdpMsg &sdpMsg)
 {
     // set version, repository, feature to sm
-    stm_.SetVersionNumber(sdpMsg.GetVersionNumber());
-    stm_.SetSupportedRes(sdpMsg.GetSupportedRes());
-    stm_.SetSupportedFeature(sdpMsg.GetSupportedFeature());
-    stm_.SetFeatureFlag(sdpMsg.GetFeatureFlag());
+    stateMachine_.SetVersionNumber(sdpMsg.GetVersionNumber());
+    stateMachine_.SetSupportedRes(sdpMsg.GetSupportedRes());
+    stateMachine_.SetSupportedFeature(sdpMsg.GetSupportedFeature());
+    stateMachine_.SetFeatureFlag(sdpMsg.GetFeatureFlag());
 
     obexConfig_ = sdpMsg.GetObexClientConfig();
     SetObexClientConfigDetail(obexConfig_);
-    stm_.CreatePceObexClient(obexConfig_);
+    stateMachine_.CreatePceObexClient(obexConfig_);
     return true;
 }
 
@@ -486,18 +645,17 @@ void PceConnectingState::InitAuth()
     authNonce_.clear();
 }
 
-
 void PceConnectingState::SetObexClientConfigDetail(PbapPceObexConfig &obexConfig) const
 {
     obexConfig.isSupportReliableSession = false;
     // SRM 总开关来自 PbapPceService 配置（SrmEnable，默认 true）。SRM 在 L2CAP/RFCOMM
     // 上均可使用（OBEX SRM 与传输层无关）；实际激活在 ObexClientSession::Get() 中按 GET
     // 操作协商，不支持 SRM 的对端自动回退经典 ping-pong 模式。
-    obexConfig.isSupportSrm = stm_.GetPceService().GetPceConfig().srmEnable_;
+    obexConfig.isSupportSrm = stateMachine_.GetPceService().GetPceConfig().srmEnable_;
     if (obexConfig.isL2capPSM) {
-        obexConfig.mtu = stm_.GetPceService().GetPceConfig().l2capMtu_;
+        obexConfig.mtu = stateMachine_.GetPceService().GetPceConfig().l2capMtu_;
     } else {
-        obexConfig.mtu = stm_.GetPceService().GetPceConfig().rfcommMtu_;
+        obexConfig.mtu = stateMachine_.GetPceService().GetPceConfig().rfcommMtu_;
     }
 }
 
@@ -510,10 +668,10 @@ void PceConnectingState::ProcessObexConnected(const utility::Message &msg)
     if (obexMsg != nullptr) {
         auto connectId = obexMsg->GetObexHeader().GetConnectionId();
         if (connectId != INVALID_CONNECTION_ID) {
-            stm_.SetConnectId(connectId);
+            stateMachine_.SetConnectId(connectId);
         }
     }
-    stm_.ClearConnectFailed();
+    stateMachine_.ClearConnectFailed();
     Transition(PCE_CONNECTED_STATE);
     PCE_CONNECTING_LOG_INFO("%{public}s end, msg.what_=[%{public}d]", __PRETTY_FUNCTION__, msg.what_);
 }
@@ -537,15 +695,16 @@ void PceConnectingState::ProcessSdpFinish(const utility::Message &msg)
     if (!createRet) {
         PCE_CONNECTING_LOG_ERROR("%{public}s CreateObexClient failed, transitioning to DISCONNECTING",
             __PRETTY_FUNCTION__);
-        stm_.MarkConnectFailed();
+        stateMachine_.RecordContactsConnectFailed(PBAP_PCE_CONN_FAIL_SDP);
+        stateMachine_.MarkConnectFailed();
         Transition(PCE_DISCONNECTING_STATE);
     } else {
-        auto self = stm_.GetObexClientPtr();
+        auto self = stateMachine_.GetObexClientPtr();
         PCE_CONNECTING_LOG_INFO("%{public}s obexClient=%{public}p", __PRETTY_FUNCTION__, self.get());
         if (self != nullptr) {
             PCE_CONNECTING_LOG_INFO("%{public}s calling obexClient->Connect, featureFlag=%{public}d",
-                __PRETTY_FUNCTION__, stm_.GetFeatureFlag());
-            self->Connect(self, stm_.GetFeatureFlag());
+                __PRETTY_FUNCTION__, stateMachine_.GetFeatureFlag());
+            self->Connect(self, stateMachine_.GetFeatureFlag());
             PCE_CONNECTING_LOG_INFO("%{public}s obexClient->Connect returned", __PRETTY_FUNCTION__);
         } else {
             PCE_CONNECTING_LOG_ERROR("%{public}s obexClient is null! cannot proceed with Connect", __PRETTY_FUNCTION__);
@@ -557,7 +716,15 @@ void PceConnectingState::ProcessSdpFinish(const utility::Message &msg)
 void PceConnectingState::ProcessObexConnectFailed(const utility::Message &msg)
 {
     PCE_CONNECTING_LOG_INFO("%{public}s start, msg.what_=[%{public}d]", __PRETTY_FUNCTION__, msg.what_);
-    stm_.MarkConnectFailed();
+    int responseCode = msg.arg1_;
+    if (responseCode == OBEX_HTTP_FORBIDDEN || responseCode == OBEX_HTTP_UNAUTHORIZED) {
+        stateMachine_.SetConnectFailReason(PBAP_PCE_CONN_FAIL_REJECT);
+    } else if (responseCode > 0) {
+        stateMachine_.SetConnectFailReason(PBAP_PCE_CONN_FAIL_UNAVAILABLE);
+    } else if (stateMachine_.GetConnectFailReason() == PBAP_PCE_CONN_FAIL_NONE) {
+        stateMachine_.SetConnectFailReason(PBAP_PCE_CONN_FAIL_TRANSPORT);
+    }
+    stateMachine_.MarkConnectFailed();
     Transition(PCE_DISCONNECTING_STATE);
     PCE_CONNECTING_LOG_INFO("%{public}s end, msg.what_=[%{public}d]", __PRETTY_FUNCTION__, msg.what_);
 }
@@ -565,14 +732,17 @@ void PceConnectingState::ProcessObexConnectFailed(const utility::Message &msg)
 void PceConnectingState::ProcessObexTransportFailed(const utility::Message &msg)
 {
     PCE_CONNECTING_LOG_INFO("%{public}s start, msg.what_=[%{public}d]", __PRETTY_FUNCTION__, msg.what_);
+    stateMachine_.SetConnectFailReason(PBAP_PCE_CONN_FAIL_TRANSPORT);
+    stateMachine_.MarkConnectFailed();
     PCE_CONNECTING_LOG_INFO("%{public}s end, msg.what_=[%{public}d]", __PRETTY_FUNCTION__, msg.what_);
 }
 
 void PceConnectingState::OnConnectTimeout()
 {
     PCE_CONNECTING_LOG_WARN("%{public}s connect timeout, closing obexClient", __PRETTY_FUNCTION__);
-    stm_.MarkConnectFailed();
-    auto obexClient = stm_.GetObexClientPtr();
+    stateMachine_.SetConnectFailReason(PBAP_PCE_CONN_FAIL_TIMEOUT);
+    stateMachine_.MarkConnectFailed();
+    auto obexClient = stateMachine_.GetObexClientPtr();
     if (obexClient != nullptr) {
         // OBEX client exists -> tear down via DISCONNECTING (sends OBEX DISCONNECT,
         // waits for response, then transitions to DISCONNECTED).
@@ -618,14 +788,15 @@ bool PceConnectingState::Dispatch(const utility::Message &msg)
         case PCE_REQ_SET_TARGET_STATE:
             PCE_CONNECTING_LOG_INFO("%{public}s handling PCE_REQ_SET_TARGET_STATE, arg1=%{public}d",
                 __PRETTY_FUNCTION__, msg.arg1_);
-            stm_.SetTargetState(msg.arg1_);
+            stateMachine_.SetTargetState(msg.arg1_);
             break;
         case PCE_REQ_TRANSIT_TARGET_STATE:
-            stm_.TransitTargetState();
+            stateMachine_.TransitTargetState();
             break;
         case PCE_OBEX_DISCONNECTED:
             PCE_CONNECTING_LOG_INFO("%{public}s handling PCE_OBEX_DISCONNECTED", __PRETTY_FUNCTION__);
-            stm_.MarkConnectFailed();
+            stateMachine_.SetConnectFailReason(PBAP_PCE_CONN_FAIL_TRANSPORT);
+            stateMachine_.MarkConnectFailed();
             Transition(PCE_DISCONNECTING_STATE);
             Transition(PCE_DISCONNECTED_STATE);
             break;
@@ -639,7 +810,7 @@ bool PceConnectingState::Dispatch(const utility::Message &msg)
             PCE_CONNECTING_LOG_ERROR("%{public}s unhandled msg.what_=[%{public}d], returning false",
                 __PRETTY_FUNCTION__, msg.what_);
             // 兜底释放携带 arg2_ 裸指针的消息负载（与其他状态的 default 分支一致）
-            stm_.TryReleasePbapMsg(msg);
+            stateMachine_.TryReleasePbapMsg(msg);
             return false;
     }
 
@@ -648,7 +819,7 @@ bool PceConnectingState::Dispatch(const utility::Message &msg)
 }
 void PceConnectingState::ProcessReqDisconnected(const utility::Message &msg)
 {
-    auto obexClient = stm_.GetObexClientPtr();
+    auto obexClient = stateMachine_.GetObexClientPtr();
     if (obexClient != nullptr) {
         obexClient->Disconnect(false);
     }
@@ -657,7 +828,8 @@ void PceConnectingState::ProcessReqDisconnected(const utility::Message &msg)
 
 void PceConnectingState::ProcessSdpFailed(const utility::Message &msg)
 {
-    stm_.MarkConnectFailed();
+    stateMachine_.SetConnectFailReason(PBAP_PCE_CONN_FAIL_SDP);
+    stateMachine_.MarkConnectFailed();
     Transition(PCE_DISCONNECTING_STATE);
     Transition(PCE_DISCONNECTED_STATE);
 }
@@ -673,7 +845,8 @@ PceConnectedState::PceConnectedState(
 void PceConnectedState::Entry()
 {
     PCE_CONNECTED_LOG_INFO("%{public}s, observer->OnConnectionStateChanged", __PRETTY_FUNCTION__);
-    auto &device = stm_.GetDevice();
+    stateMachine_.MarkChrConnConnected();
+    auto &device = stateMachine_.GetDevice();
     IPowerManager::GetInstance()->StatusUpdate(RequestStatus::CONNECT_ON, PROFILE_NAME_PBAP_PCE, device);
     if (observer_) {
         observer_->OnConnectionStateChanged(device, static_cast<int>(BTConnectState::CONNECTED), 0);
@@ -682,14 +855,14 @@ void PceConnectedState::Entry()
     // 若延迟任务执行前状态已变化（如断连），PCE_REQ_DOWNLOAD 会被新状态的 Dispatch
     // 安全忽略。weak_ptr 捕获：与动态库空闲卸载（delete ServiceImpl → 释放 SM）
     // 竞态时 lock 失败即丢弃任务，避免悬垂指针 UAF。
-    auto weakSm = stm_.weak_from_this();
+    auto weakSm = stateMachine_.weak_from_this();
     DoInPbapThread([weakSm]() {
         auto sm = weakSm.lock();
         if (sm != nullptr) {
             sm->ProcessMessage(utility::Message(PCE_REQ_DOWNLOAD));
         }
     });
-    stm_.TransitTargetState();
+    stateMachine_.TransitTargetState();
 }
 
 void PceConnectedState::Exit()
@@ -702,14 +875,14 @@ void PceConnectedState::ReqPullPhoneBook(const utility::Message &msg) const
     // 🔴 接收方负责释放内存
     std::unique_ptr<PbapPceAppParams> appParams(
         static_cast<PbapPceAppParams*>(msg.arg2_));
-    
+
     if (!appParams) {
         PCE_CONNECTED_LOG_ERROR("appParams is null");
         return;
     }
-    
+
     // 直接使用 appParams
-    stm_.PullPhoneBook(*appParams);
+    stateMachine_.PullPhoneBook(*appParams);
 }
 
 bool PceConnectedState::DispatchActionCompleted(const utility::Message &msg) const
@@ -718,17 +891,17 @@ bool PceConnectedState::DispatchActionCompleted(const utility::Message &msg) con
 
     switch (msg.what_) {
         case PCE_PULLPHONEBOOKSIZE_COMPLETED:
-            stm_.HandlePhoneBookSizeActionCompleted(msg);
+            stateMachine_.HandlePhoneBookSizeActionCompleted(msg);
             break;
         case PCE_PULLPHONEBOOK_COMPLETED:
-            stm_.HandlePullPhoneBookActionCompleted(msg);
+            stateMachine_.HandlePullPhoneBookActionCompleted(msg);
             break;
         case PCE_ABORTDOWNLOADING_COMPLETED:
-            stm_.HandleAbortDownloadingActionCompleted(msg);
+            stateMachine_.HandleAbortDownloadingActionCompleted(msg);
             break;
         default:
             ret = false;
-            stm_.TryReleasePbapMsg(msg);
+            stateMachine_.TryReleasePbapMsg(msg);
             PCE_CONNECTED_LOG_ERROR("%{public}s msg.what_=%{public}d can't be handled.",
             __PRETTY_FUNCTION__, msg.what_);
             break;
@@ -743,18 +916,18 @@ bool PceConnectedState::Dispatch(const utility::Message &msg)
     switch (msg.what_) {
         case PCE_REQ_DISCONNECTED:
             Transition(PCE_DISCONNECTING_STATE);
-            stm_.ForceCloseObexClient();
+            stateMachine_.ForceCloseObexClient();
             break;
         case PCE_TRANSPORT_FAILED:
             PCE_CONNECTED_LOG_WARN("%{public}s PCE_TRANSPORT_FAILED, force close and transition", __PRETTY_FUNCTION__);
             Transition(PCE_DISCONNECTING_STATE);
-            stm_.ForceCloseObexClient();
+            stateMachine_.ForceCloseObexClient();
             break;
         case PCE_REQ_SET_TARGET_STATE:
-            stm_.SetTargetState(msg.arg1_);
+            stateMachine_.SetTargetState(msg.arg1_);
             break;
         case PCE_REQ_TRANSIT_TARGET_STATE:
-            stm_.TransitTargetState();
+            stateMachine_.TransitTargetState();
             break;
         case PCE_OBEX_DISCONNECTED:
             Transition(PCE_DISCONNECTING_STATE);
@@ -767,18 +940,13 @@ bool PceConnectedState::Dispatch(const utility::Message &msg)
             ProcessReqDownload(msg);
             break;
         case PCE_REQ_ABORTDOWNLOADING:
-            stm_.AbortDownloading();
+            stateMachine_.AbortDownloading();
             break;
         case PCE_DOWNLOAD_COMPLETE:
             ProcessDownloadComplete(msg);
             break;
         case PCE_DOWNLOAD_FAILED:
-            PCE_CONNECTED_LOG_WARN("%{public}s PCE_DOWNLOAD_FAILED received", __PRETTY_FUNCTION__);
-            if (observer_) {
-                observer_->OnSyncStateChange(stm_.GetDevice(),
-                    static_cast<int>(PBAP_PCE_PHONEBOOK_STATE_DOWNLOAD_ERROR));
-            }
-            stm_.TransitTargetState();
+            ProcessDownloadFailed(msg);
             break;
         default:
             ret = DispatchActionCompleted(msg);
@@ -787,17 +955,30 @@ bool PceConnectedState::Dispatch(const utility::Message &msg)
     return ret;
 }
 
+void PceConnectedState::ProcessDownloadFailed(const utility::Message &msg)
+{
+    PCE_CONNECTED_LOG_WARN("%{public}s PCE_DOWNLOAD_FAILED received, failReason=%{public}d",
+        __PRETTY_FUNCTION__, msg.arg1_);
+    int syncFailReason = (msg.arg1_ > 0) ? msg.arg1_ : PBAP_PCE_SYNC_FAIL_OBEX_ERR;
+    stateMachine_.RecordContactsSyncFinish(true, syncFailReason);
+    if (observer_) {
+        observer_->OnSyncStateChange(stateMachine_.GetDevice(),
+            static_cast<int>(PBAP_PCE_PHONEBOOK_STATE_DOWNLOAD_ERROR));
+    }
+    stateMachine_.TransitTargetState();
+}
+
 void PceConnectedState::ProcessReqDownload(const utility::Message &msg)
 {
     // 统一的下载触发入口：Entry 自动触发与外部 Connect 手动触发均经此处理
     // 禁止在此处理中触发 Transition（Entry 调用栈内同步分发，递归 Transition 会破坏状态栈）
-    auto &dev = stm_.GetDevice();
-    if (stm_.IsBusy()) {
+    auto &dev = stateMachine_.GetDevice();
+    if (stateMachine_.IsBusy()) {
         PCE_CONNECTED_LOG_INFO("PCE_REQ_DOWNLOAD ignored, already busy, addr=%{public}s",
             GetEncryptAddr(dev.GetAddress()).c_str());
         return;
     }
-    auto obexClient = stm_.GetObexClientPtr();
+    auto obexClient = stateMachine_.GetObexClientPtr();
     if (obexClient == nullptr) {
         PCE_CONNECTED_LOG_ERROR("PCE_REQ_DOWNLOAD failed, obexClient null, addr=%{public}s",
             GetEncryptAddr(dev.GetAddress()).c_str());
@@ -805,6 +986,7 @@ void PceConnectedState::ProcessReqDownload(const utility::Message &msg)
     }
     PCE_CONNECTED_LOG_INFO("download triggered via PCE_REQ_DOWNLOAD, addr=%{public}s",
         GetEncryptAddr(dev.GetAddress()).c_str());
+    stateMachine_.MarkChrSyncStart();
     DoInPbapSyncThread([obexClient]() {
         obexClient->DownloadContactsAndCallLogs();
     });
@@ -813,11 +995,12 @@ void PceConnectedState::ProcessReqDownload(const utility::Message &msg)
 void PceConnectedState::ProcessDownloadComplete(const utility::Message &msg)
 {
     PCE_CONNECTED_LOG_INFO("%{public}s PCE_DOWNLOAD_COMPLETE received", __PRETTY_FUNCTION__);
+    stateMachine_.RecordContactsSyncFinish(false, PBAP_PCE_SYNC_FAIL_NONE);
     if (observer_) {
-        observer_->OnSyncStateChange(stm_.GetDevice(),
+        observer_->OnSyncStateChange(stateMachine_.GetDevice(),
             static_cast<int>(PBAP_PCE_PHONEBOOK_STATE_DOWNLOADED));
     }
-    stm_.TransitTargetState();
+    stateMachine_.TransitTargetState();
 }
 
 // ---------------------------------------------------------------------------
@@ -832,7 +1015,7 @@ void PceDisconnectingState::Entry()
 {
     PCE_DISCONNECTING_LOG_INFO("%{public}s, Observer()->OnServiceConnectionStateChanged()->DISCONNECTING",
         __PRETTY_FUNCTION__);
-    auto &device = stm_.GetDevice();
+    auto &device = stateMachine_.GetDevice();
     if (observer_) {
         observer_->OnConnectionStateChanged(device, static_cast<int>(BTConnectState::DISCONNECTING), 0);
     }
@@ -841,7 +1024,7 @@ void PceDisconnectingState::Entry()
     // P0-2: 超时回调经 DoInPbapThread 转投 PCE_DISCONNECT_TIMEOUT 消息，由状态机
     // 在 PbapThread 串行处理，避免 timer 线程直接 Transition/ForceClose 与
     // PbapThread 并发操作状态栈。消息到达时若已离开本状态，由新状态安全忽略。
-    auto weakSm = stm_.weak_from_this();
+    auto weakSm = stateMachine_.weak_from_this();
     disconnectTimer_ = std::make_shared<utility::Timer>([weakSm]() {
         DoInPbapThread([weakSm]() {
             auto sm = weakSm.lock();
@@ -865,7 +1048,7 @@ void PceDisconnectingState::Exit()
 void PceDisconnectingState::OnDisconnectTimeout()
 {
     PCE_DISCONNECTING_LOG_WARN("Disconnect timeout, force closing socket and transition to DISCONNECTED");
-    stm_.ForceCloseObexClient();
+    stateMachine_.ForceCloseObexClient();
     Transition(PCE_DISCONNECTED_STATE);
 }
 
@@ -880,7 +1063,15 @@ bool PceDisconnectingState::Dispatch(const utility::Message &msg)
         case PCE_DOWNLOAD_COMPLETE:
             PCE_DISCONNECTING_LOG_INFO("%{public}s PCE_DOWNLOAD_COMPLETE ignored in DISCONNECTING",
                 __PRETTY_FUNCTION__);
+            stateMachine_.MarkChrSyncFinish(false, PBAP_PCE_SYNC_FAIL_NONE);
             break;
+        case PCE_DOWNLOAD_FAILED: {
+            PCE_DISCONNECTING_LOG_INFO("%{public}s PCE_DOWNLOAD_FAILED in DISCONNECTING, failReason=%{public}d",
+                __PRETTY_FUNCTION__, msg.arg1_);
+            int syncFailReason = (msg.arg1_ > 0) ? msg.arg1_ : PBAP_PCE_SYNC_FAIL_OBEX_ERR;
+            stateMachine_.MarkChrSyncFinish(true, syncFailReason);
+            break;
+        }
         case PCE_DISCONNECT_TIMEOUT:
             PCE_DISCONNECTING_LOG_DEBUG("%{public}s handling PCE_DISCONNECT_TIMEOUT", __PRETTY_FUNCTION__);
             OnDisconnectTimeout();
@@ -888,14 +1079,14 @@ bool PceDisconnectingState::Dispatch(const utility::Message &msg)
         case PCE_REQ_SET_TARGET_STATE:
             PCE_DISCONNECTING_LOG_DEBUG("%{public}s handling PCE_REQ_SET_TARGET_STATE, arg1=%{public}d",
                 __PRETTY_FUNCTION__, msg.arg1_);
-            stm_.SetTargetState(msg.arg1_);
+            stateMachine_.SetTargetState(msg.arg1_);
             break;
         case PCE_REQ_TRANSIT_TARGET_STATE:
             PCE_DISCONNECTING_LOG_DEBUG("%{public}s handling PCE_REQ_TRANSIT_TARGET_STATE", __PRETTY_FUNCTION__);
-            stm_.TransitTargetState();
+            stateMachine_.TransitTargetState();
             break;
         default:
-            stm_.TryReleasePbapMsg(msg);
+            stateMachine_.TryReleasePbapMsg(msg);
             return false;
     }
 
