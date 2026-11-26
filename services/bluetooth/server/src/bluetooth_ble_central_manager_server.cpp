@@ -1050,6 +1050,16 @@ int BluetoothBleCentralManagerServer::StartScan(int32_t scannerId, const Bluetoo
         callingName.c_str(), pid, uid, scannerId, settings.GetReportMode());
 
     CHECK_AND_RETURN_LOG_RET(CheckBleScanPermission(), BT_ERR_PERMISSION_FAILED, "CheckBleScanPermission failed");
+    for (const auto& filter : filters) {
+        if (!filter.GetIrk().empty() && !PermissionManager::IsSystemHap()) {
+            // irk is a systemAPI.
+            HILOGE("Non-system applications are not allowed to use system APIs.");
+            if (pimpl->applications) {
+                pimpl->applications->ChrReportScanFilter(BT_ERR_SYSTEM_PERMISSION_FAILED);
+            }
+            return BT_ERR_SYSTEM_PERMISSION_FAILED;
+        }
+    }
     int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
     CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     CHECK_AND_RETURN_LOG_RET(scannerId != BLE_SCAN_INVALID_ID, BT_ERR_INTERNAL_ERROR, "Invalid scannerId");
@@ -1268,13 +1278,6 @@ static std::vector<BluetoothBleScanFilter> RemoveDuplicateFilters(const std::vec
 int BluetoothBleCentralManagerServer::ConfigScanFilterInner(
     int32_t scannerId, const BleScanSettingsImpl &settings, const std::vector<BluetoothBleScanFilter> &filters)
 {
-    for (const auto& filter : filters) {
-        if (!filter.GetIrk().empty() && !PermissionManager::IsSystemHap()) {
-            // irk is a systemAPI.
-            HILOGE("Non-system applications are not allowed to use system APIs.");
-            return BT_ERR_SYSTEM_PERMISSION_FAILED;
-        }
-    }
     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
     if (bleService == nullptr || pimpl->applications == nullptr) {
         HILOGE("bleService or applications is null");
