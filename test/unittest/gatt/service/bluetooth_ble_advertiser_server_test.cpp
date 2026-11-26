@@ -14,11 +14,8 @@
  */
 
 #include <gtest/gtest.h>
-#include "ble_adapter.h"
 #include <gmock/gmock.h>
 #include "bluetooth_errorcode.h"
-#include "adapter_manager.h"
-#include "adapter_config.h"
 #include "bluetooth_ble_advertiser_server.h"
 #include "bluetooth_ble_advertiser_server.cpp"
 #include "bluetooth_ble_advertiser_power_compensator.h"
@@ -253,10 +250,6 @@ public:
     }
     ~BluetoothGattClientCallbackTest() override = default;
 };
-static void *BleAdapterCreate(void)
-{
-    return new BleAdapter();
-}
 
 void BluetoothBleAdvertiserServerTest::SetUpTestSuite(void)
 {
@@ -272,12 +265,6 @@ void BluetoothBleAdvertiserServerTest::SetUpTestSuite(void)
         host_->EnableBt();
         sleep(TIME);
     }
-    // 测试进程内的 AdapterManager 与设备 SA 不同进程，需显式创建 adapter 并置为开启
-    AdapterConfig::GetInstance()->Load();
-    ClassFactory::RegisterClass("BleAdapter", BleAdapterCreate);
-    AdapterManager::GetInstance()->CreateAdapters();
-    AdapterManager::GetInstance()->UpdateBluetoothState(
-        bluetooth::BTTransport::ADAPTER_BLE, bluetooth::BTStateID::STATE_TURN_ON);
 
     ClassFactory::RegisterClass("GattClientService", GattClientServiceCreate);
 
