@@ -54,15 +54,15 @@ do { \
 } while (0)
 
 namespace {
-bluetooth::BleScanSettingsImpl ConvertScanSetting(BleScannerMessage msg)
+bool IsLegacyModeNeeded(const std::list<BleScannerStateMachine::ScannerAppInfo> &appQueue);
+
+bluetooth::BleScanSettingsImpl ConvertScanSetting(BleScannerMessage msg, bool legacy)
 {
     BleScannerStateMachine::ScannerParameters params = msg.appInfo.params;
     bluetooth::BleScanSettingsImpl setting;
     setting.SetReportDelay(params.reportDelayMillis);
     setting.SetScanMode(params.scanMode);
-    // The legacy mode must use the merged result of all scanning apps: as long as any app requests
-    // an extended scan(legacy == false), the stack must be started in extended scan mode.
-    setting.SetLegacy(msg.scanParams.legacy);
+    setting.SetLegacy(legacy);
     setting.SetPhy(params.phy);
     setting.SetCallbackType(params.callbackType);
     setting.SetMatchTrackAdvType(params.matchTrackAdvType);
@@ -269,6 +269,7 @@ void BleScannerStoppedState::Exit()
 bool BleScannerStoppedState::Dispatch(const utility::Message &utilMsg)
 {
     auto msg = static_cast<const BleScannerMessage &>(utilMsg);
+    bool legacy = false;
 
     switch (msg.what_) {
         case BleScannerStateMachine::START_EVENT:
@@ -287,9 +288,11 @@ bool BleScannerStoppedState::Dispatch(const utility::Message &utilMsg)
             HILOGI("[STOPPED] -> [STARTING] after event [%{public}s], %{public}s",
                 EventToStr(msg.what_, sm_.isInnerEvent_), msg.appInfo.ToString().c_str());
             Transition(BLE_SCAN_STARTING);
-            sm_.startScanFunc_(ConvertScanSetting(msg));
+            legacy = msg.appInfo.params.legacy && IsLegacyModeNeeded(sm_.appQueue_);
+            sm_.startScanFunc_(ConvertScanSetting(msg, legacy));
             sm_.reqApp_ = std::make_shared<BleScannerStateMachine::ScannerAppInfo>(msg.appInfo);
             sm_.reqParam_ = msg.scanParams;
+            sm_.reqParam_.legacy = legacy;
             break;
         case BleScannerStateMachine::STOP_EVENT:
             HILOGE("Unsupported [%{public}s] in StateStopped.", EventToStr(msg.what_));
@@ -818,9 +821,11 @@ void BleScannerShCollaboration::HandlePendingEvent(const BleScannerMessage &msg)
             }
             HILOGI("[SH_COLLABORATION] -> [STARTING]");
             Transition(BLE_SCAN_STARTING);
-            sm_.startScanFunc_(ConvertScanSetting(msg));
+            bool legacy = msg.appInfo.params.legacy && IsLegacyModeNeeded(sm_.appQueue_);
+            sm_.startScanFunc_(ConvertScanSetting(msg, legacy));
             sm_.reqApp_ = std::make_shared<BleScannerStateMachine::ScannerAppInfo>(msg.appInfo);
             sm_.reqParam_ = msg.scanParams;
+            sm_.reqParam_.legacy = legacy;
         } else {
             HILOGI("[SH_COLLABORATION] -> [STOPPED]");
             Transition(BLE_SCAN_STOPPED);
@@ -973,8 +978,8 @@ std::list<BleScannerStateMachine::ScannerAppInfo>::iterator BleScannerStateMachi
 
     auto maxIter = appQueue.begin();
     optimalParam = maxIter->params;
-    // Extended scan(legacy == false) is compatible with legacy scan, so it is used as long as
-    // any scanning app requires it.
+    // Pending stack confirmation: legacy adv/scan rsp are still reported when legacy == false,
+    // so extended scan is used as long as any scanning app requires it.
     optimalParam.legacy = IsLegacyModeNeeded(appQueue);
 
     for (auto it = appQueue.begin(); it != appQueue.end(); ++it) {

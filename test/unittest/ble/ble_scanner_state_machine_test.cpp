@@ -89,6 +89,40 @@ static const BleScannerMessage T_STOP_EVENT_5 {
     BleScannerStateMachine::ScannerAppInfo(50, 50, 5),
 };
 
+static const BleScannerMessage T_START_EVENT_6 {
+    BleScannerStateMachine::START_EVENT,
+    BleScannerStateMachine::ScannerAppInfo(60, 60, 6,
+        BleScannerStateMachine::ScannerParameters(0, OHOS::bluetooth::SCAN_MODE_OP_P2_60_3000, false, 0)),
+};
+
+static const BleScannerMessage T_STOP_EVENT_6 {
+    BleScannerStateMachine::STOP_EVENT,
+    BleScannerStateMachine::ScannerAppInfo(60, 60, 6),
+};
+
+static const BleScannerMessage T_START_EVENT_7 {
+    BleScannerStateMachine::START_EVENT,
+    BleScannerStateMachine::ScannerAppInfo(70, 70, 7,
+        BleScannerStateMachine::ScannerParameters(0, OHOS::bluetooth::SCAN_MODE_OP_P10_60_600, true, 0)),
+};
+
+static const BleScannerMessage T_STOP_EVENT_7 {
+    BleScannerStateMachine::STOP_EVENT,
+    BleScannerStateMachine::ScannerAppInfo(70, 70, 7),
+};
+
+static const BleScannerMessage T_START_EVENT_8 {
+    BleScannerStateMachine::START_EVENT,
+    BleScannerStateMachine::ScannerAppInfo(80, 80, 8,
+        BleScannerStateMachine::ScannerParameters(0, OHOS::bluetooth::SCAN_MODE_OP_P2_60_3000, true, 0)),
+};
+
+static const BleScannerMessage T_START_EVENT_9 {
+    BleScannerStateMachine::START_EVENT,
+    BleScannerStateMachine::ScannerAppInfo(90, 90, 9,
+        BleScannerStateMachine::ScannerParameters(0, OHOS::bluetooth::SCAN_MODE_OP_P2_60_3000, false, 0)),
+};
+
 static const BleScannerMessage T_START_EVENT_100 {
     BleScannerStateMachine::START_EVENT,
     BleScannerStateMachine::ScannerAppInfo(10, 10, 100,
@@ -2526,4 +2560,62 @@ HWTEST_F(BleScannerStateMachineTest, ble_scanner_state_machine_test_057, TestSiz
     CHECK_STATE_STARTED();
     EXPECT_TRUE(stateMachine_->optimalParam_.legacy);
     HILOGI("ble_scanner_state_machine_test_057 end");
+}
+
+/**
+ * @tc.name: ble_scanner_state_machine_test_058
+ * @tc.desc: Verify the BleScannerStateMachine:
+ *                During the re-negotiation window, one app stops and another app starts. The
+ *                legacy mode sent to the stack must still be merged from all the scanning
+ *                apps, not the mode of the app which triggers the start event.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BleScannerStateMachineTest, ble_scanner_state_machine_test_058, TestSize.Level0)
+{
+    HILOGI("ble_scanner_state_machine_test_058 enter");
+    NiceMock<BleScannerInterfaceMock> interface;
+    appActiveScan_ = true;
+    InitStateMachine(interface, true);
+    auto app7Setting = GetTestScanSetting(T_START_EVENT_7);
+    app7Setting.SetLegacy(false);
+    auto app8Setting = GetTestScanSetting(T_START_EVENT_8);
+    app8Setting.SetLegacy(false);
+    {
+        InSequence s;
+        EXPECT_CALL(interface, StartScan(GetTestScanSetting(T_START_EVENT_6))); // legacy == false
+        EXPECT_CALL(interface, StopScan());
+        EXPECT_CALL(interface, StartScan(app7Setting)); // merged legacy == false
+        EXPECT_CALL(interface, StopScan());
+        EXPECT_CALL(interface, StartScan(app8Setting)); // merged legacy == false
+    }
+
+    /* app6(extended) and app9(extended) are scanning */
+    CHECK_STATE_STOPPED();
+    StartCycleInit(T_START_EVENT_6);
+    stateMachine_->SendMessage(T_START_EVENT_9);
+    CHECK_STATE_STARTED();
+    EXPECT_EQ(stateMachine_->appQueue_.size(), 2);
+
+    /* app7(legacy, higher duty cycle) joins and the scan is restarted with merged legacy == false */
+    StartCycleLarger(T_START_EVENT_7);
+    EXPECT_FALSE(stateMachine_->optimalParam_.legacy);
+
+    /* app7 stops, the scan is stopped for re-negotiation */
+    stoppedScannerIds_.insert(7);
+    stateMachine_->SendMessage(T_STOP_EVENT_7);
+    CHECK_STATE_STOPPING();
+
+    /* In the re-negotiation window, app6 stops and app8(legacy) starts. The queued resume
+       START_EVENT(app6) is discarded, and app8 starts with merged legacy == false because
+       app9 is still scanning with extended scan. */
+    stoppedScannerIds_.insert(6);
+    stateMachine_->SendMessage(T_STOP_EVENT_6);
+    stateMachine_->SendMessage(T_START_EVENT_8);
+    CHECK_STATE_STOPPING();
+    stateMachine_->SendMessage(T_STOP_SUCCESS_EVENT);
+    CHECK_STATE_STARTING();
+    stateMachine_->SendMessage(T_START_SUCCESS_EVENT);
+    CHECK_STATE_STARTED();
+    EXPECT_FALSE(stateMachine_->optimalParam_.legacy);
+    HILOGI("ble_scanner_state_machine_test_058 end");
 }
