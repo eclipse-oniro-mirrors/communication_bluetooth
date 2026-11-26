@@ -153,6 +153,11 @@ void AvrcpTgService::Enable(void)
 void AvrcpTgService::EnableNative(void)
 {
 #ifdef MULTI_A2DP_ENABLED
+    Bluetooth::MultiA2dpManager::RegisterDeviceBoundCallback([](const std::string &addr) {
+        DoInAvrcpTgThread([addr]() {
+            AvrcpServiceManager::GetInstance().SyncAbsVolumeOnZoneBound(RawAddress(addr));
+        });
+    });
     Bluetooth::MultiA2dpManager::Init();
 #endif
     AvrcpServiceManager::GetInstance().Init();
@@ -168,6 +173,7 @@ void AvrcpTgService::DisableNative(void)
 {
     AvrcpServiceManager::GetInstance().DeInit();
 #ifdef MULTI_A2DP_ENABLED
+    Bluetooth::MultiA2dpManager::UnregisterDeviceBoundCallback();
     Bluetooth::MultiA2dpManager::Cleanup();
 #endif
     GetContext()->OnDisable(PROFILE_NAME_AVRCP_TG, true);

@@ -103,6 +103,21 @@ namespace {
     std::mutex g_displayCallbackMapMutex;
     std::map<int32_t, std::shared_ptr<class BtAudioDeviceChangeCallback>> g_deviceCallbackMap;
 
+    std::mutex g_deviceBoundCallbackMutex;
+    MultiA2dpManager::DeviceBoundCallback g_deviceBoundCallback;
+
+    void NotifyDeviceBound(const std::string &addr)
+    {
+        MultiA2dpManager::DeviceBoundCallback callback;
+        {
+            std::lock_guard<std::mutex> lock(g_deviceBoundCallbackMutex);
+            callback = g_deviceBoundCallback;
+        }
+        if (callback) {
+            callback(addr);
+        }
+    }
+
 #ifdef BLUETOOTH_OS_ACCOUNT
 void CollectForegroundAccounts(std::map<int32_t, int32_t> &newMap)
 {
@@ -191,11 +206,16 @@ public:
             std::string addr = dev.deviceAddress;
             if (addr.empty()) continue;
             if (dev.status == ZONE_AUDIO_DEVICE_STATUS_CONNECT) {
-                std::lock_guard<std::mutex> lock(g_deviceDisplayMapMutex);
-                g_addrToDisplayId[NormalizeAddr(addr)] = displayId_;
-                g_displayIdToAddr[displayId_] = NormalizeAddr(addr);
-                HILOGI("Device connected: addr=%{public}s, displayId=%{public}d",
-                       bluetooth::GetEncryptAddr(addr).c_str(), displayId_);
+                {
+                    std::lock_guard<std::mutex> lock(g_deviceDisplayMapMutex);
+                    g_addrToDisplayId[NormalizeAddr(addr)] = displayId_;
+                    g_displayIdToAddr[displayId_] = NormalizeAddr(addr);
+                    HILOGI("Device connected: addr=%{public}s, displayId=%{public}d",
+                           bluetooth::GetEncryptAddr(addr).c_str(), displayId_);
+                }
+                /* The mapping must be visible before notifying, so a concurrent AVRCP connect
+                 * that misses this notification still sees the bound display. */
+                NotifyDeviceBound(addr);
             } else if (dev.status == ZONE_AUDIO_DEVICE_STATUS_DISCONNECT) {
                 std::lock_guard<std::mutex> lock(g_deviceDisplayMapMutex);
                 g_addrToDisplayId.erase(NormalizeAddr(addr));
@@ -366,6 +386,18 @@ void MultiA2dpManager::Cleanup()
     HILOGI("MultiA2dpManager::Cleanup success");
 }
 
+void MultiA2dpManager::RegisterDeviceBoundCallback(DeviceBoundCallback callback)
+{
+    std::lock_guard<std::mutex> lock(g_deviceBoundCallbackMutex);
+    g_deviceBoundCallback = std::move(callback);
+}
+
+void MultiA2dpManager::UnregisterDeviceBoundCallback()
+{
+    std::lock_guard<std::mutex> lock(g_deviceBoundCallbackMutex);
+    g_deviceBoundCallback = nullptr;
+}
+
 int32_t MultiA2dpManager::GetDisplayIdByAddr(const std::string &addr)
 {
     std::lock_guard<std::mutex> lock(g_deviceDisplayMapMutex);
@@ -422,6 +454,8 @@ namespace Bluetooth {
 
 void MultiA2dpManager::Init() {}
 void MultiA2dpManager::Cleanup() {}
+void MultiA2dpManager::RegisterDeviceBoundCallback(DeviceBoundCallback) {}
+void MultiA2dpManager::UnregisterDeviceBoundCallback() {}
 int32_t MultiA2dpManager::GetDisplayIdByAddr(const std::string &) { return 0; }
 std::string MultiA2dpManager::GetAddrByDisplayId(int32_t) { return ""; }
 int32_t MultiA2dpManager::GetUserIdByDisplayId(int32_t) { return -1; }
