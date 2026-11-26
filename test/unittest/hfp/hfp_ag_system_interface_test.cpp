@@ -245,17 +245,17 @@ HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_QueryCurrentCallsList
     HILOGI("Hfp_Ag_system_interface_QueryCurrentCallsList_002 start");
 
     CallAttributeInfo voipCall;
-    voipcall.callType = CallType::TYPE_VOIP;
+    voipCall.callType = CallType::TYPE_VOIP;
     voipCall.accountNumber[0] = '\0';
-    std:string number = voipCall.accountNumber;
+    std::string number = voipCall.accountNumber;
 
     EXPECT_TRUE(number.empty());
     EXPECT_EQ(voipCall.callType, CallType::TYPE_VOIP);
     bool shouldFillZeros = (voipCall.callType == CallType::TYPE_VOIP) && number.empty();
     EXPECT_TRUE(shouldFillZeros);
 
-    number = '00000000000';
-    EXPECT_EQ(number, '00000000000');
+    number = "00000000000";
+    EXPECT_EQ(number, "00000000000");
     EXPECT_EQ(number.length(), 11u);
 
     HILOGI("Hfp_Ag_system_interface_QueryCurrentCallsList_002 end");
@@ -273,7 +273,7 @@ HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_QueryCurrentCallsList
     CallAttributeInfo csCall;
     csCall.callType = CallType::TYPE_CS;
     csCall.accountNumber[0] = '\0';
-    std:string number = csCall.accountNumber;
+    std::string number = csCall.accountNumber;
 
     EXPECT_TRUE(number.empty());
     EXPECT_NE(csCall.callType, CallType::TYPE_VOIP);
@@ -284,7 +284,7 @@ HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_QueryCurrentCallsList
     imsCall.callType = CallType::TYPE_CS;
     imsCall.accountNumber[0] = '\0';
     number = imsCall.accountNumber;
-    shouldFillZeros = (csCimsCallall.callType == CallType::TYPE_VOIP) && number.empty();
+    shouldFillZeros = (imsCall.callType == CallType::TYPE_VOIP) && number.empty();
     EXPECT_FALSE(shouldFillZeros);
 
     HILOGI("Hfp_Ag_system_interface_QueryCurrentCallsList_003 end");
@@ -301,7 +301,7 @@ HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_QueryCurrentCallsList
 
     CallAttributeInfo voipCallWithNumber;
     voipCallWithNumber.callType = CallType::TYPE_VOIP;
-    std:string originalNumber = '138000000000';
+    std::string originalNumber = "138000000000";
     std::strncpy(voipCallWithNumber.accountNumber, originalNumber.c_str(), kMaxNumberLen);
     voipCallWithNumber.accountNumber[kMaxNumberLen] = '\0';
     std::string number = voipCallWithNumber.accountNumber;
