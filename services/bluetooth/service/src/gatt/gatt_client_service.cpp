@@ -421,8 +421,12 @@ int GattClientService::Connect(int appId, bool autoConnect)
     bool isAllowed = BluetoothConnectionManager::GetInstance()->IsNativeAppOrSystemHap();
     HILOGI("callingName(%{public}s); IsNativeApp : %{public}d", callingname.c_str(), isAllowed);
     if (IAdapterManager::GetInstance()->IsBluetoothRestricted()) {
-        if (!isAllowed) {
-            HILOGW("just allow system hap and native app connect gatt");
+        // owner 白名单优先；未命中时允许系统 HAP / native。内部 profile（如 BAS）在
+        // 受限态本就应放行，进程内直调不经过 server 门禁，由 msg.isSystemHap 覆盖。
+        bool isOwnerApp = IAdapterManager::GetInstance()->IsBleOwnerMode() &&
+            IAdapterManager::GetInstance()->IsBleOwnerModeApp(msg.pid);
+        if (!msg.isSystemHap && !isOwnerApp) {
+            HILOGW("just allow native/system hap/owner app connect gatt");
             return Bluetooth::BT_ERR_RESTRICT_STATE;
         }
     }

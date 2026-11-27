@@ -30,6 +30,7 @@
 #include "bluetooth_log.h"
 #include "bluetooth_utils_server.h"
 #include "bluetooth_errorcode.h"
+#include "bt_state_check.h"
 #include "bt_chr_ue_manager.h"
 #include "bt_chr_hci_process_data.h"
 #include "bt_chr_dft_exception.h"
@@ -830,6 +831,9 @@ bool BluetoothBleCentralManagerServer::FreezeByRss(std::set<int> pidSet, bool is
 {
     HILOGI("bluetooth freeze, pid[%{public}s] isFreeze: %{public}d freezeType : %{public}d",
         ToLogString(pidSet).c_str(), isFreeze, freezeType);
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, false,
+        "ble half state not allowed, ret: %{public}d", stateCheckRet);
     CHECK_AND_RETURN_LOG_RET(freezeType <= FreezeType::LOW_POWER_TYPE, false, "Invalid freezeType");
     bool ret = true;
     for (int pid : pidSet) {
@@ -854,6 +858,9 @@ bool BluetoothBleCentralManagerServer::FreezeByRss(std::set<int> pidSet, bool is
 bool BluetoothBleCentralManagerServer::ResetAllProxy()
 {
     HILOGI("Start bluetooth ResetAllProxy");
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, false,
+        "ble half state not allowed, ret: %{public}d", stateCheckRet);
     std::lock_guard<std::mutex> lock(proxyMutex_);
     proxyPids_.clear();
     return true;
@@ -1044,6 +1051,8 @@ int BluetoothBleCentralManagerServer::StartScan(int32_t scannerId, const Bluetoo
         callingName.c_str(), pid, uid, scannerId, settings.GetReportMode());
 
     CHECK_AND_RETURN_LOG_RET(CheckBleScanPermission(), BT_ERR_PERMISSION_FAILED, "CheckBleScanPermission failed");
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     CHECK_AND_RETURN_LOG_RET(scannerId != BLE_SCAN_INVALID_ID, BT_ERR_INTERNAL_ERROR, "Invalid scannerId");
     BtChr2g4BleScanPkgNameSet(callingName);
     BleScanSettingsImpl settingsImpl;
@@ -1378,6 +1387,8 @@ void BluetoothBleCentralManagerServer::DeregisterBleCentralManagerCallback(int32
 int BluetoothBleCentralManagerServer::SetLpDeviceAdvParam(int duration, int maxExtAdvEvents, int window, int interval,
     int advHandle)
 {
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
     if (bleService == nullptr) {
         HILOGE("bleService is nullptr.");
@@ -1389,6 +1400,8 @@ int BluetoothBleCentralManagerServer::SetLpDeviceAdvParam(int duration, int maxE
 
 int BluetoothBleCentralManagerServer::SetScanReportChannelToLpDevice(int32_t scannerId, bool enable)
 {
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
     if (bleService == nullptr) {
         HILOGE("bleService is nullptr.");
@@ -1406,6 +1419,8 @@ int BluetoothBleCentralManagerServer::SetScanReportChannelToLpDevice(int32_t sca
 
 int BluetoothBleCentralManagerServer::EnableSyncDataToLpDevice()
 {
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
     if (bleService == nullptr) {
         HILOGE("bleService is nullptr.");
@@ -1428,6 +1443,8 @@ int BluetoothBleCentralManagerServer::DisableSyncDataToLpDevice()
 
 int BluetoothBleCentralManagerServer::SendParamsToLpDevice(const std::vector<uint8_t> &dataValue, int32_t type)
 {
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
     if (bleService == nullptr) {
         HILOGE("bleService is nullptr.");
@@ -1439,6 +1456,9 @@ int BluetoothBleCentralManagerServer::SendParamsToLpDevice(const std::vector<uin
 
 bool BluetoothBleCentralManagerServer::IsLpDeviceAvailable()
 {
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, false,
+        "ble half state not allowed, ret: %{public}d", stateCheckRet);
     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
     if (bleService == nullptr) {
         HILOGE("bleService is nullptr.");
@@ -1449,6 +1469,8 @@ bool BluetoothBleCentralManagerServer::IsLpDeviceAvailable()
 
 int BluetoothBleCentralManagerServer::SetLpDeviceParam(const BluetoothLpDeviceParamSet &paramSet)
 {
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
     if (bleService == nullptr) {
         HILOGE("bleService is nullptr.");
@@ -1521,6 +1543,8 @@ int BluetoothBleCentralManagerServer::ChangeScanParams(int32_t scannerId, const 
         HILOGE("CheckBleScanPermission failed");
         return BT_ERR_PERMISSION_FAILED;
     }
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
 
     auto oldScanSetting = pimpl->applications->GetScanSetting(scannerId);
     if ((oldScanSetting.GetCallbackType() != settings.GetCallbackType() ||
@@ -1556,6 +1580,8 @@ int BluetoothBleCentralManagerServer::FlushBatchScanResults(int32_t scannerId)
         HILOGE("CheckBleScanPermission failed");
         return BT_ERR_PERMISSION_FAILED;
     }
+    int32_t stateCheckRet = bluetooth::CheckBleHalfStateForCaller();
+    CHECK_AND_RETURN_LOG_RET(stateCheckRet == BT_NO_ERROR, stateCheckRet, "ble half state not allowed");
     CHECK_AND_RETURN_LOG_RET(scannerId != BLE_SCAN_INVALID_ID, BT_ERR_INTERNAL_ERROR, "Invalid scannerId");
     bool isValid = pimpl->applications->IsValidScannerId(pid, uid, scannerId);
     CHECK_AND_RETURN_LOG_RET(isValid, BT_ERR_INTERNAL_ERROR, "Unknown scannerId");

@@ -250,6 +250,7 @@ public:
     }
     ~BluetoothGattClientCallbackTest() override = default;
 };
+
 void BluetoothBleAdvertiserServerTest::SetUpTestSuite(void)
 {
     HILOGI("SetUpTestCase start");
