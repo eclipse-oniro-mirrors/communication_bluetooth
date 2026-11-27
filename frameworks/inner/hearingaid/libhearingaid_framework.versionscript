@@ -1,0 +1,40 @@
+# Copyright (c) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+{
+  global:
+    _ZGVN4OHOS9Bluetooth24BluetoothHearingAidProxy10delegator_E;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid10DisconnectERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid10GetProfileEv;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid15GetActiveDeviceERNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEES9_;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid16RegisterObserverENSt3__h10shared_ptrINS0_18HearingAidObserverEEE;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid18DeregisterObserverENSt3__h10shared_ptrINS0_18HearingAidObserverEEE;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid18GetConnectionStateERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEERi;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid19GetConnectedDevicesERNSt3__h6vectorINS2_12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEENS7_IS9_EEEE;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid21GetConnectionStrategyERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEERi;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid21SetConnectionStrategyERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEi;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid23GetHearingAidDeviceInfoE*;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid30IsLocalDeviceSupportHearingAidERb;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid4implC1Ev;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid4implC2Ev;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid4implD1Ev;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid4implD2Ev;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid7ConnectERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEE;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAid9SetVolumeE*;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAidC1Ev;
+    _ZN4OHOS9Bluetooth19BluetoothHearingAidC2Ev;
+    _ZN4OHOS9Bluetooth24BluetoothHearingAidProxy10delegator_E;
+    __cfi_check;
+  local:
+    *;
+};

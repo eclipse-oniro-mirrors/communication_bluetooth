@@ -18,6 +18,8 @@ BT_NAPI_DIR = "$BT_PART_DIR/frameworks/js/napi"
 SUBSYSTEM_DIR = "//foundation/communication"
 
 ohos_shared_library("hid") {
+  # Used to control the export of dynamic library symbols.
+  version_script = "libhid.versionscript"
   cflags_cc = [
     "-Os",
     "-fno-rtti",

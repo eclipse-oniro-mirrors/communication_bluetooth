@@ -40,6 +40,8 @@ ohos_taihe("run_taihe") {
 }
 
 taihe_shared_library("bluetoothA2dp_taihe_native") {
+  # Used to control the export of dynamic library symbols.
+  version_script = "libbluetoothA2dp_taihe_native.versionscript"
   cflags_cc = [
     "-Os",
     "-fno-rtti",

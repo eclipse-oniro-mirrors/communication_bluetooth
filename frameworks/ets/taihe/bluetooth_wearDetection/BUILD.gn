@@ -37,6 +37,8 @@ ohos_taihe("run_taihe") {
 }
 
 taihe_shared_library("bluetoothWearDetection_taihe_native") {
+  # Used to control the export of dynamic library symbols.
+  version_script = "libbluetoothWearDetection_taihe_native.versionscript"
   cflags_cc = [
     "-Os",
     "-fno-rtti",

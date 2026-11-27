@@ -38,6 +38,8 @@ config("bluetooth_ndk_config") {
 }
 
 ohos_shared_library("bluetooth_ndk") {
+  # Used to control the export of dynamic library symbols.
+  version_script = "libbluetooth_ndk.versionscript"
   cflags_cc = [
     "-Os",
     "-fno-rtti",

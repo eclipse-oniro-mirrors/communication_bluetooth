@@ -60,7 +60,7 @@ ohos_shared_library("hearingaid_framework") {
     ubsan = true
   }
   branch_protector_ret = "pac_ret"
-  version_script = "libhearingaid_version_script.txt"
+  version_script = "libhearingaid_framework.versionscript"
   configs = [ ":hearingaid_config" ]
   public_configs = [ ":hearingaid_public_config" ]
 
