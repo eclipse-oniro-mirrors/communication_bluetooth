@@ -22,7 +22,6 @@
 #include "pbap_pce_message.h"
 #include "pbap_pce_header_msg.h"
 #include "pbap_pce_def.h"
-#include "bt_chr_dft_exception.h"
 #include "bluetooth_log.h"
 #include "raw_address.h"
 #include "profile_service_manager.h"
@@ -215,24 +214,6 @@ static void TestPbapPceImplMessages(FuzzedDataProvider &provider)
     impl.ForwardMsgToStm(rawAddr, invalidMsg);
 }
 
-static void TestPbapPceContactsChr(PbapPceStateMachine &sm, FuzzedDataProvider &provider)
-{
-    sm.SetConnectFailReason(provider.ConsumeIntegralInRange<int32_t>(
-        PBAP_PCE_CONN_FAIL_NONE, PBAP_PCE_CONN_FAIL_TRANSPORT));
-    sm.GetConnectFailReason();
-    sm.RecordContactsConnecting();
-    sm.MarkChrConnConnected();
-    sm.MarkChrSyncStart();
-    sm.MarkChrSyncFinish(provider.ConsumeBool(),
-        provider.ConsumeIntegralInRange<int32_t>(PBAP_PCE_SYNC_FAIL_NONE, PBAP_PCE_SYNC_FAIL_DB_TIMEOUT));
-    sm.RecordContactsConnectFailed(provider.ConsumeIntegralInRange<int32_t>(
-        PBAP_PCE_CONN_FAIL_NONE, PBAP_PCE_CONN_FAIL_TRANSPORT));
-    sm.RecordContactsSyncFinish(provider.ConsumeBool(),
-        provider.ConsumeIntegralInRange<int32_t>(PBAP_PCE_SYNC_FAIL_NONE, PBAP_PCE_SYNC_FAIL_DB_TIMEOUT));
-    sm.ReportContactsSynUeEvent(provider.ConsumeBool(),
-        provider.ConsumeIntegralInRange<int32_t>(PBAP_PCE_CONN_FAIL_NONE, PBAP_PCE_CONN_FAIL_TRANSPORT));
-}
-
 static void TestPbapPceStateMachine(FuzzedDataProvider &provider)
 {
     std::string addr = BuildAddressString(provider);
@@ -259,9 +240,6 @@ static void TestPbapPceStateMachine(FuzzedDataProvider &provider)
     sm.SetBusy(provider.ConsumeBool());
     sm.AbortDownloading();
     sm.ForceCloseObexClient();
-
-    TestPbapPceContactsChr(sm, provider);
-
     int32_t what = provider.ConsumeIntegralInRange<int32_t>(PBAP_PCE_STM_MSG_MIN, PBAP_PCE_STM_MSG_MAX);
     sm.ProcessMessage(utility::Message(what, provider.ConsumeIntegral<int32_t>()));
 

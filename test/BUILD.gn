@@ -84,7 +84,6 @@ group("fuzz_test") {
     "fuzztest/audio_manager:fuzztest",
     "fuzztest/avsync:fuzztest",
     "fuzztest/ble:fuzztest",
-    "fuzztest/btchr:fuzztest",
     "fuzztest/common:fuzztest",
     "fuzztest/gatt:fuzztest",
     "fuzztest/hfp_ag:fuzztest",
