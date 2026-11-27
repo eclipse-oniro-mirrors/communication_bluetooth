@@ -54,13 +54,15 @@ do { \
 } while (0)
 
 namespace {
-bluetooth::BleScanSettingsImpl ConvertScanSetting(BleScannerMessage msg)
+bool IsLegacyModeNeeded(const std::list<BleScannerStateMachine::ScannerAppInfo> &appQueue);
+
+bluetooth::BleScanSettingsImpl ConvertScanSetting(BleScannerMessage msg, bool legacy)
 {
     BleScannerStateMachine::ScannerParameters params = msg.appInfo.params;
     bluetooth::BleScanSettingsImpl setting;
     setting.SetReportDelay(params.reportDelayMillis);
     setting.SetScanMode(params.scanMode);
-    setting.SetLegacy(params.legacy);
+    setting.SetLegacy(legacy);
     setting.SetPhy(params.phy);
     setting.SetCallbackType(params.callbackType);
     setting.SetMatchTrackAdvType(params.matchTrackAdvType);
@@ -267,6 +269,7 @@ void BleScannerStoppedState::Exit()
 bool BleScannerStoppedState::Dispatch(const utility::Message &utilMsg)
 {
     auto msg = static_cast<const BleScannerMessage &>(utilMsg);
+    bool legacy = false;
 
     switch (msg.what_) {
         case BleScannerStateMachine::START_EVENT:
@@ -285,9 +288,11 @@ bool BleScannerStoppedState::Dispatch(const utility::Message &utilMsg)
             HILOGI("[STOPPED] -> [STARTING] after event [%{public}s], %{public}s",
                 EventToStr(msg.what_, sm_.isInnerEvent_), msg.appInfo.ToString().c_str());
             Transition(BLE_SCAN_STARTING);
-            sm_.startScanFunc_(ConvertScanSetting(msg));
+            legacy = msg.appInfo.params.legacy && IsLegacyModeNeeded(sm_.appQueue_);
+            sm_.startScanFunc_(ConvertScanSetting(msg, legacy));
             sm_.reqApp_ = std::make_shared<BleScannerStateMachine::ScannerAppInfo>(msg.appInfo);
             sm_.reqParam_ = msg.scanParams;
+            sm_.reqParam_.legacy = legacy;
             break;
         case BleScannerStateMachine::STOP_EVENT:
             HILOGE("Unsupported [%{public}s] in StateStopped.", EventToStr(msg.what_));
@@ -528,8 +533,9 @@ void BleScannerStartedState::Entry()
             bluetooth::SCAN_SUCCESS);
     }
     sm_.isStartByStateMachine_ = false;
-    HILOGI("current app:%{public}s, window:%{public}d, interval:%{public}d",
-        sm_.currentApp_->ToString().c_str(), sm_.optimalParam_.scanWindow, sm_.optimalParam_.scanInterval);
+    HILOGI("current app:%{public}s, window:%{public}d, interval:%{public}d, legacy:%{public}d",
+        sm_.currentApp_->ToString().c_str(), sm_.optimalParam_.scanWindow, sm_.optimalParam_.scanInterval,
+        sm_.optimalParam_.legacy);
     // If START_EVENT or STOP_EVENT trigger in this function, it will be Inner Event.
     sm_.isInnerEvent_ = true;
     HandlePriorityEvent();
@@ -569,7 +575,8 @@ bool BleScannerStartedState::HandleStartEvent(const BleScannerMessage &msg)
     BleScannerStateMachine::ScannerParameters optimalParam;
     sm_.GetOptimalParam(sm_.appQueue_, optimalParam);
     if (optimalParam.scanInterval == sm_.optimalParam_.scanInterval &&
-        optimalParam.scanWindow == sm_.optimalParam_.scanWindow) {
+        optimalParam.scanWindow == sm_.optimalParam_.scanWindow &&
+        optimalParam.legacy == sm_.optimalParam_.legacy) {
         HILOGI("Add app %{public}s", msg.appInfo.ToString().c_str());
         sm_.reportStartedEventFunc_(msg.appInfo.pid, msg.appInfo.uid, msg.appInfo.scannerId, bluetooth::SCAN_SUCCESS);
         HandlePriorityEvent();
@@ -615,7 +622,8 @@ bool BleScannerStartedState::HandleStopEvent(const BleScannerMessage &msg)
     BleScannerStateMachine::ScannerParameters optimalParam;
     GetOptimalParamInStopEvent(sm_.appQueue_, optimalParam);
     if (optimalParam.scanInterval == sm_.optimalParam_.scanInterval &&
-        optimalParam.scanWindow == sm_.optimalParam_.scanWindow) {
+        optimalParam.scanWindow == sm_.optimalParam_.scanWindow &&
+        optimalParam.legacy == sm_.optimalParam_.legacy) {
         HILOGI("Remove app %{public}s", msg.appInfo.ToString().c_str());
 #ifdef CONTEXTHUB_BLE_V3
         if (msg.appInfo.scannerId == sm_.ownedScannerId_) {
@@ -813,9 +821,11 @@ void BleScannerShCollaboration::HandlePendingEvent(const BleScannerMessage &msg)
             }
             HILOGI("[SH_COLLABORATION] -> [STARTING]");
             Transition(BLE_SCAN_STARTING);
-            sm_.startScanFunc_(ConvertScanSetting(msg));
+            bool legacy = msg.appInfo.params.legacy && IsLegacyModeNeeded(sm_.appQueue_);
+            sm_.startScanFunc_(ConvertScanSetting(msg, legacy));
             sm_.reqApp_ = std::make_shared<BleScannerStateMachine::ScannerAppInfo>(msg.appInfo);
             sm_.reqParam_ = msg.scanParams;
+            sm_.reqParam_.legacy = legacy;
         } else {
             HILOGI("[SH_COLLABORATION] -> [STOPPED]");
             Transition(BLE_SCAN_STOPPED);
@@ -931,14 +941,35 @@ std::list<BleScannerStateMachine::ScannerAppInfo>::iterator BleScannerStateMachi
     return maxIter;
 }
 
+namespace {
+bool HandleEmptyAppQueue(const std::list<BleScannerStateMachine::ScannerAppInfo> &appQueue,
+    BleScannerStateMachine::ScannerParameters &optimalParam)
+{
+    if (!appQueue.empty()) {
+        return false;
+    }
+    HILOGI("appQueue is empty.");
+    optimalParam.scanInterval = 0;
+    optimalParam.scanWindow = 0;
+    return true;
+}
+
+bool IsLegacyModeNeeded(const std::list<BleScannerStateMachine::ScannerAppInfo> &appQueue)
+{
+    for (const auto &app : appQueue) {
+        if (!app.params.legacy) {
+            return false;
+        }
+    }
+    return true;
+}
+}  // namespace
+
 std::list<BleScannerStateMachine::ScannerAppInfo>::iterator BleScannerStateMachine::GetOptimalParam(
     std::list<BleScannerStateMachine::ScannerAppInfo> &appQueue,
     BleScannerStateMachine::ScannerParameters &optimalParam)
 {
-    if (appQueue.empty()) {
-        HILOGI("appQueue is empty.");
-        optimalParam.scanInterval = 0;
-        optimalParam.scanWindow = 0;
+    if (HandleEmptyAppQueue(appQueue, optimalParam)) {
         return appQueue.end();
     }
     int minScanInterval = MAX_VALUE;
@@ -947,6 +978,9 @@ std::list<BleScannerStateMachine::ScannerAppInfo>::iterator BleScannerStateMachi
 
     auto maxIter = appQueue.begin();
     optimalParam = maxIter->params;
+    // Pending stack confirmation: legacy adv/scan rsp are still reported when legacy == false,
+    // so extended scan is used as long as any scanning app requires it.
+    optimalParam.legacy = IsLegacyModeNeeded(appQueue);
 
     for (auto it = appQueue.begin(); it != appQueue.end(); ++it) {
         int clientWindow = it->params.scanWindow;
@@ -1023,7 +1057,8 @@ std::string BleScannerStateMachine::ScannerAppInfo::ToString(void) const
     if (params.scanMode != -1) {
         s += ",scanMode:" + std::to_string(params.scanMode) +
              ",window:" + std::to_string(params.scanWindow) +
-             ",interval:" + std::to_string(params.scanInterval);
+             ",interval:" + std::to_string(params.scanInterval) +
+             ",legacy:" + std::to_string(params.legacy);
     }
     return s;
 }
