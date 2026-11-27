@@ -133,3 +133,11 @@ declare_args() {
 
   bluetooth_pbap_pce_feature = false
 }
+
+bluetooth_deps_telephony_exist = false
+if (defined(global_parts_info) &&
+    defined(global_parts_info.telephony_call_manager) &&
+    defined(global_parts_info.telephony_core_service) &&
+    defined(global_parts_info.telephony_state_registry)) {
+  bluetooth_deps_telephony_exist = true
+}

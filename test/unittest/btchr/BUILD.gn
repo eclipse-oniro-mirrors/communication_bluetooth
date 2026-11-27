@@ -357,6 +357,34 @@ ohos_unittest("hwbt_chr_switch_test") {
   }
 }
 
+ohos_unittest("btchr_local_data_test") {
+  module_out_path = module_output_path
+  sources = [ "bt_chr_local_data_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+  include_dirs = [ "$PART_DIR/btchr/include" ]
+
+  deps = [
+    "//foundation/communication/bluetooth/frameworks/inner:btcommon",
+    "//foundation/communication/bluetooth/frameworks/inner:btframework",
+    "${bluetooth_unittest_utils_path}:unittest_utils_static",
+    "$PART_DIR/btchr:btchr",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "eventhandler:libeventhandler",
+    "hisysevent:libhisysevent",
+    "hilog:libhilog",
+  ]
+
+  if (bluetooth_ffrt_enable) {
+    external_deps += [ "ffrt:libffrt" ]
+  }
+}
+
 ################################################################################
 group("unittest") {
   testonly = true
@@ -374,6 +402,7 @@ group("unittest") {
       ":btchr_hci_process_data_test",
       ":hwbt_chr_switch_test",
       ":btchr_pkgname_manager_test",
+      ":btchr_local_data_test",
       ":btchr_airtime_test",
     ]
   }

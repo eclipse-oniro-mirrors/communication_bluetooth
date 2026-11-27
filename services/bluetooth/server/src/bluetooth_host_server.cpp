@@ -26,6 +26,7 @@
 
 #include "adapter_device_config.h"
 #include "bt_chr_dft_exception.h"
+#include "bt_chr_local_data.h"
 #include "bt_chr_ue_manager.h"
 #include "bluetooth_a2dp_sink_server.h"
 #include "bluetooth_a2dp_source_server.h"
@@ -1168,10 +1169,12 @@ void BluetoothHostServer::impl::Init()
 #endif
     BluetoothDeviceManager::GetInstance()->AddPairedDevInfo();
     createServers();
+    BtChrLocalData::GetInstance().Start();
 }
 
 void BluetoothHostServer::impl::Clear()
 {
+    BtChrLocalData::GetInstance().Stop();
     /// systerm state observer
     IAdapterManager::GetInstance()->DeregisterSystemStateObserver(*systemStateObserver_);
 

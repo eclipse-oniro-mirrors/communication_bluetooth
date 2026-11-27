@@ -24,6 +24,7 @@
 #include "bt_chr_business_event.h"
 #include "bt_chr_util.h"
 #include "bt_chr_hci_process_data.h"
+#include "bt_chr_local_data.h"
 #include "hisysevent_c.h"
 #include "hisysevent.h"
 #include "hitrace_meter.h"
@@ -114,6 +115,13 @@ void BtChrAddEventParam(std::vector<BtChrEventParam>& cacheParams, BtChrEventPar
     cacheParams.push_back(param);
 }
 
+// Only the events confirmed with the big data side carry the country info.
+static bool IsNeedCountryInfoEvent(const std::string& eventName)
+{
+    return eventName == CHR_USER_DISCONNECT || eventName == CHR_BLE_DISCONNECT ||
+        eventName == CHR_A2DP_AUDIO_EXCEPTION;
+}
+
 void BtChrSubEventWrite(const std::string& subEventName, const std::string& subEventJsonStr,
     std::vector<BtChrEventParam>& cacheParams, const std::string& eventKey)
 {
@@ -192,8 +200,15 @@ static void convertToHiSysEventParams(const std::vector<BtChrEventParam>& params
 }
 
 void BtChrHiSysEventWrite(const std::string& eventName, const std::string& eventKey,
-    const std::vector<BtChrEventParam>& cacheParams, HiSysEventEventType eventType)
+    std::vector<BtChrEventParam>& cacheParams, HiSysEventEventType eventType)
 {
+    // 仅白名单事件携带国家码，取不到时不携带该字段（与星闪 DFT 一致）
+    if (IsNeedCountryInfoEvent(eventName)) {
+        std::string countryInfo = BtChrLocalData::GetInstance().GetCountryInfo();
+        if (!countryInfo.empty()) {
+            BtChrAddEventParam(cacheParams, BtChrEventParam("LOCAL_COUNTRY_INFO", countryInfo));
+        }
+    }
     HILOGD("eventKey: %{public}s, cacheParams size: %{public}zu", GET_ENCRYPT_EVENTKEY(eventKey), cacheParams.size());
     std::vector<HiSysEventParam> hiSysEventParams;
     std::vector<std::vector<char*>> strArrayStorage;

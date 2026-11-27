@@ -23,6 +23,7 @@
 #include "hisysevent.h"
 #include "common_util.h"
 #include "bluetooth_log.h"
+#include "bt_chr_local_data.h"
 #include "bt_config.h"
 #include "parameter.h"
 #include "parameters.h"
@@ -99,13 +100,25 @@ extern "C" BT_FUNC_HOOK void BtChrWriteHiSysEvent(
     int errCode, const std::string &switchTime, const std::string &callingName, int action, int64_t actionTimeStamp)
 {
     const char *durationName = (action != ChrSwitchInfo::ACTION_DISABLE_BLUETOOTH ? "BTONDURA" : "BTOFFDURA");
+    std::string countryInfo = BtChrLocalData::GetInstance().GetCountryInfo();
+    if (countryInfo.empty()) {
+        HiSysEventWrite(OHOS::HiviewDFX::HiSysEvent::Domain::BT_SERVICE, CHR_BT_SWITCH_EVENT,
+            HiviewDFX::HiSysEvent::EventType::FAULT,
+            "ERRCODE", errCode,
+            "BTSWITCHTIME", switchTime,
+            "BTSWITCHAPP", callingName,
+            "BTMANASERVICEFLOWSTATE", action,
+            durationName, GetTimeStamp() - actionTimeStamp);
+        return;
+    }
     HiSysEventWrite(OHOS::HiviewDFX::HiSysEvent::Domain::BT_SERVICE, CHR_BT_SWITCH_EVENT,
         HiviewDFX::HiSysEvent::EventType::FAULT,
         "ERRCODE", errCode,
         "BTSWITCHTIME", switchTime,
         "BTSWITCHAPP", callingName,
         "BTMANASERVICEFLOWSTATE", action,
-        durationName, GetTimeStamp() - actionTimeStamp);
+        durationName, GetTimeStamp() - actionTimeStamp,
+        "LOCAL_COUNTRY_INFO", countryInfo);
 }
 
 void BtChrWriteHiSysEvent(int errCode, int action)
