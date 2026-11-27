@@ -203,6 +203,14 @@ HWTEST_F(MapMseContentObserverTest, MapMseContentObserverTest_HandleListChangeFo
     HILOGI("MapMseContentObserverTest_HandleListChangeForExistMessage_001 end");
 }
 
+HWTEST_F(MapMseContentObserverTest, MapMseContentObserverTest_HandleListChangeForExistMessage_002, TestSize.Level1)
+{
+    std::map<int64_t, Message> currMessageList;
+    Message msg{12, 1, false, true, true};  // soft deleted
+    mapMseContentObserver->HandleListChangeForExistMessage(currMessageList, msg);
+    EXPECT_TRUE(currMessageList.empty());
+}
+
 HWTEST_F(MapMseContentObserverTest, MapMseContentObserverTest_GetSendMessageHandle_001, TestSize.Level1)
 {
     HILOGI("MapMseContentObserverTest_GetSendMessageHandle_001 start");

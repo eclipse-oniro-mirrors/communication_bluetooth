@@ -211,8 +211,9 @@ void MapMseContentObserver::HandleSmsMessageListChanged()
         int64_t msgState = GetLongFromResultSet(resultSet, "msg_state");
         bool sent = (GetLongFromResultSet(resultSet, "is_sender") == 0) ? true : false;
         bool read = (GetLongFromResultSet(resultSet, "is_read") == 1) ? true : false;
-        Message msg{handle, msgState, sent, read};
-        if (!smsMessageCollection_.count(handle)) {
+        bool isDelete = (GetLongFromResultSet(resultSet, "delete_time") > 0) ? true : false;
+        Message msg{handle, msgState, sent, read, isDelete};
+        if (!smsMessageCollection_.count(handle) && !isDelete) {
             // new message
             HandleListChangeForNewMessage(currMessageList, msg);
         } else {
@@ -368,8 +369,11 @@ void MapMseContentObserver::InitMessageList()
         int64_t msgState = GetLongFromResultSet(resultSet, "msg_state");
         bool sent = GetLongFromResultSet(resultSet, "is_sender") == 0 ? true : false;
         bool read = (GetLongFromResultSet(resultSet, "is_read") == 1) ? true : false;
-        Message msg{handle, msgState, sent, read};
-        smsMessageCollection_[handle] = msg;
+        bool isDelete = (GetLongFromResultSet(resultSet, "delete_time") > 0) ? true : false;
+        Message msg{handle, msgState, sent, read, isDelete};
+        if (!isDelete) {
+            smsMessageCollection_[handle] = msg;
+        }
         opRet = resultSet->GoToNextRow();
     }
     resultSet->Close();
@@ -392,7 +396,8 @@ std::shared_ptr<DataShare::DataShareResultSet> MapMseContentObserver::QueryMessa
         "msg_content",
         "is_read",
         "session_id",
-        "msg_state"};
+        "msg_state",
+        "delete_time"};
     Uri uri(SMS_MMS_INFO_URI_STR);
     auto resultSet = smsDataShareHelper_->Query(uri, predicates, columns);
     if (!resultSet) {
@@ -438,6 +443,9 @@ void MapMseContentObserver::HandleListChangeForNewMessage(std::map<int64_t, Mess
 void MapMseContentObserver::HandleListChangeForExistMessage(std::map<int64_t, Message> &newMsgList, const Message &msg)
 {
     HITRACE_METER(BT_TRACE_TAG);
+    if (msg.isDelete) {
+        return;
+    }
     newMsgList[msg.handle] = msg;
     auto existMsg = smsMessageCollection_[msg.handle];
 
@@ -461,7 +469,6 @@ void MapMseContentObserver::HandleListChangeForDeleteMessage(std::map<int64_t, M
         if (!newMsgList.count(msg.first)) {
             HILOGI("msgId=%{public}ld has been delete", msg.first);
             SendEvent(MapEvent(msg.first, EVENT_TYPE_DELETE, GetMessageEventFolder(msg.second)));
-            break;
         }
     }
 }
@@ -483,7 +490,8 @@ int64_t MapMseContentObserver::GetSendMessageHandle()
     while (opRet == DataShare::E_OK) {
         int64_t handle = GetLongFromResultSet(resultSet, "msg_id");
         bool sent = GetLongFromResultSet(resultSet, "is_sender") == 0 ? true : false;
-        if (!smsMessageCollection_.count(handle)) {
+        bool isDelete = (GetLongFromResultSet(resultSet, "delete_time") > 0) ? true : false;
+        if (!isDelete && !smsMessageCollection_.count(handle)) {
             if (sent) {
                 smsMessageSentHandle_ = handle;
                 resultSet->Close();

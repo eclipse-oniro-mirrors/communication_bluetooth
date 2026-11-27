@@ -45,6 +45,7 @@ public:
         int32_t msgState;
         bool sent;
         bool readFlag;
+        bool isDelete = false;
     };
 
     class MapDataShareObserver : public DataShare::DataShareObserver {
