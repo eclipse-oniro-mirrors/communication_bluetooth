@@ -68,6 +68,11 @@ int32_t FfiBluetoothConGetProfileConnectionState(int32_t profileId, int32_t* err
     return ConnectionImpl::GetProfileConnectionState(profileId, errCode);
 }
 
+int32_t FfiBluetoothConGetBtConnectionState(int32_t* errCode)
+{
+    return ConnectionImpl::GetBtConnectionState(errCode);
+}
+
 void FfiBluetoothConSetDevicePairingConfirmation(const char* deviceId, bool accept, int32_t* errCode)
 {
     return ConnectionImpl::SetDevicePairingConfirmation(deviceId, accept, errCode);
