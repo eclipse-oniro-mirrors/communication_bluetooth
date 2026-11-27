@@ -81,7 +81,6 @@ ohos_shared_library("cj_bluetooth_socket_ffi") {
     defines += [ "WINDOWS_PLATFORM" ]
   }
 
-  # Used to control the export of dynamic library symbols.
   version_script = "../libcj_bluetooth_ffi.map"
 
   innerapi_tags = [ "platformsdk" ]
