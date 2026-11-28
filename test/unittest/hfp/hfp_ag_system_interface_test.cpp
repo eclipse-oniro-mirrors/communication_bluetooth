@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <cstring>
+#include "securec.h"
 #include "hfp_ag_service.h"
 #include "hfp_ag_system_interface.h"
 #include "system_ability_definition.h"
@@ -233,6 +234,68 @@ HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_QueryCurrentCallsList
     EXPECT_TRUE(hfpAgInterface_->QueryCurrentCallsList());
 
     HILOGI("Hfp_Ag_system_interface_QueryCurrentCallsList_001 end");
+}
+
+/*
+ * @tc.number: Hfp_Ag_system_interface_GetCallNumber_001
+ * @tc.name: GetCallNumber_VOIP_EmptyNumber
+ * @tc.desc: A VOIP call with an empty number is filled with the 11-digit all-zero placeholder.
+ */
+HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_GetCallNumber_001, TestSize.Level1)
+{
+    HILOGI("Hfp_Ag_system_interface_GetCallNumber_001 start");
+
+    CallAttributeInfo voipCall;
+    voipCall.callType = CallType::TYPE_VOIP;
+    voipCall.accountNumber[0] = '\0';
+
+    std::string number = HfpAgSystemInterface::GetCallNumber(voipCall);
+    EXPECT_EQ(number, "00000000000");
+    EXPECT_EQ(number.length(), 11u);
+
+    HILOGI("Hfp_Ag_system_interface_GetCallNumber_001 end");
+}
+
+/*
+ * @tc.number: Hfp_Ag_system_interface_GetCallNumber_002
+ * @tc.name: GetCallNumber_VOIP_NonEmptyNumber
+ * @tc.desc: A VOIP call with a real number keeps the original number unchanged.
+ */
+HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_GetCallNumber_002, TestSize.Level1)
+{
+    HILOGI("Hfp_Ag_system_interface_GetCallNumber_002 start");
+
+    CallAttributeInfo voipCall;
+    voipCall.callType = CallType::TYPE_VOIP;
+    std::string originalNumber = "138000000000";
+    if (strncpy_s(voipCall.accountNumber, sizeof(voipCall.accountNumber),
+        originalNumber.c_str(), originalNumber.length()) != EOK) {
+        voipCall.accountNumber[0] = '\0';
+    }
+
+    std::string number = HfpAgSystemInterface::GetCallNumber(voipCall);
+    EXPECT_EQ(number, originalNumber);
+
+    HILOGI("Hfp_Ag_system_interface_GetCallNumber_002 end");
+}
+
+/*
+ * @tc.number: Hfp_Ag_system_interface_GetCallNumber_003
+ * @tc.name: GetCallNumber_NonVOIP_EmptyNumber
+ * @tc.desc: A non-VOIP call with an empty number keeps the empty number.
+ */
+HWTEST_F(HfpAgSystemInterfaceTest, Hfp_Ag_system_interface_GetCallNumber_003, TestSize.Level1)
+{
+    HILOGI("Hfp_Ag_system_interface_GetCallNumber_003 start");
+
+    CallAttributeInfo csCall;
+    csCall.callType = CallType::TYPE_CS;
+    csCall.accountNumber[0] = '\0';
+
+    std::string number = HfpAgSystemInterface::GetCallNumber(csCall);
+    EXPECT_TRUE(number.empty());
+
+    HILOGI("Hfp_Ag_system_interface_GetCallNumber_003 end");
 }
 
 /*

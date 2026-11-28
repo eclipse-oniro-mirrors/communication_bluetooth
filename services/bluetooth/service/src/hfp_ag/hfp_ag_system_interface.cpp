@@ -58,6 +58,8 @@ constexpr int32_t INCOMING_CALL = 0;
 constexpr int32_t OUTGOING_CALL = 1;
 constexpr int32_t NETWORK_STATE_AVAILABLE = 1;
 
+constexpr const char *VOIP_EMPTY_NUMBER_PLACEHOLDER = "00000000000";
+
 HfpAgSystemInterface::HfpAgSystemInterface()
 {}
 
@@ -374,6 +376,38 @@ std::string HfpAgSystemInterface::GetSubscriberNumber()
     return subscriberNumber_;
 }
 
+#ifdef BLUETOOTH_HFP_AG_ENABLE
+static int GetCallDirection(const CallAttributeInfo &call)
+{
+    switch (static_cast<int>(call.callDirection)) {
+        case static_cast<int>(CallDirection::CALL_DIRECTION_IN):
+            return BT_CALL_DIRECTION_IN;
+        case static_cast<int>(CallDirection::CALL_DIRECTION_OUT):
+            return BT_CALL_DIRECTION_OUT;
+        default:
+            return BT_CALL_DIRECTION_UNKNOW;
+    }
+}
+
+static int GetCallType(const CallAttributeInfo &call)
+{
+    if (static_cast<int>(call.callType) == static_cast<int>(CallType::TYPE_CS)) {
+        return CALL_TYPE_DEFAULT;
+    }
+    return static_cast<int>(call.callType);
+}
+
+std::string HfpAgSystemInterface::GetCallNumber(const CallAttributeInfo &call)
+{
+    std::string number = call.accountNumber;
+    if (call.callType == CallType::TYPE_VOIP && number.empty()) {
+        number = VOIP_EMPTY_NUMBER_PLACEHOLDER;
+        HILOGW("[HFP_SYSTEM_INTERFACE]VOIP call with empty number, filled with 00000000000");
+    }
+    return number;
+}
+#endif
+
 bool HfpAgSystemInterface::QueryCurrentCallsList()
 {
     HITRACE_METER(BT_TRACE_TAG);
@@ -387,30 +421,10 @@ bool HfpAgSystemInterface::QueryCurrentCallsList()
     std::vector<CallAttributeInfo> callList =
         DelayedRefSingleton<BluetoothCallClient>::GetInstance().GetCurrentCallList(slotid);
     for (auto call : callList) {
-        std::string number = call.accountNumber;
-        bool conferenceState = false;
-        if (call.conferenceState != TelConferenceState::TEL_CONFERENCE_IDLE) {
-            conferenceState = true;
-        }
-        int dire = -1;
-        switch ((int)call.callDirection) {
-            case (int)CallDirection::CALL_DIRECTION_IN:
-                dire = BT_CALL_DIRECTION_IN;
-                break;
-            case (int)CallDirection::CALL_DIRECTION_OUT:
-                dire = BT_CALL_DIRECTION_OUT;
-                break;
-            default:
-                dire = BT_CALL_DIRECTION_UNKNOW;
-                break;
-        }
-        int calltype = -1;
-        if ((int)call.callType == (int)CallType::TYPE_CS) {
-            calltype = CALL_TYPE_DEFAULT;
-        } else {
-            calltype = (int)call.callType;
-        }
-
+        std::string number = GetCallNumber(call);
+        bool conferenceState = call.conferenceState != TelConferenceState::TEL_CONFERENCE_IDLE;
+        int dire = GetCallDirection(call);
+        int calltype = GetCallType(call);
         /*
         * Note that when querying call information,
         * if the call status is disconnecting or disconnected, only need to reply OK
@@ -419,7 +433,6 @@ bool HfpAgSystemInterface::QueryCurrentCallsList()
             static_cast<int>(call.callState) == static_cast<int>(HFP_AG_CALL_STATE_DISCONNECTING)) {
             continue;
         }
-
         int callIndex = GetIndexForCall(call.callId);
         service->ClccResponse(callIndex, dire, static_cast<int>(call.callState), 0, conferenceState, number, calltype);
         HILOGI("[HFP_SYSTEM_INTERFACE]id: %{public}d state: %{public}d", callIndex, static_cast<int>(call.callState));
