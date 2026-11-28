@@ -379,10 +379,10 @@ std::string HfpAgSystemInterface::GetSubscriberNumber()
 #ifdef BLUETOOTH_HFP_AG_ENABLE
 static int GetCallDirection(const CallAttributeInfo &call)
 {
-    switch ((int)call.callDirection) {
-        case (int)CallDirection::CALL_DIRECTION_IN:
+    switch (static_cast<int>(call.callDirection)) {
+        case static_cast<int>(CallDirection::CALL_DIRECTION_IN):
             return BT_CALL_DIRECTION_IN;
-        case (int)CallDirection::CALL_DIRECTION_OUT:
+        case static_cast<int>(CallDirection::CALL_DIRECTION_OUT):
             return BT_CALL_DIRECTION_OUT;
         default:
             return BT_CALL_DIRECTION_UNKNOW;
@@ -391,10 +391,10 @@ static int GetCallDirection(const CallAttributeInfo &call)
 
 static int GetCallType(const CallAttributeInfo &call)
 {
-    if ((int)call.callType == (int)CallType::TYPE_CS) {
+    if (static_cast<int>(call.callType) == static_cast<int>(CallType::TYPE_CS)) {
         return CALL_TYPE_DEFAULT;
     }
-    return (int)call.callType;
+    return static_cast<int>(call.callType);
 }
 
 std::string HfpAgSystemInterface::GetCallNumber(const CallAttributeInfo &call)
